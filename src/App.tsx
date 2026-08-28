@@ -15,6 +15,7 @@ import { AgentActivity } from './pages/AgentActivity';
 import { DecisionHistory } from './pages/DecisionHistory';
 import { DataStreamInspector } from './pages/DataStreamInspector';
 import { ExecutionSequence } from './pages/ExecutionSequence';
+import { LiveStreamTable } from './pages/LiveStreamTable';
 
 export function App() {
   const [currentPage, setCurrentPage] = useState<PageId>('command-center');
@@ -89,6 +90,8 @@ export function App() {
     switch (currentPage) {
       case 'command-center':
         return <CommandCenter liveData={liveData} onOpenDrawer={(id) => setDrawerInvoiceId(id)} onNavigate={(p) => setCurrentPage(p)} />;
+      case 'live-stream-table':
+        return <LiveStreamTable />;
       case 'execution-sequence':
         return <ExecutionSequence onOpenDrawer={(id) => setDrawerInvoiceId(id)} />;
       case 'invoices':

@@ -8,7 +8,8 @@ export type PageId =
   | 'agent-activity' 
   | 'decision-history'
   | 'data-stream'
-  | 'execution-sequence';
+  | 'execution-sequence'
+  | 'live-stream-table';
 
 export interface KPIState {
   availableCash: number;

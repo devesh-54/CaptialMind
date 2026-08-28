@@ -10,7 +10,8 @@ import {
   Activity, 
   History,
   Database,
-  ListOrdered
+  ListOrdered,
+  Table
 } from 'lucide-react';
 
 interface NavigationProps {
@@ -21,6 +22,7 @@ interface NavigationProps {
 export const Navigation: React.FC<NavigationProps> = ({ currentPage, onSelectPage }) => {
   const navItems = [
     { id: 'command-center' as PageId, label: 'Command Center', icon: LayoutDashboard },
+    { id: 'live-stream-table' as PageId, label: 'Live Data Table', icon: Table, badge: 'STREAM' },
     { id: 'execution-sequence' as PageId, label: 'Execution Plan', icon: ListOrdered, badge: 'ORDER' },
     { id: 'invoices' as PageId, label: 'Invoices', icon: FileText, badge: '5' },
     { id: 'receivables' as PageId, label: 'Receivables', icon: ArrowDownLeft },
@@ -59,7 +61,7 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onSelectPag
                   </div>
                   {item.badge && (
                     <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                      item.badge === 'LIVE' 
+                      item.badge === 'LIVE' || item.badge === 'STREAM'
                         ? 'bg-emerald-950 text-emerald-400 border border-emerald-800 animate-pulse'
                         : item.badge === 'ORDER'
                         ? 'bg-amber-950 text-amber-300 border border-amber-800'

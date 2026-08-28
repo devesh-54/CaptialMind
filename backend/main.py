@@ -31,22 +31,23 @@ current_cash = data_loader.load_cash()
 receivables = data_loader.load_receivables()
 invoices = data_loader.load_invoices()
 suppliers = data_loader.load_suppliers()
+obligations = data_loader.load_obligations()
 
 activity_feed = [
     {
         "id": "ACT-105",
         "timestamp": "14s ago",
         "stage": "DECIDE",
-        "title": f"Optimized Capital Deployment ({len(invoices)} Invoices Queued)",
-        "detail": f"Evaluated candidate options for open invoices. Selected Pay Now (Score: 96/100) for {invoices[0]['supplierName'] if invoices else 'Tata Steel'}.",
+        "title": "Optimized Capital Deployment for Employee Salary Day & Supplier Invoices",
+        "detail": f"Evaluated candidate options. Reserved ₹4.10Cr for Employee Salary Payroll due tomorrow and selected Pay Now (Score: 96/100) for {invoices[0]['supplierName'] if invoices else 'Valeo India'}.",
         "impact": "+₹6.67L Net Yield"
     },
     {
         "id": "ACT-104",
         "timestamp": "2m ago",
         "stage": "FORECAST",
-        "title": "Receivable Risk & Cash Balance Ingested",
-        "detail": f"Ingested cash_accounts.csv (Balance: ₹{(current_cash/10000000.0):.2f}Cr). Collection probability calculated.",
+        "title": "Customer A (Mahindra Logistics) Inflow & Salary Obligation Forecasted",
+        "detail": f"Customer A (₹2.45Cr, 95% on-time confidence) expected on Jan 15th. Employee Payroll (₹4.10Cr) scheduled for tomorrow.",
         "impact": "Protected ₹15.0L Floor"
     },
     {
@@ -54,7 +55,7 @@ activity_feed = [
         "timestamp": "11m ago",
         "stage": "OBSERVE",
         "title": "Bank API Cash Sync",
-        "detail": f"Treasury Account balance confirmed: ₹{current_cash:,.2f}. Operating reserve constraint verified.",
+        "detail": f"HDFC Treasury Account balance confirmed: ₹{current_cash:,.2f}. Operating reserve constraint verified.",
     }
 ]
 
@@ -62,17 +63,17 @@ decision_history = [
     {
         "id": "DEC-8801",
         "timestamp": "2026-08-28 14:45",
-        "triggerEvent": "Daily Working Capital Run",
-        "decision": f"Early Settlement - {invoices[0]['supplierName'] if invoices else 'Tata Steel'} (Pay Now)",
+        "triggerEvent": "Daily Working Capital Run & Salary Day Alignment",
+        "decision": f"Reserve ₹4.10Cr Salary Payroll + Early Settlement for {invoices[0]['supplierName'] if invoices else 'Valeo India'} (Pay Now)",
         "amount": invoices[0]['amount'] if invoices else 33381685.97,
         "confidence": 96,
         "status": "Pending Approval",
         "version": "v1.2",
         "reasons": [
+            "Employee Monthly Payroll (₹4.10Cr) prioritized as CRITICAL due tomorrow.",
             "Pay Now candidate scored 96/100 (runner-up Bank Finance scored 74/100).",
-            "Discount percentage captures early settlement yield.",
-            "Post-payment cash remains well above ₹15.0L safety reserve floor.",
-            "Supplier priority rating critical for Q1 delivery guarantees."
+            "2.0% discount captures ₹66.76L net value on Valeo India invoice.",
+            "Customer A (Mahindra Logistics) inflow of ₹2.45Cr on Jan 15th guarantees safety buffer above ₹15.0L floor."
         ]
     }
 ]
@@ -117,6 +118,7 @@ def get_command_center():
         "candidates": candidates,
         "forecast": forecast,
         "invoices": invoices,
+        "obligations": obligations,
         "receivables": receivables,
         "suppliers": suppliers,
         "activityFeed": activity_feed
@@ -148,9 +150,9 @@ def get_financing_options():
             "id": "FIN-01",
             "title": "Internal Cash Deployment",
             "recommended": True,
-            "impact": "₹3.34Cr Immediate Outflow",
+            "impact": "₹3.34Cr Outflow + ₹4.10Cr Salary",
             "cost": "₹0 (Zero Financing Interest)",
-            "verdict": "RECOMMENDED: Captures ₹66.76L discount while preserving ₹15L safety reserve floor.",
+            "verdict": "RECOMMENDED: Captures ₹66.76L discount while covering ₹4.10Cr Salary Payroll due tomorrow.",
             "apr": "0.0%",
             "availability": "Instant (HDFC Treasury)"
         },
@@ -160,7 +162,7 @@ def get_financing_options():
             "recommended": False,
             "impact": "₹0 Outflow Today (₹12.5L Line Drawn)",
             "cost": "₹18,500 Interest Cost (8.5% APR)",
-            "verdict": "ALTERNATIVE: Preserves cash if Flipkart receivable is delayed >5 days.",
+            "verdict": "ALTERNATIVE: Preserves cash if Customer A receivable is delayed >5 days.",
             "apr": "8.5% p.a.",
             "availability": "Pre-Approved (ICICI Bank)"
         },
@@ -193,7 +195,7 @@ async def trigger_simulated_event(req: EventTriggerRequest):
         "timestamp": "Just now",
         "stage": req.event_type,
         "title": req.description,
-        "detail": f"Triggered real-time scenario: Delay +{req.receivable_delay_days}d, Outflow ₹{req.extra_outflow_lakhs}L.",
+        "detail": f"Triggered real-time scenario: Customer A delay +{req.receivable_delay_days}d, Outflow ₹{req.extra_outflow_lakhs}L.",
         "impact": "Re-optimized Plan"
     }
     activity_feed.insert(0, new_event)
@@ -223,13 +225,13 @@ def run_what_if_simulation(req: WhatIfRequest):
 
     if breaches_floor:
         explanation = (
-            f"Action Shifted: Because simulated cash drops to ₹{min_cash:.1f}L (breaching the ₹15.0L reserve floor), "
-            f"CashPilot automatically shifts invoice payment to Bank Dynamic Credit Line to preserve internal cash buffer."
+            f"Action Shifted: Because simulated Customer A delay drops cash to ₹{min_cash:.1f}L (breaching reserve floor after Salary Day), "
+            f"CashPilot automatically shifts Valeo India payment to Bank Dynamic Credit Line to protect Employee Payroll."
         )
     else:
         explanation = (
-            f"Strategy Intact: Current stress parameters (+{req.receivable_delay_days}d delay, ₹{req.cash_drop_lakhs}L outflow) "
-            f"keep minimum liquidity at ₹{min_cash:.1f}L, safely above the policy floor."
+            f"Strategy Intact: Current stress parameters (Customer A +{req.receivable_delay_days}d delay, ₹{req.cash_drop_lakhs}L outflow) "
+            f"keep minimum liquidity at ₹{min_cash:.1f}L after Salary Payroll tomorrow, safely above floor."
         )
 
     return {

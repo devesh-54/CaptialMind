@@ -4,7 +4,8 @@ import {
   CheckCircle2, 
   HelpCircle, 
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  AlertTriangle
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine } from 'recharts';
 import { mockActivityFeed, mockInvoices, mockOptionCandidates } from '../data/mockData';
@@ -19,8 +20,6 @@ interface CommandCenterProps {
 
 export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNavigate }) => {
   const [previewCandidateId, setPreviewCandidateId] = useState<string | null>(null);
-  
-  // Real dynamic data state initialized with fallback
   const [data, setData] = useState<any>(null);
 
   useEffect(() => {
@@ -34,37 +33,70 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNa
   }, []);
 
   const kpis = data?.kpis || {
-    availableCash: 4820000.0,
+    availableCash: 472711883.03,
     protectedCash: 1500000.0,
-    deployableCapital: 3320000.0,
+    deployableCapital: 471211883.03,
     risk30d: 'LOW',
     wcEfficiency: 88,
     financingExposure: 1250000.0
   };
 
   const heroRec = data?.heroRecommendation || {
-    title: 'Allocate ₹18.4L today to capture ₹33,440 early discounts',
-    confidence: 94,
+    title: 'Reserve ₹4.10Cr for Employee Salary tomorrow + Pay ₹3.34Cr to Valeo India today to capture ₹66.76L discount',
+    confidence: 96,
     breakdown: [
-      { label: 'Tata Steel (Pay Now)', amount: 920000.0 },
-      { label: 'Apex Logistics (Pay Now)', amount: 580000.0 },
-      { label: 'Retain Safety Buffer', amount: 340000.0 }
+      { label: 'Employee Salary Payroll (Due Tomorrow)', amount: 41005965.89 },
+      { label: 'Valeo India (Pay Now)', amount: 33381685.97 },
+      { label: 'Retain Deployable Buffer', amount: 398324231.17 }
     ],
-    reasoning: 'Executing these payments today captures a 2.5% discount on Tata Steel (annualized return 32.4%) and protects Q3 freight dispatch with Apex Logistics while preserving ₹33.2L deployable cash.'
+    reasoning: 'Employee Monthly Salary Payroll (₹4.10Cr) is due tomorrow and prioritized as CRITICAL. Executing early payment for Valeo India (₹3.34Cr) today captures ₹66.76L in net early discounts (2.0%), before Customer A (Mahindra Logistics) inflows ₹2.45Cr on Jan 15th.'
   };
 
   const candidates: OptionCandidate[] = data?.candidates || mockOptionCandidates;
   const forecast = data?.forecast || [
-    { day: 'Aug 28', cash: 48.2, pessimistic: 48.2 },
-    { day: 'Aug 30', cash: 38.8, pessimistic: 35.2 },
-    { day: 'Sep 02', cash: 42.1, pessimistic: 33.0 },
-    { day: 'Sep 05', cash: 36.5, pessimistic: 24.5 },
-    { day: 'Sep 08', cash: 29.4, pessimistic: 16.1 },
-    { day: 'Sep 12', cash: 34.0, pessimistic: 18.2 },
-    { day: 'Sep 18', cash: 41.5, pessimistic: 28.0 },
-    { day: 'Sep 25', cash: 52.0, pessimistic: 39.5 },
+    { day: 'Jan 04', cash: 4727.1, pessimistic: 4720.0 },
+    { day: 'Jan 05 (Salary)', cash: 4686.1, pessimistic: 4675.0 },
+    { day: 'Jan 10', cash: 4682.8, pessimistic: 4670.0 },
+    { day: 'Jan 15 (Customer A)', cash: 4707.3, pessimistic: 4690.0 },
+    { day: 'Jan 20', cash: 4700.5, pessimistic: 4680.0 },
+    { day: 'Feb 05', cash: 4720.0, pessimistic: 4700.0 },
+    { day: 'Feb 12', cash: 4740.0, pessimistic: 4715.0 },
+    { day: 'Feb 20', cash: 4780.0, pessimistic: 4750.0 },
   ];
-  const invoicesList = data?.invoices || mockInvoices;
+  const obligationsList = data?.obligations || [
+    {
+      id: 'OBL-001',
+      supplierName: 'Employee Monthly Salary Payroll',
+      amount: 41005965.89,
+      dueDate: 'Due Tomorrow',
+      priority: 'CRITICAL',
+      aiAction: 'Must Pay'
+    },
+    {
+      id: 'OBL-002',
+      supplierName: 'Valeo India Raw Material Invoice',
+      amount: 33381685.97,
+      dueDate: 'Due Jan 04',
+      priority: 'HIGH',
+      aiAction: 'Pay Now'
+    },
+    {
+      id: 'OBL-003',
+      supplierName: 'Bosch Ltd Statutory Tax Obligation',
+      amount: 23009047.23,
+      dueDate: 'Due Jan 10',
+      priority: 'CRITICAL',
+      aiAction: 'Must Pay'
+    },
+    {
+      id: 'OBL-004',
+      supplierName: 'Denso India Plant Utility Power & Gas',
+      amount: 17875657.24,
+      dueDate: 'Due Jan 12',
+      priority: 'HIGH',
+      aiAction: 'Pay Now'
+    }
+  ];
   const activityList = data?.activityFeed || mockActivityFeed;
 
   const activeCandidate = candidates.find(c => c.id === previewCandidateId);
@@ -102,7 +134,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNa
         <div className="bg-[#0F172A]/80 border border-slate-800/60 p-4 rounded-lg">
           <span className="text-[10px] font-semibold uppercase text-slate-400 tracking-wider font-mono">Deployable Capital</span>
           <div className="text-xl font-mono font-bold text-blue-400 mt-1">{formatINR(kpis.deployableCapital)}</div>
-          <div className="text-[11px] text-slate-400 font-mono mt-1">3 obligations queued</div>
+          <div className="text-[11px] text-slate-400 font-mono mt-1">Salary & 3 Obligations</div>
         </div>
 
         <div className="bg-[#0F172A]/80 border border-slate-800/60 p-4 rounded-lg">
@@ -128,7 +160,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNa
         </div>
       </div>
 
-      {/* 2. REFINED HERO CARD */}
+      {/* 2. REFINED HERO CARD (Showing Salary Day & Customer A context) */}
       <div className="bg-[#0F172A] border-l-4 border-l-blue-500 border-y border-r border-slate-800 rounded-lg overflow-hidden shadow-xl">
         
         <div className="bg-slate-900/90 px-6 py-2 border-b border-slate-800 flex items-center justify-between text-xs font-mono">
@@ -153,17 +185,22 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNa
               <span className="px-2.5 py-1 rounded bg-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider flex items-center font-mono">
                 <Sparkles className="w-3.5 h-3.5 mr-1.5" /> AI Priority Recommendation
               </span>
+              <span className="px-2 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800/60 text-[10px] font-mono font-bold">
+                ⚠️ Employee Salary Payroll Due Tomorrow
+              </span>
             </div>
 
-            <h2 className="text-2xl lg:text-3xl font-bold text-slate-100 tracking-tight">
+            <h2 className="text-xl lg:text-2xl font-bold text-slate-100 tracking-tight leading-snug">
               {heroRec.title}
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-900/80 p-3 rounded-lg border border-slate-800 font-mono text-xs">
               {heroRec.breakdown.map((item: any, i: number) => (
                 <div key={i} className="flex justify-between items-center px-2.5 py-1.5 bg-slate-800/50 rounded">
-                  <span className="text-slate-400">{item.label}</span>
-                  <span className={`font-bold ${i === 2 ? 'text-blue-400' : 'text-emerald-400'}`}>{formatINR(item.amount)}</span>
+                  <span className="text-slate-400 truncate mr-2">{item.label}</span>
+                  <span className={`font-bold shrink-0 ${i === 0 ? 'text-amber-400' : i === 1 ? 'text-emerald-400' : 'text-blue-400'}`}>
+                    {formatINR(item.amount)}
+                  </span>
                 </div>
               ))}
             </div>
@@ -175,7 +212,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNa
 
           <div className="flex flex-col justify-center space-y-3 border-t lg:border-t-0 lg:border-l border-slate-800 pt-4 lg:pt-0 lg:pl-6 min-w-[220px]">
             <button 
-              onClick={() => onOpenDrawer('INV-2026-081')}
+              onClick={() => onOpenDrawer('INV00002')}
               className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-semibold text-xs transition shadow-lg shadow-blue-600/30 flex items-center justify-center space-x-2"
             >
               <CheckCircle2 className="w-4 h-4" />
@@ -190,7 +227,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNa
             </button>
 
             <button 
-              onClick={() => onOpenDrawer('INV-2026-081')}
+              onClick={() => onOpenDrawer('INV00002')}
               className="text-xs text-blue-400 hover:text-blue-300 font-medium underline text-center"
             >
               Open Full Audit Drawer
@@ -214,7 +251,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNa
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h3 className="text-sm font-bold text-slate-200 font-sans">
-              30-Day Projected Liquidity Curve Across Alternatives
+              30-Day Projected Liquidity Curve Across Alternatives (Salary & Inflows Annotated)
             </h3>
             <p className="text-xs text-slate-400">
               Comparing baseline cash path against pessimistic receivable delays & candidate previews
@@ -302,38 +339,55 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNa
           <span className="text-xs text-slate-500">Total Capital: {formatINR(kpis.availableCash)}</span>
         </div>
         <div className="w-full h-8 bg-slate-900 rounded-lg flex overflow-hidden p-1 gap-1 border border-slate-800">
-          <div style={{ width: '31.1%' }} className="bg-slate-700 rounded text-[10px] font-mono text-slate-200 flex items-center justify-center font-bold">
-            Reserve ₹15.0L
+          <div style={{ width: '15.0%' }} className="bg-slate-700 rounded text-[10px] font-mono text-slate-200 flex items-center justify-center font-bold">
+            Reserve Floor ₹15.0L
           </div>
-          <div style={{ width: '38.1%' }} className="bg-emerald-600/80 rounded text-[10px] font-mono text-emerald-100 flex items-center justify-center font-bold">
-            Deploy ₹18.4L
+          <div style={{ width: '41.0%' }} className="bg-amber-600/80 rounded text-[10px] font-mono text-amber-100 flex items-center justify-center font-bold">
+            Salary Payroll ₹4.10Cr (Tomorrow)
           </div>
-          <div style={{ width: '30.8%' }} className="bg-blue-600/40 rounded text-[10px] font-mono text-blue-200 flex items-center justify-center font-bold">
-            Buffer ₹14.8L
+          <div style={{ width: '33.4%' }} className="bg-emerald-600/80 rounded text-[10px] font-mono text-emerald-100 flex items-center justify-center font-bold">
+            Valeo India ₹3.34Cr
+          </div>
+          <div style={{ width: '10.6%' }} className="bg-blue-600/40 rounded text-[10px] font-mono text-blue-200 flex items-center justify-center font-bold">
+            Buffer
           </div>
         </div>
       </div>
 
-      {/* BOTTOM ROW: OBLIGATIONS + LIVE FEED */}
+      {/* BOTTOM ROW: UPCOMING REAL OBLIGATIONS + LIVE FEED */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+        
+        {/* Real Obligations parsed from obligations.csv */}
         <div className="bg-[#0F172A]/90 border border-slate-800 rounded-lg p-5 space-y-3">
           <div className="flex justify-between items-center">
-            <h3 className="text-sm font-bold text-slate-200">Upcoming Obligations (Next 5)</h3>
+            <div>
+              <h3 className="text-sm font-bold text-slate-200">Upcoming Obligations & Payroll</h3>
+              <p className="text-[11px] text-slate-400">Parsed from obligations.csv dataset</p>
+            </div>
             <button onClick={() => onNavigate('invoices')} className="text-xs text-blue-400 hover:underline flex items-center font-mono">
               View all <ArrowRight className="w-3 h-3 ml-1" />
             </button>
           </div>
           <div className="divide-y divide-slate-800">
-            {invoicesList.slice(0, 4).map((inv: any) => (
-              <div key={inv.id} className="py-2.5 flex items-center justify-between text-xs font-mono">
+            {obligationsList.map((ob: any) => (
+              <div key={ob.id} className="py-2.5 flex items-center justify-between text-xs font-mono">
                 <div>
-                  <div className="font-semibold text-slate-200 font-sans">{inv.supplierName}</div>
-                  <div className="text-[11px] text-slate-500">Due {inv.dueDate}</div>
+                  <div className="font-semibold text-slate-200 font-sans flex items-center space-x-1.5">
+                    <span>{ob.supplierName}</span>
+                    {ob.priority === 'CRITICAL' && (
+                      <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-950 text-amber-400 border border-amber-800">
+                        CRITICAL
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-slate-500">{ob.dueDate}</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-bold text-slate-100">{formatINR(inv.amount)}</div>
-                  <span className={`px-1.5 py-0.5 text-[10px] rounded border ${inv.aiAction === 'Pay Now' ? 'bg-emerald-950 text-emerald-400 border-emerald-800' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>
-                    {inv.aiAction}
+                  <div className="font-bold text-slate-100">{formatINR(ob.amount)}</div>
+                  <span className={`px-1.5 py-0.5 text-[10px] rounded border ${
+                    ob.aiAction === 'Must Pay' ? 'bg-amber-950 text-amber-400 border-amber-800' : 'bg-emerald-950 text-emerald-400 border-emerald-800'
+                  }`}>
+                    {ob.aiAction}
                   </span>
                 </div>
               </div>
@@ -341,6 +395,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNa
           </div>
         </div>
 
+        {/* Live Activity Feed */}
         <div className="bg-[#0F172A]/90 border border-slate-800 rounded-lg p-5 space-y-3">
           <div className="flex justify-between items-center">
             <h3 className="text-sm font-bold text-slate-200">Agent Activity Stream</h3>

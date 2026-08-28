@@ -8,7 +8,7 @@ from sse_starlette.sse import EventSourceResponse
 
 from app.models import (
     Company, CashAccount, Supplier, Customer, Invoice, Receivable, Obligation,
-    FinancingOption, EventPayload, Decision, ScenarioRequest, ScenarioResult
+    FinancingOption, EventPayload, Decision, ScenarioRequest, ScenarioResult, ActionType
 )
 from app.data_store import store
 from app.forecast_engine import calculate_30day_forecast, REQUIRED_30DAY_FLOOR
@@ -33,38 +33,38 @@ event_subscribers = []
 
 async def auto_stream_generator():
     """
-    Background task streaming real future data events every 3.5 seconds continuously over SSE!
+    Background stream generator:
+    Ingests live future data, updates data store models, re-runs 0/1 Knapsack DP decision pipeline,
+    records decision history, and broadcasts updates over SSE channel every 3.5 seconds!
     """
     sequence_events = [
         {
-            "event_type": "TELEMETRY_PING",
-            "title": "📡 HDFC & ICICI Treasury Cash Sync",
-            "detail": "Verified live cash balance ₹25.54 Cr across HDFC Operating and ICICI Reserve accounts.",
-            "impact": "Monitored (No Change)"
+            "event_type": "RECEIVABLE_DELAYED",
+            "title": "⚠️ Customer A Wire Delayed (+10d)",
+            "detail": "Customer CUST011 payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+            "impact": "Re-Optimizing Strategy",
+            "action_code": "DELAY_AR"
         },
         {
-            "event_type": "RECEIVABLE_INFLOW",
-            "title": "📥 Mahindra Logistics (Customer CUST011) Wire Pending",
-            "detail": "Incoming AR ₹31.76k scheduled for 2026-09-28. Bayesian probability: 87.0%.",
-            "impact": "Monitored Inflow"
-        },
-        {
-            "event_type": "INVOICE_DUE",
-            "title": "🏭 Bosch Ltd Tier-1 Raw Material (INV_FUT_0260)",
-            "detail": "Invoice ₹68,902.88 due today. 2.0% early discount active until 2026-08-30.",
-            "impact": "Pay Now Selected"
+            "event_type": "NEW_INVOICE",
+            "title": "🏭 Bosch Ltd Component Invoice INV_FUT_0270 (₹81.4k)",
+            "detail": "New raw material invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+            "impact": "Added to Decision Pool",
+            "action_code": "NEW_INV"
         },
         {
             "event_type": "OPEX_RESERVE",
-            "title": "💼 Employee Monthly Payroll Reserve Lock",
+            "title": "💼 Operating Expense Payroll Lock (₹16.50L)",
             "detail": "Locked ₹16.50L reserve in HDFC operating cash for salary day in 3 days.",
-            "impact": "Locked in Reserve"
+            "impact": "Locked in Reserve",
+            "action_code": "LOCK_OPEX"
         },
         {
             "event_type": "TELEMETRY_PING",
-            "title": "⚡ 0/1 Knapsack Allocation Matrix Health Check",
-            "detail": "Re-verified 30-day liquidity trajectory. Safety buffer intact at ₹9.70L minimum floor.",
-            "impact": "Strategy Verified"
+            "title": "📡 HDFC Treasury Balance Sync",
+            "detail": "Verified live cash balance ₹25.54 Cr across HDFC Operating & ICICI Reserve accounts.",
+            "impact": "Monitored (No Change)",
+            "action_code": "SYNC"
         }
     ]
 
@@ -77,22 +77,102 @@ async def auto_stream_generator():
         evt = sequence_events[idx % len(sequence_events)]
         idx += 1
         timestamp = time.strftime("%H:%M:%S")
+        evt_id = f"evt_auto_{int(time.time()*1000)}"
 
+        # 1. Update data store models based on live event type
+        if evt["action_code"] == "DELAY_AR":
+            for r in store.receivables:
+                if r.customer_name.startswith("Customer CUST011"):
+                    r.expected_delay_days += 1
+                    r.collection_probability = max(0.65, r.collection_probability - 0.01)
+        elif evt["action_code"] == "NEW_INV":
+            new_inv_id = f"INV_FUT_{270 + idx}"
+            if not any(i.id == new_inv_id for i in store.invoices):
+                store.invoices.append(
+                    Invoice(
+                        id=new_inv_id,
+                        supplier_id="SUP003",
+                        supplier_name="Bosch Ltd",
+                        amount=0.814,
+                        issue_date="2026-08-28",
+                        due_date="2026-09-05",
+                        due_days=7,
+                        discount_percentage=1.5,
+                        discount_deadline_days=3,
+                        priority_score=91.0,
+                        recommended_action=ActionType.PAY_NOW,
+                        action_reason="Bosch Tier-1 component invoice ingested into decision pool."
+                    )
+                )
+
+        # 2. Append event to log ledger
+        evt_item = {
+            "id": evt_id,
+            "time": timestamp,
+            "event_type": evt["event_type"],
+            "stage": "FORECAST" if evt["action_code"] != "SYNC" else "OBSERVE",
+            "title": evt["title"],
+            "detail": evt["detail"],
+            "impact": evt["impact"]
+        }
+        store.events_log.insert(0, evt_item)
+
+        # 3. Re-run 0/1 Knapsack DP Decision Pipeline with updated data
+        total_cash = store.get_total_cash()
+        new_decision = run_decision_pipeline(
+            total_cash, store.invoices, store.suppliers, store.financing_options, triggered_by_event_id=evt_id
+        )
+        store.decisions_history.insert(0, new_decision)
+
+        # 4. Broadcast live update to all connected frontend pages
         payload = json.dumps({
-            "event": "TELEMETRY_PING",
+            "event": "REALTIME_UPDATE",
             "data": {
-                "timestamp": timestamp,
-                "availableCash": store.get_total_cash() * 100000.0,
+                "newEvent": evt_item,
+                "availableCash": total_cash * 100000.0,
                 "sequenceDate": f"2026-08-{(28 + idx % 10):02d}",
-                "newEvent": {
-                    "id": f"evt_auto_{int(time.time()*1000)}",
-                    "time": timestamp,
-                    "event_type": evt["event_type"],
-                    "stage": "OBSERVE",
-                    "title": evt["title"],
-                    "detail": evt["detail"],
-                    "impact": evt["impact"]
-                }
+                "heroRecommendation": {
+                    "title": new_decision.chosen_action,
+                    "confidence": int(new_decision.confidence * 100),
+                    "reasoning": new_decision.reasoning
+                },
+                "candidates": [
+                    {
+                        "id": "OPT-1",
+                        "action": "Pay Now",
+                        "title": "Pay Now + Reserve Opex (Selected)",
+                        "score": int(new_decision.achieved_utility * 100),
+                        "subScores": { "liquidity": 98, "financial": 95, "supplier": 92, "risk": 96 },
+                        "costBenefit": f"Covers ₹16.5L Opex & allocates {len(new_decision.allocations)} invoice payouts",
+                        "riskNote": f"Customer CUST011 AR inflow (Sep 28) maintains ₹{REQUIRED_30DAY_FLOOR}L reserve floor",
+                        "breachesFloor": False,
+                        "selected": True,
+                        "sparklineData": [
+                            {"day": "Aug 28", "cash": total_cash},
+                            {"day": "Aug 29", "cash": total_cash - 16.5},
+                            {"day": "Sep 01", "cash": total_cash - 17.2},
+                            {"day": "Sep 05", "cash": total_cash - 17.5},
+                            {"day": "Sep 28", "cash": total_cash + 0.3}
+                        ]
+                    }
+                ],
+                "invoices": [
+                    {
+                        "id": inv.id,
+                        "supplierName": inv.supplier_name,
+                        "supplierCategory": "Raw Materials" if inv.supplier_id == "SUP003" else "Components",
+                        "amount": round(inv.amount * 100000.0, 2),
+                        "dueDate": inv.due_date,
+                        "discountPct": inv.discount_percentage,
+                        "discountDeadline": inv.issue_date,
+                        "priorityScore": int(inv.priority_score),
+                        "aiAction": inv.recommended_action.value if hasattr(inv.recommended_action, 'value') else str(inv.recommended_action),
+                        "strategicImportance": 5,
+                        "reasoning": inv.action_reason
+                    }
+                    for inv in store.invoices[:6]
+                ],
+                "timestamp": timestamp
             }
         })
 
@@ -210,31 +290,19 @@ def get_dashboard_summary():
         ],
         "invoices": [
             {
-                "id": "INV_FUT_0260",
-                "supplierName": "Bosch Ltd",
-                "supplierCategory": "Raw Materials",
-                "amount": 68902.88,
-                "dueDate": "2026-08-28",
-                "discountPct": 2.0,
-                "discountDeadline": "2026-08-30",
-                "priorityScore": 95,
-                "aiAction": "Pay Now",
+                "id": inv.id,
+                "supplierName": inv.supplier_name,
+                "supplierCategory": "Raw Materials" if inv.supplier_id == "SUP003" else "Components",
+                "amount": round(inv.amount * 100000.0, 2),
+                "dueDate": inv.due_date,
+                "discountPct": inv.discount_percentage,
+                "discountDeadline": inv.issue_date,
+                "priorityScore": int(inv.priority_score),
+                "aiAction": inv.recommended_action.value if hasattr(inv.recommended_action, 'value') else str(inv.recommended_action),
                 "strategicImportance": 5,
-                "reasoning": "Tier-1 critical supplier. Preserves delivery SLA and clears invoice due today."
-            },
-            {
-                "id": "INV_FUT_0261",
-                "supplierName": "Bosch Ltd",
-                "supplierCategory": "Components",
-                "amount": 140555.66,
-                "dueDate": "2026-08-29",
-                "discountPct": 0.0,
-                "discountDeadline": "-",
-                "priorityScore": 89,
-                "aiAction": "Pay Now",
-                "strategicImportance": 5,
-                "reasoning": "Bosch Component Invoice due tomorrow."
+                "reasoning": inv.action_reason
             }
+            for inv in store.invoices[:6]
         ],
         "receivables": [
             {
@@ -269,31 +337,19 @@ def get_cash_forecast():
 def get_invoices():
     return [
         {
-            "id": "INV_FUT_0260",
-            "supplierName": "Bosch Ltd",
-            "supplierCategory": "Raw Materials",
-            "amount": 68902.88,
-            "dueDate": "2026-08-28",
-            "discountPct": 2.0,
-            "discountDeadline": "2026-08-30",
-            "priorityScore": 95,
-            "aiAction": "Pay Now",
+            "id": inv.id,
+            "supplierName": inv.supplier_name,
+            "supplierCategory": "Raw Materials" if inv.supplier_id == "SUP003" else "Components",
+            "amount": round(inv.amount * 100000.0, 2),
+            "dueDate": inv.due_date,
+            "discountPct": inv.discount_percentage,
+            "discountDeadline": inv.issue_date,
+            "priorityScore": int(inv.priority_score),
+            "aiAction": inv.recommended_action.value if hasattr(inv.recommended_action, 'value') else str(inv.recommended_action),
             "strategicImportance": 5,
-            "reasoning": "Tier-1 critical supplier. Preserves delivery SLA and clears invoice due today."
-        },
-        {
-            "id": "INV_FUT_0261",
-            "supplierName": "Bosch Ltd",
-            "supplierCategory": "Components",
-            "amount": 140555.66,
-            "dueDate": "2026-08-29",
-            "discountPct": 0.0,
-            "discountDeadline": "-",
-            "priorityScore": 89,
-            "aiAction": "Pay Now",
-            "strategicImportance": 5,
-            "reasoning": "Bosch Component Invoice due tomorrow."
+            "reasoning": inv.action_reason
         }
+        for inv in store.invoices
     ]
 
 @app.get("/receivables")
@@ -301,14 +357,15 @@ def get_invoices():
 def get_receivables():
     return [
         {
-            "id": "REC_FUT_0365",
-            "customerName": "Customer CUST011",
-            "amount": 31760.96,
-            "expectedDate": "2026-09-28",
-            "collectionProbability": 87.0,
-            "expectedDelayDays": 1,
-            "status": "On Time"
+            "id": r.id,
+            "customerName": r.customer_name,
+            "amount": round(r.amount * 100000.0, 2),
+            "expectedDate": r.expected_date,
+            "collectionProbability": round(r.collection_probability * 100.0, 1),
+            "expectedDelayDays": r.expected_delay_days,
+            "status": "On Time" if r.expected_delay_days <= 2 else "Delayed"
         }
+        for r in store.receivables
     ]
 
 @app.get("/suppliers")
@@ -464,13 +521,13 @@ def get_decisions():
     for idx, dec in enumerate(store.decisions_history):
         result.append({
             "id": f"DEC-{8801 - idx}",
-            "timestamp": "2026-08-28 14:45",
-            "triggerEvent": "Daily Working Capital Run & Dataset Sync",
+            "timestamp": dec.created_at or "2026-08-28 14:45",
+            "triggerEvent": f"Live Stream Ingestion & 0/1 Knapsack Re-Run ({dec.triggered_by_event_id or 'Auto'})",
             "decision": dec.chosen_action,
-            "amount": 209458.54,
+            "amount": round(dec.total_budget_spent * 100000.0, 2),
             "confidence": int(dec.confidence * 100),
             "status": "ACTIVE" if idx == 0 else "SUPERSEDED",
-            "version": f"v2.{idx+1}",
+            "version": f"v2.{len(store.decisions_history) - idx}",
             "reasons": [dec.reasoning]
         })
     return result
@@ -478,12 +535,16 @@ def get_decisions():
 @app.get("/agent/activity")
 @app.get("/api/agent-activity")
 def get_agent_activity():
-    return [
-        {"stage": "OBSERVE", "time": "20:01:04", "title": "Treasury Balance Confirmed", "detail": "HDFC & ICICI Treasury cash balance confirmed: ₹25.54 Cr."},
-        {"stage": "FORECAST", "time": "20:01:05", "title": "30-Day Trajectory Forecasted", "detail": "Generated 30-day Expected Value & Pessimistic cash trajectory."},
-        {"stage": "DECIDE", "time": "20:01:08", "title": "0/1 Knapsack Allocation Matrix Ran", "detail": "Evaluated candidate actions. Selected Pay Now for Bosch Ltd INV_FUT_0260."},
-        {"stage": "EXECUTE", "time": "20:01:21", "title": "Recommended Payout Batch", "detail": "Auto-recommended payout batch for Bosch Ltd."},
-    ]
+    activities = []
+    for evt in store.events_log[:15]:
+        activities.append({
+            "stage": evt.get("stage", "OBSERVE"),
+            "time": evt.get("time", "20:01:04"),
+            "title": evt.get("title", "Telemetry Sync"),
+            "detail": evt.get("detail", "Processed live event stream."),
+            "impact": evt.get("impact", "Monitored")
+        })
+    return activities
 
 # SSE STREAM ENDPOINT
 @app.get("/api/stream")

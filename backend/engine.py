@@ -16,36 +16,29 @@ class MaterialityChangeDetector:
         rate_shift_pct: float = 0.0
     ) -> Tuple[bool, str]:
         
-        # 1. Receivable delay > 3 days
         if delay_days >= 3:
             return True, f"Material Receivable Delay: Expected payment delayed by +{delay_days} days."
 
-        # 2. Cash balance / outflow change > 2% of deployable capital (> ₹5.0L)
-        if outflow_lakhs >= 5.0:
+        if outflow_lakhs >= 1.0:
             return True, f"Material Cash Outflow: Significant capital shift of ₹{outflow_lakhs:.1f}L."
 
-        # 3. Collection probability shift > 15% (e.g. 85% -> 55%)
         if abs(prob_delta) >= 15.0:
             return True, f"Material Bayesian Probability Shift: Customer collection confidence shifted by {prob_delta:.1f}%."
 
-        # 4. Supplier risk shift (e.g. LOW -> HIGH)
         if risk_shift:
             return True, "Material Supplier Risk Shift: Tier-1 supplier liquidity risk escalated."
 
-        # 5. Financing APR rate shift > 1.5%
         if abs(rate_shift_pct) >= 1.5:
             return True, f"Material Interest Rate Shift: Financing line APR changed by {rate_shift_pct:.1f}%."
 
-        # 6. Specific explicit event overrides
         if event_type in ["RECEIVABLE_DELAYED", "REOPTIMIZE_TRIGGER"]:
             return True, f"Material Trigger Event: {event_type} invoked."
 
-        # Non-material telemetry ping (e.g. minor cash fluctuation <2%)
         return False, "Monitored telemetry update — below materiality threshold (<2% cash delta, <3d delay). Strategy retained."
 
 
 class DecisionEngine:
-    def __init__(self, reserve_floor: float = 1500000.0):
+    def __init__(self, reserve_floor: float = 970000.0):
         self.reserve_floor = reserve_floor
         self.change_detector = MaterialityChangeDetector()
 
@@ -79,28 +72,28 @@ class DecisionEngine:
         receivable_delay_days: int = 0,
         extra_outflow: float = 0.0
     ) -> List[Dict[str, Any]]:
-        days = ['Jan 04', 'Jan 05 (Salary)', 'Jan 10', 'Jan 15 (Customer A)', 'Jan 20', 'Feb 05', 'Feb 12', 'Feb 20']
+        days = ['Aug 28', 'Aug 29 (Opex)', 'Sep 01', 'Sep 05', 'Sep 15 (REC_0365)', 'Sep 28', 'Oct 08', 'Oct 18']
         base_cash_lakhs = current_cash / 100000.0
         
-        cust_a_prob = 0.95
+        cust_a_prob = 0.87
         if receivables and len(receivables) > 0:
-            cust_a_prob = (receivables[0].get("collectionProbability", 95.0)) / 100.0
+            cust_a_prob = (receivables[0].get("collectionProbability", 87.0)) / 100.0
 
         forecast = []
         for idx, day in enumerate(days):
-            cash = base_cash_lakhs - (extra_outflow / 100000.0) - (idx * 1.5)
+            cash = base_cash_lakhs - (extra_outflow / 100000.0) - (idx * 0.15)
             if idx == 1:
-                cash -= 41.0  # Salary payroll outflow (₹4.10Cr)
-            if idx == 3:
-                expected_inflow = 24.5 * cust_a_prob
+                cash -= 16.5  # Daily operating expense & salary outflow (₹16.5L)
+            if idx == 4:
+                expected_inflow = 0.317 * cust_a_prob  # REC_FUT_0365 (₹31.76k)
                 if receivable_delay_days > 0:
                     expected_inflow = expected_inflow * max(0.2, 1.0 - (receivable_delay_days * 0.1))
                 cash += expected_inflow
             
-            pessimistic = max(15.0, cash - 8.5)
+            pessimistic = max(9.7, cash - 1.5)
             forecast.append({
                 "day": day,
-                "cash": round(max(15.0, cash), 1),
+                "cash": round(max(9.7, cash), 1),
                 "pessimistic": round(pessimistic, 1)
             })
         return forecast
@@ -111,27 +104,29 @@ class DecisionEngine:
         available_cash: float,
         receivables: List[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
-        top_inv = invoices[0] if invoices else {"amount": 33381685.97, "supplierName": "Valeo India Pvt Ltd", "discountPct": 2.0}
-        discount_savings = top_inv["amount"] * (top_inv.get("discountPct", 2.0) / 100.0)
-        salary_payroll = 41005965.89
+        top_inv = invoices[0] if invoices else {"amount": 68902.88, "supplierName": "Bosch Ltd (INV_FUT_0260)", "discountPct": 0.0}
+        inv_2 = invoices[1] if len(invoices) > 1 else {"amount": 140555.66, "supplierName": "Bosch Ltd (INV_FUT_0261)", "discountPct": 0.0}
+        opex_amount = 1650000.0  # Daily Opex & Payroll from future_daily_consolidated.csv
 
-        cust_a_name = receivables[0]["customerName"] if receivables else "Mahindra Logistics"
-        cust_a_prob = receivables[0]["collectionProbability"] if receivables else 95.0
+        cust_name = receivables[0]["customerName"] if receivables else "CUST011"
+        cust_prob = receivables[0]["collectionProbability"] if receivables else 87.0
 
-        remaining_cash = available_cash - top_inv["amount"] - salary_payroll - self.reserve_floor
+        total_alloc = top_inv["amount"] + inv_2["amount"]
+        remaining_cash = available_cash - total_alloc - opex_amount - self.reserve_floor
 
         breakdown = [
-            {"label": "Employee Salary Payroll (Due Tomorrow)", "amount": salary_payroll},
+            {"label": "Operating Expense & Payroll (Due Today)", "amount": opex_amount},
             {"label": f"{top_inv['supplierName']} (Pay Now)", "amount": top_inv["amount"]},
+            {"label": f"{inv_2['supplierName']} (Pay Now)", "amount": inv_2["amount"]},
             {"label": "Retain Deployable Buffer", "amount": max(0.0, remaining_cash)}
         ]
 
-        title = f"Reserve ₹4.10Cr for Employee Salary tomorrow + Pay ₹3.34Cr to {top_inv['supplierName']} today to capture ₹{discount_savings:,.0f} discount"
+        title = f"Reserve ₹16.5L for Opex & Payroll + Pay ₹2.09L for Invoices INV_FUT_0260 & 0261 today"
 
         reasoning = (
-            f"Employee Monthly Salary Payroll (₹4.10Cr) is due tomorrow and prioritized as CRITICAL. "
-            f"Executing early payment for {top_inv['supplierName']} (₹3.34Cr) today captures ₹{discount_savings:,.0f} in net early discounts (2.0%), "
-            f"before Customer A ({cust_a_name}) inflows ₹2.45Cr on Jan 15th ({cust_a_prob}% Bayesian confidence), preserving deployable cash above ₹15.0L floor."
+            f"Operating Expense & Payroll (₹16.50L) is due today and prioritized as CRITICAL from future_daily_consolidated.csv. "
+            f"Executing payments for open future invoices INV_FUT_0260 (₹68.9k) & INV_FUT_0261 (₹1.41L) today "
+            f"preserves Tier-1 supplier delivery SLAs before Customer {cust_name} inflows ₹31.76k on Sep 28 ({cust_prob}% Bayesian probability), maintaining ₹9.70L reserve floor."
         )
 
         return {
@@ -147,33 +142,33 @@ class DecisionEngine:
         top_invoice: Dict[str, Any] = None,
         receivables: List[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
-        inv_amount = top_invoice["amount"] if top_invoice else 33381685.97
-        disc_pct = top_invoice.get("discountPct", 2.0) if top_invoice else 2.0
-        disc_savings = (inv_amount * disc_pct / 100.0) if disc_pct > 0 else 667633.71
+        inv_amount = top_invoice["amount"] if top_invoice else 68902.88
+        disc_pct = top_invoice.get("discountPct", 0.0) if top_invoice else 0.0
+        disc_savings = (inv_amount * disc_pct / 100.0) if disc_pct > 0 else 0
 
-        cust_a_prob = receivables[0]["collectionProbability"] if receivables else 95.0
+        cust_prob = receivables[0]["collectionProbability"] if receivables else 87.0
         cash_lakhs = available_cash / 100000.0
 
         candidates = [
             {
                 "id": "OPT-1",
                 "action": "Pay Now",
-                "title": "Pay Now + Reserve Salary (Selected)",
+                "title": "Pay Now + Reserve Opex (Selected)",
                 "score": 96,
                 "subScores": { "liquidity": 98, "financial": 95, "supplier": 92, "risk": 96 },
-                "costBenefit": f"Captures ₹{disc_savings:,.0f} discount & covers ₹4.10Cr Salary tomorrow",
-                "riskNote": f"Customer A inflow (₹2.45Cr) on Jan 15 ({cust_a_prob}% Bayesian prob) guarantees floor safety",
+                "costBenefit": f"Covers ₹16.5L Opex & clears INV_FUT_0260 (₹68.9k)",
+                "riskNote": f"Customer CUST011 inflow (₹31.7k) on Sep 28 ({cust_prob}% Bayesian prob) guarantees floor safety",
                 "breachesFloor": False,
                 "selected": True,
                 "sparklineData": [
-                    {"day": "Jan 04", "cash": cash_lakhs},
-                    {"day": "Jan 05", "cash": cash_lakhs - 41.0},
-                    {"day": "Jan 10", "cash": cash_lakhs - 44.3},
-                    {"day": "Jan 15", "cash": cash_lakhs - 19.8},
-                    {"day": "Jan 20", "cash": cash_lakhs - 22.0},
-                    {"day": "Feb 05", "cash": cash_lakhs + 1.2},
-                    {"day": "Feb 12", "cash": cash_lakhs + 5.5},
-                    {"day": "Feb 20", "cash": cash_lakhs + 12.0}
+                    {"day": "Aug 28", "cash": cash_lakhs},
+                    {"day": "Aug 29", "cash": cash_lakhs - 16.5},
+                    {"day": "Sep 01", "cash": cash_lakhs - 17.2},
+                    {"day": "Sep 05", "cash": cash_lakhs - 17.5},
+                    {"day": "Sep 15", "cash": cash_lakhs - 17.2},
+                    {"day": "Sep 28", "cash": cash_lakhs + 0.3},
+                    {"day": "Oct 08", "cash": cash_lakhs + 1.2},
+                    {"day": "Oct 18", "cash": cash_lakhs + 2.5}
                 ]
             },
             {
@@ -182,19 +177,19 @@ class DecisionEngine:
                 "title": "Pay at Maturity",
                 "score": 61,
                 "subScores": { "liquidity": 65, "financial": 42, "supplier": 78, "risk": 62 },
-                "costBenefit": f"Forfeits ₹{disc_savings:,.0f} discount; holds cash for Salary",
-                "riskNote": "Covers Salary payroll tomorrow; zero early settlement return",
+                "costBenefit": "Holds cash for Opex; defers payment to due date",
+                "riskNote": "Covers Opex today; zero early settlement return",
                 "breachesFloor": False,
                 "selected": False,
                 "sparklineData": [
-                    {"day": "Jan 04", "cash": cash_lakhs},
-                    {"day": "Jan 05", "cash": cash_lakhs - 41.0},
-                    {"day": "Jan 10", "cash": cash_lakhs - 41.0},
-                    {"day": "Jan 15", "cash": cash_lakhs - 16.5},
-                    {"day": "Jan 20", "cash": cash_lakhs - 49.8},
-                    {"day": "Feb 05", "cash": cash_lakhs - 2.2},
-                    {"day": "Feb 12", "cash": cash_lakhs + 2.0},
-                    {"day": "Feb 20", "cash": cash_lakhs + 8.5}
+                    {"day": "Aug 28", "cash": cash_lakhs},
+                    {"day": "Aug 29", "cash": cash_lakhs - 16.5},
+                    {"day": "Sep 01", "cash": cash_lakhs - 16.5},
+                    {"day": "Sep 05", "cash": cash_lakhs - 16.5},
+                    {"day": "Sep 15", "cash": cash_lakhs - 17.2},
+                    {"day": "Sep 28", "cash": cash_lakhs + 0.3},
+                    {"day": "Oct 08", "cash": cash_lakhs + 1.2},
+                    {"day": "Oct 18", "cash": cash_lakhs + 2.0}
                 ]
             },
             {
@@ -203,19 +198,19 @@ class DecisionEngine:
                 "title": "Bank Credit Line",
                 "score": 74,
                 "subScores": { "liquidity": 90, "financial": 65, "supplier": 85, "risk": 58 },
-                "costBenefit": "Costs ₹18,500 interest (8.5% APR)",
-                "riskNote": "Frees cash for Salary Day & buffers Customer A delay risk",
+                "costBenefit": "Costs ₹1,250 interest (8.5% APR)",
+                "riskNote": "Frees cash for Opex & buffers Customer CUST011 delay risk",
                 "breachesFloor": False,
                 "selected": False,
                 "sparklineData": [
-                    {"day": "Jan 04", "cash": cash_lakhs},
-                    {"day": "Jan 05", "cash": cash_lakhs - 41.0},
-                    {"day": "Jan 10", "cash": cash_lakhs - 41.5},
-                    {"day": "Jan 15", "cash": cash_lakhs - 17.0},
-                    {"day": "Jan 20", "cash": cash_lakhs - 18.2},
-                    {"day": "Feb 05", "cash": cash_lakhs + 0.5},
-                    {"day": "Feb 12", "cash": cash_lakhs + 4.2},
-                    {"day": "Feb 20", "cash": cash_lakhs + 11.0}
+                    {"day": "Aug 28", "cash": cash_lakhs},
+                    {"day": "Aug 29", "cash": cash_lakhs - 16.5},
+                    {"day": "Sep 01", "cash": cash_lakhs - 16.5},
+                    {"day": "Sep 05", "cash": cash_lakhs - 16.6},
+                    {"day": "Sep 15", "cash": cash_lakhs - 16.3},
+                    {"day": "Sep 28", "cash": cash_lakhs + 0.5},
+                    {"day": "Oct 08", "cash": cash_lakhs + 1.5},
+                    {"day": "Oct 18", "cash": cash_lakhs + 2.8}
                 ]
             },
             {
@@ -225,19 +220,19 @@ class DecisionEngine:
                 "score": 32,
                 "subScores": { "liquidity": 40, "financial": 25, "supplier": 30, "risk": 28 },
                 "costBenefit": "₹0 supplier outflow today",
-                "riskNote": "If Customer A is delayed >7d, breaches reserve floor on Feb 05",
+                "riskNote": "If CUST011 delay exceeds >7d, breaches ₹9.7L floor on Oct 08",
                 "breachesFloor": True,
-                "breachDay": "Feb 05",
+                "breachDay": "Oct 08",
                 "selected": False,
                 "sparklineData": [
-                    {"day": "Jan 04", "cash": cash_lakhs},
-                    {"day": "Jan 05", "cash": cash_lakhs - 41.0},
-                    {"day": "Jan 10", "cash": cash_lakhs - 41.5},
-                    {"day": "Jan 15", "cash": cash_lakhs - 41.5},
-                    {"day": "Jan 20", "cash": cash_lakhs - 74.8},
-                    {"day": "Feb 05", "cash": 12.5},
-                    {"day": "Feb 12", "cash": 14.0},
-                    {"day": "Feb 20", "cash": 22.0}
+                    {"day": "Aug 28", "cash": cash_lakhs},
+                    {"day": "Aug 29", "cash": cash_lakhs - 16.5},
+                    {"day": "Sep 01", "cash": cash_lakhs - 16.5},
+                    {"day": "Sep 05", "cash": cash_lakhs - 16.5},
+                    {"day": "Sep 15", "cash": cash_lakhs - 17.2},
+                    {"day": "Sep 28", "cash": 9.2},
+                    {"day": "Oct 08", "cash": 8.8},
+                    {"day": "Oct 18", "cash": 12.0}
                 ]
             },
             {
@@ -247,18 +242,18 @@ class DecisionEngine:
                 "score": 45,
                 "subScores": { "liquidity": 85, "financial": 20, "supplier": 35, "risk": 40 },
                 "costBenefit": "Maximizes nominal liquidity buffer",
-                "riskNote": f"Forfeits ₹{disc_savings:,.0f} & risks Valeo India delivery hold",
+                "riskNote": "Risks supplier delivery hold on Bosch Ltd (INV_FUT_0260)",
                 "breachesFloor": False,
                 "selected": False,
                 "sparklineData": [
-                    {"day": "Jan 04", "cash": cash_lakhs},
-                    {"day": "Jan 05", "cash": cash_lakhs - 41.0},
-                    {"day": "Jan 10", "cash": cash_lakhs - 41.0},
-                    {"day": "Jan 15", "cash": cash_lakhs - 16.5},
-                    {"day": "Jan 20", "cash": cash_lakhs - 16.5},
-                    {"day": "Feb 05", "cash": cash_lakhs - 1.0},
-                    {"day": "Feb 12", "cash": cash_lakhs + 5.0},
-                    {"day": "Feb 20", "cash": cash_lakhs + 12.0}
+                    {"day": "Aug 28", "cash": cash_lakhs},
+                    {"day": "Aug 29", "cash": cash_lakhs - 16.5},
+                    {"day": "Sep 01", "cash": cash_lakhs - 16.5},
+                    {"day": "Sep 05", "cash": cash_lakhs - 16.5},
+                    {"day": "Sep 15", "cash": cash_lakhs - 16.5},
+                    {"day": "Sep 28", "cash": cash_lakhs + 0.3},
+                    {"day": "Oct 08", "cash": cash_lakhs + 1.2},
+                    {"day": "Oct 18", "cash": cash_lakhs + 2.5}
                 ]
             }
         ]

@@ -107,6 +107,68 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
     priorityScore: 95
   };
 
+  // Dynamic live signals derived directly from real-time stream ingestion feed
+  const liveStreamEvents = (data?.activityFeed || data?.events_log || []);
+
+  const renderedSignals = liveStreamEvents.length > 0
+    ? liveStreamEvents.slice(0, 4).map((evt: any, i: number) => ({
+        id: evt.id || `sig-${i}`,
+        title: evt.title || evt.event_type || 'STREAM SIGNAL',
+        tag: evt.impact || evt.stage || 'LIVE STREAM',
+        tagColor: i % 2 === 0 ? 'bg-amber-500 text-black' : 'bg-emerald-950/80 text-emerald-300 border border-emerald-800',
+        borderColor: i % 2 === 0 ? 'border-amber-500/30 hover:border-amber-500/60' : 'border-emerald-500/30 hover:border-emerald-500/60',
+        topLineColor: i % 2 === 0 ? 'via-amber-400/40' : 'via-emerald-400/40',
+        titleColor: i % 2 === 0 ? 'text-amber-400' : 'text-emerald-400',
+        amountText: evt.time ? `Refreshed ${evt.time}` : formatINR(1650000),
+        detail: evt.detail || 'Live stream context signal ingested into 0/1 Knapsack DP decision solver.'
+      }))
+    : [
+        {
+          id: 'sig-1',
+          title: '💼 PLANT SALARIES & OPEX',
+          tag: 'DUE IN 3 DAYS',
+          tagColor: 'bg-amber-500 text-black',
+          borderColor: 'border-amber-500/30 hover:border-amber-500/60',
+          topLineColor: 'via-amber-400/40',
+          titleColor: 'text-amber-400',
+          amountText: formatINR(1650000),
+          detail: 'Critical payroll requirement due in 3 days. Lock reserve before executing discretionary payouts.'
+        },
+        {
+          id: 'sig-2',
+          title: `📥 ${customerAInflow.customerName || 'VRL LOGISTICS'} INFLOW`,
+          tag: `EXPECTED IN ${customerAInflow.expectedDelayDays || 10}d`,
+          tagColor: 'bg-emerald-950/80 text-emerald-300 border border-emerald-800',
+          borderColor: 'border-emerald-500/30 hover:border-emerald-500/60',
+          topLineColor: 'via-emerald-400/40',
+          titleColor: 'text-emerald-400',
+          amountText: formatINR(customerAInflow.amount || 317609.60),
+          detail: `Expected wire on Sep 28. Live Bayesian probability: ${customerAInflow.collectionProbability || 87.0}%.`
+        },
+        {
+          id: 'sig-3',
+          title: `🏭 ${boschInvoice.supplierName || 'BOSCH LTD'} OEM`,
+          tag: `DISCOUNT ${boschInvoice.discountPct || 2.0}%`,
+          tagColor: 'bg-blue-950/80 text-blue-300 border border-blue-800',
+          borderColor: 'border-blue-500/30 hover:border-blue-500/60',
+          topLineColor: 'via-blue-400/40',
+          titleColor: 'text-blue-400',
+          amountText: formatINR(boschInvoice.amount || 22721445.28),
+          detail: `${boschInvoice.discountPct || 2.0}% early discount active. Priority Score: ${boschInvoice.priorityScore || 95}/100.`
+        },
+        {
+          id: 'sig-4',
+          title: '🏦 STATUTORY TAX OBLIGATION',
+          tag: 'DUE IN 5 DAYS',
+          tagColor: 'bg-purple-950/80 text-purple-300 border border-purple-800',
+          borderColor: 'border-purple-500/30 hover:border-purple-500/60',
+          topLineColor: 'via-purple-400/40',
+          titleColor: 'text-purple-400',
+          amountText: formatINR(230000),
+          detail: 'Mandatory tax obligation due in 5 days. Remained covered under 30-day liquidity horizon.'
+        }
+      ];
+
   // Dynamic choices driven by live decision engine
   const choices = data?.candidates || [
     {
@@ -246,13 +308,13 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
         </div>
       </div>
 
-      {/* SECTION 1: IMMINENT CONTEXT SIGNALS (DYNAMICALLY BOUND TO LIVE STREAM) */}
+      {/* SECTION 1: IMMINENT CONTEXT SIGNALS (DYNAMICALLY BOUND TO LIVE STREAMING EVENTS) */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Zap className="w-4 h-4 text-amber-400 animate-pulse" />
             <h2 className="text-xs font-bold uppercase tracking-wider text-slate-200">
-              Section 1: Imminent Financial Context Signals (Live Dynamic)
+              Section 1: Imminent Financial Context Signals (Live Dynamic Stream Feed)
             </h2>
           </div>
           <span className="text-[10px] text-emerald-400 font-bold flex items-center">
@@ -261,59 +323,24 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          {/* Signal 1: Salaries */}
-          <div className="backdrop-blur-xl bg-[#0F172A]/50 border border-amber-500/30 rounded-xl p-4 space-y-2 shadow-xl hover:border-amber-500/60 transition group relative overflow-hidden">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-400/40 to-transparent"></div>
-            <div className="flex items-center justify-between text-[10px] text-amber-400 font-bold">
-              <span>💼 SALARIES & OPEX</span>
-              <span className="px-2 py-0.5 rounded-full bg-amber-500 text-black font-bold shadow-sm">DUE IN 3 DAYS</span>
+          {renderedSignals.map((sig: any) => (
+            <div 
+              key={sig.id}
+              className={`backdrop-blur-xl bg-[#0F172A]/50 border ${sig.borderColor} rounded-xl p-4 space-y-2 shadow-xl transition group relative overflow-hidden`}
+            >
+              <div className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent ${sig.topLineColor} to-transparent`}></div>
+              <div className="flex items-center justify-between text-[10px] font-bold gap-2">
+                <span className={`truncate font-sans ${sig.titleColor}`}>{sig.title}</span>
+                <span className={`shrink-0 px-2 py-0.5 rounded text-[9px] font-bold ${sig.tagColor}`}>
+                  {sig.tag}
+                </span>
+              </div>
+              <div className="text-lg font-bold text-slate-100 font-mono truncate">{sig.amountText}</div>
+              <p className="text-[11px] text-slate-300 font-sans leading-relaxed line-clamp-2">
+                {sig.detail}
+              </p>
             </div>
-            <div className="text-xl font-bold text-slate-100">{formatINR(1650000)}</div>
-            <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
-              Critical payroll requirement due in 3 days. Must lock reserve before executing discretionary payouts.
-            </p>
-          </div>
-
-          {/* Signal 2: Customer A (Dynamic Inflow & Bayesian Confidence) */}
-          <div className="backdrop-blur-xl bg-[#0F172A]/50 border border-emerald-500/30 rounded-xl p-4 space-y-2 shadow-xl hover:border-emerald-500/60 transition group relative overflow-hidden">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent"></div>
-            <div className="flex items-center justify-between text-[10px] text-emerald-400 font-bold gap-2">
-              <span className="truncate">📥 CUSTOMER A INFLOW</span>
-              <span className="shrink-0 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800 text-[9px]">EXPECTED IN 10d</span>
-            </div>
-            <div className="text-xl font-bold text-slate-100">{formatINR(customerAInflow.amount || 317609.60)}</div>
-            <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
-              Expected wire on Sep 28. Live Bayesian probability: <strong className="text-emerald-400">{customerAInflow.collectionProbability || 87.0}%</strong>.
-            </p>
-          </div>
-
-          {/* Signal 3: Bosch Invoice (Dynamic Invoice Data) */}
-          <div className="backdrop-blur-xl bg-[#0F172A]/50 border border-blue-500/30 rounded-xl p-4 space-y-2 shadow-xl hover:border-blue-500/60 transition group relative overflow-hidden">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-400/40 to-transparent"></div>
-            <div className="flex items-center justify-between text-[10px] text-blue-400 font-bold gap-2">
-              <span className="truncate">🏭 BOSCH/VALEO OEM</span>
-              <span className="shrink-0 bg-blue-950/80 px-2 py-0.5 rounded border border-blue-800 text-[9px]">DISCOUNT IN 2d</span>
-            </div>
-            <div className="text-xl font-bold text-slate-100">{formatINR(boschInvoice.amount || 22721445.28)}</div>
-            <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
-              {boschInvoice.discountPct || 2.0}% early discount active. Priority Score: <strong>{boschInvoice.priorityScore || 95}</strong>/100.
-            </p>
-          </div>
-
-          {/* Signal 4: Statutory Tax */}
-          <div className="backdrop-blur-xl bg-[#0F172A]/50 border border-purple-500/30 rounded-xl p-4 space-y-2 shadow-xl hover:border-purple-500/60 transition group relative overflow-hidden">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-purple-400/40 to-transparent"></div>
-            <div className="flex items-center justify-between text-[10px] text-purple-400 font-bold gap-2">
-              <span className="truncate">🏦 STATUTORY TAX OBLIGATION</span>
-              <span className="shrink-0 bg-purple-950/80 px-2 py-0.5 rounded border border-purple-800 text-[9px]">DUE IN 5d</span>
-            </div>
-            <div className="text-xl font-bold text-slate-100">{formatINR(230000)}</div>
-            <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
-              Mandatory tax obligation due in 5 days. Remained covered under 30-day liquidity horizon.
-            </p>
-          </div>
-
+          ))}
         </div>
       </div>
 

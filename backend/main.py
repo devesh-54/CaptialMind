@@ -1,7 +1,7 @@
 import asyncio
 import json
 import time
-from typing import AsyncGenerator
+from typing import AsyncGenerator, List, Dict, Any
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -16,7 +16,6 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# Enable CORS for React frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -28,15 +27,15 @@ app.add_middleware(
 data_loader = DataLoader()
 engine = DecisionEngine(reserve_floor=1500000.0)
 
-# In-memory dynamic state
 current_cash = data_loader.load_cash()
 receivables = data_loader.load_receivables()
 invoices = data_loader.load_invoices()
 suppliers = data_loader.load_suppliers()
+
 activity_feed = [
     {
         "id": "ACT-105",
-        "timestamp": "Just now",
+        "timestamp": "14s ago",
         "stage": "DECIDE",
         "title": "Optimized Day 1 Capital Deployment",
         "detail": "Evaluated 5 candidates. Selected Pay Now (Score: 96/100) over Bank Finance (74/100).",
@@ -59,7 +58,40 @@ activity_feed = [
     }
 ]
 
-# Event queue for SSE streaming subscribers
+decision_history = [
+    {
+        "id": "DEC-8801",
+        "timestamp": "2026-08-28 14:45",
+        "triggerEvent": "Daily Working Capital Run",
+        "decision": "Early Settlement - Tata Steel (Pay Now)",
+        "amount": 920000.0,
+        "confidence": 96,
+        "status": "Pending Approval",
+        "version": "v1.2",
+        "reasons": [
+            "Pay Now candidate scored 96/100 (runner-up Bank Finance scored 74/100).",
+            "2.5% discount captures ₹23,000 net value (32.4% annualized return).",
+            "Post-payment cash remains at ₹33.2L, well above ₹15.0L safety reserve floor.",
+            "Tata Steel priority rating (5/5) critical for Q3 delivery guarantees."
+        ]
+    },
+    {
+        "id": "DEC-8794",
+        "timestamp": "2026-08-27 10:15",
+        "triggerEvent": "Flipkart Payment Delay (+4d)",
+        "decision": "Switch Zenith Packaging to Credit Line",
+        "amount": 1250000.0,
+        "confidence": 88,
+        "status": "Executed",
+        "version": "v2.0",
+        "supersededBy": "DEC-8801",
+        "reasons": [
+            "Flipkart expected payment shifted from Aug 29 to Sept 2.",
+            "Prevents cash floor dip below ₹15L threshold on Sept 1st."
+        ]
+    }
+]
+
 event_subscribers = []
 
 class EventTriggerRequest(BaseModel):
@@ -111,6 +143,67 @@ def get_command_center():
         "activityFeed": activity_feed
     }
 
+@app.get("/api/invoices")
+def get_invoices():
+    candidates = engine.generate_candidates(current_cash)
+    inv_list = []
+    for inv in invoices:
+        inv_copy = dict(inv)
+        inv_copy["candidates"] = candidates
+        inv_list.append(inv_copy)
+    return inv_list
+
+@app.get("/api/receivables")
+def get_receivables():
+    return receivables
+
+@app.get("/api/suppliers")
+def get_suppliers():
+    return suppliers
+
+@app.get("/api/financing")
+def get_financing_options():
+    return [
+        {
+            "id": "FIN-01",
+            "title": "Internal Cash Deployment",
+            "recommended": True,
+            "impact": "₹18.4L Immediate Outflow",
+            "cost": "₹0 (Zero Financing Interest)",
+            "verdict": "RECOMMENDED: Captures ₹33,440 discount while preserving ₹15L safety reserve floor.",
+            "apr": "0.0%",
+            "availability": "Instant (HDFC Treasury)"
+        },
+        {
+            "id": "FIN-02",
+            "title": "Dynamic Bank Credit Line",
+            "recommended": False,
+            "impact": "₹0 Outflow Today (₹12.5L Line Drawn)",
+            "cost": "₹4,100 Interest Cost (8.5% APR)",
+            "verdict": "ALTERNATIVE: Preserves cash if Flipkart receivable is delayed >5 days.",
+            "apr": "8.5% p.a.",
+            "availability": "Pre-Approved (ICICI Bank)"
+        },
+        {
+            "id": "FIN-03",
+            "title": "Supplier Reverse Factoring",
+            "recommended": False,
+            "impact": "₹9.2L Paid by Factoring Partner",
+            "cost": "₹7,800 Processing & Yield Fee",
+            "verdict": "SUB-OPTIMAL: Higher fee reduces net discount yield from 2.5% to 1.6%.",
+            "apr": "11.2% p.a.",
+            "availability": "Active (KredX Platform)"
+        }
+    ]
+
+@app.get("/api/agent-activity")
+def get_agent_activity():
+    return activity_feed
+
+@app.get("/api/decision-history")
+def get_decision_history():
+    return decision_history
+
 @app.post("/api/simulate-event")
 async def trigger_simulated_event(req: EventTriggerRequest):
     global current_cash, activity_feed
@@ -125,7 +218,6 @@ async def trigger_simulated_event(req: EventTriggerRequest):
     }
     activity_feed.insert(0, new_event)
 
-    # Broadcast event to all SSE subscribers
     payload = json.dumps({
         "event": "REALTIME_UPDATE",
         "data": {
@@ -169,13 +261,11 @@ def run_what_if_simulation(req: WhatIfRequest):
 
 @app.get("/api/stream")
 async def event_stream(request: Request):
-    """Server-Sent Events streaming endpoint pushing live financial updates."""
     queue = asyncio.Queue()
     event_subscribers.append(queue)
 
     async def event_generator() -> AsyncGenerator[str, None]:
         try:
-            # Initial connection ping
             yield json.dumps({"event": "CONNECTED", "data": "CashPilot AI SSE Engine Active"})
 
             while True:
@@ -183,11 +273,9 @@ async def event_stream(request: Request):
                     break
 
                 try:
-                    # Wait for real-time triggered events with timeout
                     msg = await asyncio.wait_for(queue.get(), timeout=5.0)
                     yield msg
                 except asyncio.TimeoutError:
-                    # Heartbeat pulse
                     heartbeat = json.dumps({
                         "event": "HEARTBEAT",
                         "data": {

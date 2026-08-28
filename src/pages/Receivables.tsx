@@ -1,9 +1,22 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { mockReceivables } from '../data/mockData';
 import { formatINR } from '../utils/formatters';
 import { AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { fetchReceivablesData } from '../services/api';
 
 export const Receivables: React.FC = () => {
+  const [receivables, setReceivables] = useState<any[]>(mockReceivables);
+
+  useEffect(() => {
+    async function load() {
+      const data = await fetchReceivablesData();
+      if (data) {
+        setReceivables(data);
+      }
+    }
+    load();
+  }, []);
+
   return (
     <div className="space-y-6 pb-12">
       <div>
@@ -26,7 +39,7 @@ export const Receivables: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-xs font-mono">
-              {mockReceivables.map((rec) => (
+              {receivables.map((rec) => (
                 <tr key={rec.id} className="hover:bg-slate-800/40 transition">
                   <td className="py-3 px-4 font-bold text-blue-400">{rec.id}</td>
                   <td className="py-3 px-4 font-semibold text-slate-200 font-sans">{rec.customerName}</td>

@@ -1,9 +1,21 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { mockSuppliers } from '../data/mockData';
 import { formatINR } from '../utils/formatters';
-import { ShieldCheck, AlertTriangle } from 'lucide-react';
+import { fetchSuppliersData } from '../services/api';
 
 export const Suppliers: React.FC = () => {
+  const [suppliers, setSuppliers] = useState<any[]>(mockSuppliers);
+
+  useEffect(() => {
+    async function load() {
+      const data = await fetchSuppliersData();
+      if (data) {
+        setSuppliers(data);
+      }
+    }
+    load();
+  }, []);
+
   return (
     <div className="space-y-6 pb-12">
       <div>
@@ -12,7 +24,7 @@ export const Suppliers: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {mockSuppliers.map((sup) => (
+        {suppliers.map((sup) => (
           <div key={sup.id} className="bg-[#0F172A] border border-slate-800 rounded-lg p-5 space-y-4">
             
             <div className="flex justify-between items-start">
@@ -37,7 +49,6 @@ export const Suppliers: React.FC = () => {
               </span>
             </div>
 
-            {/* Strategic Importance Visual Segment Bar */}
             <div className="space-y-1">
               <div className="flex justify-between text-[11px] font-mono text-slate-400">
                 <span>Strategic Importance</span>
@@ -55,7 +66,6 @@ export const Suppliers: React.FC = () => {
               </div>
             </div>
 
-            {/* Metrics */}
             <div className="grid grid-cols-3 gap-2 bg-slate-900/60 p-3 rounded border border-slate-800 font-mono text-xs">
               <div>
                 <div className="text-[10px] text-slate-500">Outstanding</div>

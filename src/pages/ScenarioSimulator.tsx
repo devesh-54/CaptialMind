@@ -1,17 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { formatINR } from '../utils/formatters';
-import { Sliders, RefreshCw, Sparkles, ArrowRight, ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { Sliders, RefreshCw, Sparkles } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine } from 'recharts';
+import { runWhatIfSimulation } from '../services/api';
 
 export const ScenarioSimulator: React.FC = () => {
   const [delayDays, setDelayDays] = useState<number>(5);
   const [cashDropLakhs, setCashDropLakhs] = useState<number>(6);
-  const [isSimulating, setIsSimulating] = useState<boolean>(false);
-
-  const handleSimulate = () => {
-    setIsSimulating(true);
-    setTimeout(() => setIsSimulating(false), 400);
-  };
+  const [simulationResult, setSimulationResult] = useState<any>(null);
 
   const baselineData = [
     { day: 'Aug 28', cash: 48.2 },
@@ -23,8 +19,17 @@ export const ScenarioSimulator: React.FC = () => {
     { day: 'Sep 25', cash: 52.0 },
   ];
 
-  // Calculated simulated cash path based on sliders
-  const simulatedData = baselineData.map((item, idx) => {
+  useEffect(() => {
+    async function runSim() {
+      const res = await runWhatIfSimulation(delayDays, cashDropLakhs);
+      if (res) {
+        setSimulationResult(res);
+      }
+    }
+    runSim();
+  }, [delayDays, cashDropLakhs]);
+
+  const simulatedData = simulationResult?.simulatedForecast || baselineData.map((item, idx) => {
     let newCash = item.cash;
     if (idx >= 1) newCash -= cashDropLakhs * 0.7;
     if (idx >= 3) newCash -= delayDays * 0.4;
@@ -34,8 +39,8 @@ export const ScenarioSimulator: React.FC = () => {
     };
   });
 
-  const minSimulatedCash = Math.min(...simulatedData.map(d => d.cash));
-  const breachesFloor = minSimulatedCash < 15.0;
+  const minSimulatedCash = simulationResult?.minCashLakhs ?? Math.min(...simulatedData.map((d: any) => d.cash));
+  const breachesFloor = simulationResult?.breachesFloor ?? (minSimulatedCash < 15.0);
 
   return (
     <div className="space-y-6 pb-12">
@@ -46,14 +51,12 @@ export const ScenarioSimulator: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* Left Panel: Scenario Controls (4 cols) */}
         <div className="lg:col-span-4 bg-[#0F172A] border border-slate-800 rounded-lg p-5 space-y-6">
           <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
             <Sliders className="w-4 h-4 text-blue-400" />
             <h2 className="text-sm font-bold text-slate-200 font-mono uppercase">Stress Controls</h2>
           </div>
 
-          {/* Slider 1: Receivable Delay */}
           <div className="space-y-2 font-mono">
             <div className="flex justify-between text-xs">
               <span className="text-slate-300">Flipkart Receivable Delay</span>
@@ -64,10 +67,7 @@ export const ScenarioSimulator: React.FC = () => {
               min="0" 
               max="15" 
               value={delayDays}
-              onChange={(e) => {
-                setDelayDays(Number(e.target.value));
-                handleSimulate();
-              }}
+              onChange={(e) => setDelayDays(Number(e.target.value))}
               className="w-full accent-blue-500 bg-slate-800 rounded-lg h-2 cursor-pointer"
             />
             <div className="flex justify-between text-[10px] text-slate-500">
@@ -76,7 +76,6 @@ export const ScenarioSimulator: React.FC = () => {
             </div>
           </div>
 
-          {/* Slider 2: Unexpected Cash Outflow */}
           <div className="space-y-2 font-mono">
             <div className="flex justify-between text-xs">
               <span className="text-slate-300">Unexpected Outflow</span>
@@ -87,10 +86,7 @@ export const ScenarioSimulator: React.FC = () => {
               min="0" 
               max="15" 
               value={cashDropLakhs}
-              onChange={(e) => {
-                setCashDropLakhs(Number(e.target.value));
-                handleSimulate();
-              }}
+              onChange={(e) => setCashDropLakhs(Number(e.target.value))}
               className="w-full accent-blue-500 bg-slate-800 rounded-lg h-2 cursor-pointer"
             />
             <div className="flex justify-between text-[10px] text-slate-500">
@@ -99,7 +95,6 @@ export const ScenarioSimulator: React.FC = () => {
             </div>
           </div>
 
-          {/* Context Dropdown */}
           <div className="space-y-1 font-mono text-xs">
             <label className="text-slate-400 text-[11px]">Select Target Invoice / Supplier</label>
             <select className="w-full bg-slate-900 border border-slate-800 rounded p-2 text-slate-200 outline-none">
@@ -109,12 +104,10 @@ export const ScenarioSimulator: React.FC = () => {
             </select>
           </div>
 
-          {/* Reset button */}
           <button
             onClick={() => {
               setDelayDays(0);
               setCashDropLakhs(0);
-              handleSimulate();
             }}
             className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-slate-400 rounded text-xs font-mono border border-slate-800 transition flex items-center justify-center space-x-2"
           >
@@ -123,10 +116,7 @@ export const ScenarioSimulator: React.FC = () => {
           </button>
         </div>
 
-        {/* Right Panel: Before / After Diff Comparison (8 cols) */}
         <div className="lg:col-span-8 space-y-6">
-          
-          {/* Diff Impact Highlights */}
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-[#0F172A] border border-slate-800 p-4 rounded-lg">
               <span className="text-[10px] font-mono font-bold uppercase text-slate-500">Baseline Lowest Cash</span>
@@ -147,10 +137,9 @@ export const ScenarioSimulator: React.FC = () => {
             </div>
           </div>
 
-          {/* Animated Forecast Chart Diff */}
           <div className="bg-[#0F172A] border border-slate-800 rounded-lg p-5 space-y-3">
             <div className="flex justify-between items-center text-xs font-mono">
-              <span className="font-bold text-slate-200">Simulated Cash Path Comparison</span>
+              <span className="font-bold text-slate-200 font-sans">Simulated Cash Path Comparison</span>
               <div className="flex items-center space-x-3">
                 <span className="text-slate-400 flex items-center"><span className="w-2 h-2 rounded-full bg-slate-500 mr-1"></span>Baseline</span>
                 <span className="text-blue-400 flex items-center"><span className="w-2 h-2 rounded-full bg-blue-500 mr-1"></span>Simulated</span>
@@ -178,21 +167,16 @@ export const ScenarioSimulator: React.FC = () => {
             </div>
           </div>
 
-          {/* LLM Recommendation Adaptation Explanation */}
           <div className="bg-[#0F172A] border-l-4 border-l-purple-500 border-y border-r border-slate-800 rounded-lg p-4 space-y-2">
             <div className="flex items-center space-x-2 text-xs font-mono font-bold text-purple-400">
               <Sparkles className="w-4 h-4" />
-              <span>AI Decision Adaptation</span>
+              <span>AI Decision Adaptation Rationale</span>
             </div>
             <p className="text-xs text-slate-200 leading-relaxed font-sans">
-              {breachesFloor ? (
-                <>
-                  <strong className="text-red-400">Action Shifted:</strong> Because simulated cash drops to <strong className="font-mono">₹{minSimulatedCash.toFixed(1)}L</strong> (breaching the ₹15.0L floor), CashPilot automatically shifts <strong className="text-purple-400 font-mono">Invoice #INV-2026-092 (Zenith Packaging)</strong> from Pay Now to <strong className="text-purple-400 font-mono">Bank Dynamic Credit Line</strong> to preserve ₹12.5L internal cash buffer.
-                </>
-              ) : (
-                <>
-                  <strong className="text-emerald-400 font-mono">Strategy Intact:</strong> Current stress parameters (₹{cashDropLakhs}L outflow, +{delayDays}d delay) keep minimum liquidity at <strong className="font-mono">₹{minSimulatedCash.toFixed(1)}L</strong>, remaining safely above the policy floor. Recommended early settlement plan remains optimal.
-                </>
+              {simulationResult?.explanation || (
+                breachesFloor ? 
+                `Action Shifted: Because simulated cash drops to ₹${minSimulatedCash.toFixed(1)}L (breaching reserve floor), CashPilot automatically shifts Zenith Packaging from Pay Now to Bank Credit Line.` :
+                `Strategy Intact: Current stress parameters (+${delayDays}d delay, ₹${cashDropLakhs}L outflow) keep minimum liquidity at ₹${minSimulatedCash.toFixed(1)}L, safely above floor.`
               )}
             </p>
           </div>

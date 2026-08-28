@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { mockInvoices } from '../data/mockData';
 import { formatINR, getActionColor } from '../utils/formatters';
 import { Filter, ArrowUpDown, Info } from 'lucide-react';
-import { Invoice } from '../types/dashboard';
+import { fetchInvoicesData } from '../services/api';
 
 interface InvoicesProps {
   onOpenDrawer: (invoiceId: string) => void;
@@ -11,8 +11,19 @@ interface InvoicesProps {
 export const Invoices: React.FC<InvoicesProps> = ({ onOpenDrawer }) => {
   const [filterAction, setFilterAction] = useState<string>('ALL');
   const [sortByScore, setSortByScore] = useState<boolean>(true);
+  const [invoices, setInvoices] = useState<any[]>(mockInvoices);
 
-  let displayedInvoices = [...mockInvoices];
+  useEffect(() => {
+    async function load() {
+      const data = await fetchInvoicesData();
+      if (data) {
+        setInvoices(data);
+      }
+    }
+    load();
+  }, []);
+
+  let displayedInvoices = [...invoices];
 
   if (filterAction !== 'ALL') {
     displayedInvoices = displayedInvoices.filter(i => i.aiAction === filterAction);
@@ -30,7 +41,6 @@ export const Invoices: React.FC<InvoicesProps> = ({ onOpenDrawer }) => {
           <p className="text-xs text-slate-400">AI Priority Scoring and Action Recommendations for Working Capital Optimization</p>
         </div>
 
-        {/* Filters & Sorting */}
         <div className="flex items-center space-x-3 text-xs font-mono">
           <div className="flex items-center space-x-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-md">
             <Filter className="w-3.5 h-3.5 text-slate-400" />
@@ -59,7 +69,6 @@ export const Invoices: React.FC<InvoicesProps> = ({ onOpenDrawer }) => {
         </div>
       </div>
 
-      {/* Invoice Table */}
       <div className="bg-[#0F172A] border border-slate-800 rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">

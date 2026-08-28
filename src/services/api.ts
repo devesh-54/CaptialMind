@@ -7,7 +7,79 @@ export async function fetchCommandCenterData() {
       return await res.json();
     }
   } catch (err) {
-    console.warn('Backend API offline, falling back to local dataset:', err);
+    console.warn('Backend API offline, using cached initial state:', err);
+  }
+  return null;
+}
+
+export async function fetchInvoicesData() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/invoices`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('Failed to fetch invoices from API:', err);
+  }
+  return null;
+}
+
+export async function fetchReceivablesData() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/receivables`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('Failed to fetch receivables from API:', err);
+  }
+  return null;
+}
+
+export async function fetchSuppliersData() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/suppliers`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('Failed to fetch suppliers from API:', err);
+  }
+  return null;
+}
+
+export async function fetchFinancingData() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/financing`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('Failed to fetch financing options from API:', err);
+  }
+  return null;
+}
+
+export async function fetchAgentActivityData() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/agent-activity`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('Failed to fetch agent activity from API:', err);
+  }
+  return null;
+}
+
+export async function fetchDecisionHistoryData() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/decision-history`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('Failed to fetch decision history from API:', err);
   }
   return null;
 }

@@ -104,19 +104,41 @@ def read_root():
         "data_source": "futureStreaming_data_cashpilot & historical_data_cashpilot"
     }
 
+@app.get("/api/decision-intelligence")
+def get_decision_intelligence():
+    """Returns Phase 13 Output Contract for Working-Capital Decision Intelligence."""
+    contract = engine.evaluate_full_pipeline(
+        current_cash=current_cash,
+        receivables=receivables,
+        invoices=invoices,
+        obligations=obligations
+    )
+    return contract
+
 @app.get("/api/command-center")
 def get_command_center():
     forecast = engine.forecast_30d_cash(current_cash, receivables=receivables)
     top_inv = invoices[0] if invoices else None
     candidates = engine.generate_candidates(current_cash, top_invoice=top_inv, receivables=receivables)
     hero_rec = engine.generate_hero_recommendation(invoices, current_cash, receivables=receivables)
+    
+    # Phase 13 full output contract
+    decision_contract = engine.evaluate_full_pipeline(
+        current_cash=current_cash,
+        receivables=receivables,
+        invoices=invoices,
+        obligations=obligations
+    )
+
+    rec_prob = receivables[0]["collectionProbability"] if receivables else 87.0
+    risk_level = decision_contract["financial_health"]["risk_level"]
 
     return {
         "kpis": {
             "availableCash": current_cash,
-            "protectedCash": 970000.0,
-            "deployableCapital": max(0.0, current_cash - 970000.0),
-            "risk30d": "LOW" if receivables[0]["collectionProbability"] >= 75 else "HIGH",
+            "protectedCash": decision_contract["financial_health"]["recommended_reserve"],
+            "deployableCapital": max(0.0, current_cash - decision_contract["financial_health"]["recommended_reserve"]),
+            "risk30d": risk_level,
             "wcEfficiency": 88,
             "financingExposure": 1250000.0
         },
@@ -127,7 +149,8 @@ def get_command_center():
         "obligations": obligations,
         "receivables": receivables,
         "suppliers": suppliers,
-        "activityFeed": activity_feed
+        "activityFeed": activity_feed,
+        "decisionContract": decision_contract
     }
 
 @app.get("/api/invoices")
@@ -236,12 +259,21 @@ async def receive_event(req: EventTriggerRequest):
     if req.extra_outflow_lakhs > 0:
         current_cash -= (req.extra_outflow_lakhs * 100000.0)
 
-    new_forecast = engine.forecast_30d_cash(
+    decision_contract = engine.evaluate_full_pipeline(
+        current_cash=current_cash,
+        receivables=receivables,
+        invoices=invoices,
+        obligations=obligations,
+        receivable_delay_days=req.receivable_delay_days,
+        extra_outflow=req.extra_outflow_lakhs * 100000.0
+    )
+
+    new_forecast = decision_contract["forecast_quality"].get("projected_points", engine.forecast_30d_cash(
         current_cash,
         receivables=receivables,
         receivable_delay_days=req.receivable_delay_days,
         extra_outflow=req.extra_outflow_lakhs * 100000.0
-    )
+    ))
 
     if decision_history and len(decision_history) > 0:
         for dec in decision_history:
@@ -266,7 +298,7 @@ async def receive_event(req: EventTriggerRequest):
         "reasons": [
             f"Material Change Detected: {reason}",
             f"Bayesian Customer CUST011 Probability shifted to {receivables[0]['collectionProbability']}%.",
-            f"Evaluated candidates. 0/1 Knapsack allocation re-optimized."
+            f"Evaluated candidates. Dynamic Reserve: ₹{decision_contract['financial_health']['recommended_reserve']:,.2f}."
         ]
     }
     decision_history.insert(0, new_decision)
@@ -293,7 +325,8 @@ async def receive_event(req: EventTriggerRequest):
             "forecast": new_forecast,
             "availableCash": current_cash,
             "materialChange": True,
-            "timestamp": timestamp_str
+            "timestamp": timestamp_str,
+            "decisionContract": decision_contract
         }
     })
     for queue in event_subscribers:
@@ -304,11 +337,21 @@ async def receive_event(req: EventTriggerRequest):
         "material_change": True,
         "reason": reason,
         "decision": new_decision,
-        "bayesianProbability": receivables[0]['collectionProbability']
+        "bayesianProbability": receivables[0]['collectionProbability'],
+        "decisionContract": decision_contract
     }
 
 @app.post("/api/what-if")
 def run_what_if_simulation(req: WhatIfRequest):
+    decision_contract = engine.evaluate_full_pipeline(
+        current_cash=current_cash,
+        receivables=receivables,
+        invoices=invoices,
+        obligations=obligations,
+        receivable_delay_days=req.receivable_delay_days,
+        extra_outflow=req.cash_drop_lakhs * 100000.0
+    )
+
     simulated_forecast = engine.forecast_30d_cash(
         current_cash,
         receivables=receivables,
@@ -333,10 +376,11 @@ def run_what_if_simulation(req: WhatIfRequest):
         "minCashLakhs": min_cash,
         "breachesFloor": breaches_floor,
         "simulatedForecast": simulated_forecast,
-        "explanation": explanation
+        "explanation": explanation,
+        "decisionContract": decision_contract
     }
 
-# BACKGROUND SSE LIVE AUTOMATED STREAM GENERATOR (Pushes future_daily_consolidated events every 5 seconds)
+# BACKGROUND SSE LIVE AUTOMATED STREAM GENERATOR
 async def auto_stream_generator():
     global current_cash, current_sequence_index
     while True:

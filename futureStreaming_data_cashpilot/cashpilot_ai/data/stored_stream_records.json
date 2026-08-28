@@ -1,5 +1,14 @@
 [
   {
+    "id": "evt_auto_1787936857900",
+    "time": "22:37:37",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Plant Assembly Line Worker Payroll Reserve Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
     "id": "evt_auto_1787936847496",
     "time": "22:37:27",
     "event_type": "NEW_INVOICE",

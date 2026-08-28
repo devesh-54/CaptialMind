@@ -93,7 +93,7 @@ export function App() {
       case 'live-stream-table':
         return <LiveStreamTable />;
       case 'execution-sequence':
-        return <ExecutionSequence onOpenDrawer={(id) => setDrawerInvoiceId(id)} />;
+        return <ExecutionSequence liveData={liveData} onOpenDrawer={(id) => setDrawerInvoiceId(id)} />;
       case 'invoices':
         return <Invoices onOpenDrawer={(id) => setDrawerInvoiceId(id)} />;
       case 'receivables':

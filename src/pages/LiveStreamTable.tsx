@@ -159,7 +159,7 @@ export const LiveStreamTable: React.FC = () => {
       setChannelStatus(`STREAMING LIVE (${timeStr})`);
       setStreamRows((prev) => [newRecord, ...prev.slice(0, 199)]);
       setEventCount((c) => c + 1);
-    }, 3500);
+    }, 10000);
 
     // Listen to real-time SSE stream events from backend
     const unsubscribe = subscribeToSSEStream((streamEvent) => {
@@ -233,7 +233,7 @@ export const LiveStreamTable: React.FC = () => {
                 <Radio className="w-3 h-3 mr-1 text-emerald-400 animate-pulse" /> AUTOMATED LIVE STREAMING ENGINE
               </span>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-950/80 text-blue-300 border border-blue-500/40 backdrop-blur-md">
-                3.5s REFRESH INTERVAL
+                10s REFRESH INTERVAL
               </span>
             </div>
             <h1 className="text-2xl font-bold text-slate-100 font-sans tracking-tight">

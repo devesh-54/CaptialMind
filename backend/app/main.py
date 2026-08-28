@@ -70,7 +70,7 @@ async def auto_stream_generator():
 
     idx = 0
     while True:
-        await asyncio.sleep(3.5)
+        await asyncio.sleep(10.0)
         if not event_subscribers:
             continue
 

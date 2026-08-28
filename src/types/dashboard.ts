@@ -10,6 +10,20 @@ export type PageId =
 
 export type AIActionType = 'Pay Now' | 'Pay at Maturity' | 'Finance' | 'Delay' | 'Retain';
 
+export interface OptionCandidate {
+  id: string;
+  action: AIActionType;
+  title: string;
+  score: number; // 0-100
+  costBenefit: string;
+  riskNote: string;
+  breachesFloor: boolean;
+  breachDay?: string;
+  selected: boolean;
+  sparklineData: { day: string; cash: number }[];
+  tradeoffRationale?: string;
+}
+
 export interface Invoice {
   id: string;
   supplierName: string;
@@ -22,6 +36,7 @@ export interface Invoice {
   aiAction: AIActionType;
   strategicImportance: 1 | 2 | 3 | 4 | 5;
   reasoning: string;
+  candidates?: OptionCandidate[];
 }
 
 export interface Receivable {

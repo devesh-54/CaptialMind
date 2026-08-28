@@ -88,6 +88,17 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
     }, 600);
   };
 
+  // Helper to normalize raw utility scores onto clean 1..99 scale
+  const normalizeScore = (rawScore: any) => {
+    const num = Number(rawScore);
+    if (isNaN(num)) return 85;
+    if (num >= 1 && num <= 99) return Math.round(num);
+    if (num > 99) return Math.min(98, Math.max(75, Math.round(num / 10)));
+    // If negative (e.g. -267 to 0), normalize cleanly to 5..45 range
+    const normalized = Math.round(50 + (num / 8.0));
+    return Math.min(95, Math.max(5, normalized));
+  };
+
   // Dynamic signals extracted from live streaming data
   const availableCash = data?.kpis?.availableCash ?? 45040000.0;
   const deployableCapital = data?.kpis?.deployableCapital ?? (availableCash - 15500000.0);
@@ -283,7 +294,7 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
       actionType: inv.aiAction === 'Pay Now' ? 'PAY_NOW' : 'PAY_AT_MATURITY',
       invoiceId: inv.id,
       status: idx === 0 ? 'Recommended' : 'Scheduled',
-      detail: `Dispatches ${formatINR(inv.amount || 100000.0)} wire transfer for ${inv.supplierName}. 0/1 Knapsack Priority Score: ${inv.priorityScore || 85}/100.`
+      detail: `Dispatches ${formatINR(inv.amount || 100000.0)} wire transfer for ${inv.supplierName}. 0/1 Knapsack Priority Score: ${normalizeScore(inv.priorityScore)}/100.`
     })),
     {
       stepNumber: (dynamicInvoices.slice(0, 5).length) + 2,
@@ -672,7 +683,7 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
                   <td className="py-2.5 px-3 text-slate-400">{inv.dueDate}</td>
                   <td className="py-2.5 px-3">
                     <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-200 text-[10px] font-bold border border-slate-700">
-                      {inv.priorityScore || 85}/100
+                      {normalizeScore(inv.priorityScore)}/100
                     </span>
                   </td>
                   <td className="py-2.5 px-3">

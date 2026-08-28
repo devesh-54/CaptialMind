@@ -23,22 +23,34 @@ export const Invoices: React.FC<InvoicesProps> = ({ onOpenDrawer }) => {
     load();
   }, []);
 
-  let displayedInvoices = [...invoices];
+  const normalizeScore = (rawScore: any) => {
+    const num = Number(rawScore);
+    if (isNaN(num)) return 85;
+    if (num >= 1 && num <= 99) return Math.round(num);
+    if (num > 99) return Math.min(98, Math.max(75, Math.round(num / 10)));
+    const normalized = Math.round(50 + (num / 8.0));
+    return Math.min(95, Math.max(5, normalized));
+  };
+
+  let displayedInvoices = invoices.map((inv: any) => ({
+    ...inv,
+    normalizedPriorityScore: normalizeScore(inv.priorityScore)
+  }));
 
   if (filterAction !== 'ALL') {
     displayedInvoices = displayedInvoices.filter(i => i.aiAction === filterAction);
   }
 
   if (sortByScore) {
-    displayedInvoices.sort((a, b) => b.priorityScore - a.priorityScore);
+    displayedInvoices.sort((a, b) => b.normalizedPriorityScore - a.normalizedPriorityScore);
   }
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 pb-12 font-mono">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-100">Invoice Intelligence</h1>
-          <p className="text-xs text-slate-400">AI Priority Scoring and Action Recommendations for Working Capital Optimization</p>
+          <h1 className="text-xl font-bold text-slate-100 font-sans">Invoice Intelligence</h1>
+          <p className="text-xs text-slate-400 font-sans">AI Priority Scoring and Action Recommendations for Working Capital Optimization</p>
         </div>
 
         <div className="flex items-center space-x-3 text-xs font-mono">
@@ -47,7 +59,7 @@ export const Invoices: React.FC<InvoicesProps> = ({ onOpenDrawer }) => {
             <select
               value={filterAction}
               onChange={(e) => setFilterAction(e.target.value)}
-              className="bg-transparent text-slate-200 outline-none cursor-pointer"
+              className="bg-transparent text-slate-200 outline-none cursor-pointer font-mono"
             >
               <option value="ALL">All Actions</option>
               <option value="Pay Now">Pay Now</option>
@@ -69,7 +81,7 @@ export const Invoices: React.FC<InvoicesProps> = ({ onOpenDrawer }) => {
         </div>
       </div>
 
-      <div className="bg-[#0F172A] border border-slate-800 rounded-lg overflow-hidden">
+      <div className="bg-[#0F172A] border border-slate-800 rounded-lg overflow-hidden backdrop-blur-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -85,7 +97,7 @@ export const Invoices: React.FC<InvoicesProps> = ({ onOpenDrawer }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-xs font-mono">
-              {displayedInvoices.map((inv) => (
+              {displayedInvoices.map((inv: any) => (
                 <tr 
                   key={inv.id} 
                   onClick={() => onOpenDrawer(inv.id)}
@@ -110,12 +122,12 @@ export const Invoices: React.FC<InvoicesProps> = ({ onOpenDrawer }) => {
                       <div className="w-16 bg-slate-800 rounded-full h-1.5 overflow-hidden">
                         <div 
                           className={`h-full rounded-full ${
-                            inv.priorityScore >= 80 ? 'bg-emerald-500' : inv.priorityScore >= 50 ? 'bg-blue-500' : 'bg-amber-500'
+                            inv.normalizedPriorityScore >= 80 ? 'bg-emerald-500' : inv.normalizedPriorityScore >= 50 ? 'bg-blue-500' : 'bg-amber-500'
                           }`}
-                          style={{ width: `${inv.priorityScore}%` }}
+                          style={{ width: `${inv.normalizedPriorityScore}%` }}
                         ></div>
                       </div>
-                      <span className="font-bold text-slate-200">{inv.priorityScore}</span>
+                      <span className="font-bold text-slate-200">{inv.normalizedPriorityScore}/100</span>
                     </div>
                   </td>
                   <td className="py-3 px-4">

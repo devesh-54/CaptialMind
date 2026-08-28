@@ -14,6 +14,7 @@ import { ScenarioSimulator } from './pages/ScenarioSimulator';
 import { AgentActivity } from './pages/AgentActivity';
 import { DecisionHistory } from './pages/DecisionHistory';
 import { DataStreamInspector } from './pages/DataStreamInspector';
+import { ExecutionSequence } from './pages/ExecutionSequence';
 
 export function App() {
   const [currentPage, setCurrentPage] = useState<PageId>('command-center');
@@ -21,11 +22,9 @@ export function App() {
   const [isOptimizing, setIsOptimizing] = useState<boolean>(false);
   const [liveStreamStatus, setLiveStreamStatus] = useState<string>('Connecting...');
   
-  // Real-time live streaming state passed dynamically to all views
   const [liveData, setLiveData] = useState<any>(null);
 
   useEffect(() => {
-    // Initial fetch from backend REST API
     async function loadInitial() {
       const data = await fetchCommandCenterData();
       if (data) {
@@ -34,7 +33,6 @@ export function App() {
     }
     loadInitial();
 
-    // Persistent SSE stream listener for real-time live updates
     const unsubscribe = subscribeToSSEStream((streamEvent) => {
       if (streamEvent.event === 'CONNECTED') {
         setLiveStreamStatus('LIVE SSE CONNECTED');
@@ -91,6 +89,8 @@ export function App() {
     switch (currentPage) {
       case 'command-center':
         return <CommandCenter liveData={liveData} onOpenDrawer={(id) => setDrawerInvoiceId(id)} onNavigate={(p) => setCurrentPage(p)} />;
+      case 'execution-sequence':
+        return <ExecutionSequence onOpenDrawer={(id) => setDrawerInvoiceId(id)} />;
       case 'invoices':
         return <Invoices onOpenDrawer={(id) => setDrawerInvoiceId(id)} />;
       case 'receivables':
@@ -114,21 +114,16 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-[#0B0F17] text-slate-100 font-sans flex flex-col selection:bg-blue-600 selection:text-white">
-      {/* Top Header Bar */}
       <TopBar onReoptimize={handleReoptimize} isOptimizing={isOptimizing} />
 
-      {/* Main Content Layout */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Navigation Sidebar */}
         <Navigation currentPage={currentPage} onSelectPage={(page) => setCurrentPage(page)} />
 
-        {/* Dynamic Page Content */}
         <main className="flex-1 p-6 overflow-y-auto max-w-7xl">
           {renderPage()}
         </main>
       </div>
 
-      {/* Global Audit & Explanation Drawer */}
       <ExplanationDrawer 
         invoiceId={drawerInvoiceId} 
         onClose={() => setDrawerInvoiceId(null)} 

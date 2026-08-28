@@ -9,7 +9,8 @@ import {
   Sliders, 
   Activity, 
   History,
-  Database
+  Database,
+  ListOrdered
 } from 'lucide-react';
 
 interface NavigationProps {
@@ -20,6 +21,7 @@ interface NavigationProps {
 export const Navigation: React.FC<NavigationProps> = ({ currentPage, onSelectPage }) => {
   const navItems = [
     { id: 'command-center' as PageId, label: 'Command Center', icon: LayoutDashboard },
+    { id: 'execution-sequence' as PageId, label: 'Execution Plan', icon: ListOrdered, badge: 'ORDER' },
     { id: 'invoices' as PageId, label: 'Invoices', icon: FileText, badge: '5' },
     { id: 'receivables' as PageId, label: 'Receivables', icon: ArrowDownLeft },
     { id: 'suppliers' as PageId, label: 'Suppliers', icon: Building2 },
@@ -59,7 +61,9 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onSelectPag
                     <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
                       item.badge === 'LIVE' 
                         ? 'bg-emerald-950 text-emerald-400 border border-emerald-800 animate-pulse'
-                        : 'bg-slate-800 text-slate-400 border border-slate-700'
+                        : item.badge === 'ORDER'
+                        ? 'bg-amber-950 text-amber-300 border border-amber-800'
+                        : 'bg-slate-800 text-slate-400'
                     }`}>
                       {item.badge}
                     </span>
@@ -71,17 +75,12 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPage, onSelectPag
         </div>
       </div>
 
-      <div className="p-4 border-t border-slate-800/80 font-mono text-[11px]">
-        <div className="bg-slate-900/60 p-3 rounded-lg border border-slate-800 space-y-2">
-          <div className="flex justify-between items-center text-slate-400">
-            <span>Liquidity Guard</span>
-            <span className="text-emerald-400 font-bold">100% OK</span>
-          </div>
-          <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
-            <div className="bg-emerald-500 h-full rounded-full w-full"></div>
-          </div>
-          <div className="text-[10px] text-slate-500">
-            Policy Floor: ₹15.0L
+      <div className="p-4 border-t border-slate-800/80">
+        <div className="bg-slate-900/60 p-3 rounded-lg border border-slate-800 space-y-1">
+          <div className="text-[10px] font-mono text-slate-400 uppercase font-bold">Autonomous Engine</div>
+          <div className="text-xs font-mono text-emerald-400 flex items-center">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
+            Mode: Autonomous
           </div>
         </div>
       </div>

@@ -7,7 +7,8 @@ export type PageId =
   | 'scenario-simulator' 
   | 'agent-activity' 
   | 'decision-history'
-  | 'data-stream';
+  | 'data-stream'
+  | 'execution-sequence';
 
 export interface KPIState {
   availableCash: number;
@@ -30,11 +31,18 @@ export interface OptionCandidate {
   action: 'Pay Now' | 'Pay at Maturity' | 'Finance' | 'Delay' | 'Retain';
   title: string;
   score: number;
-  subScores: SubScores;
+  subScores?: SubScores;
   costBenefit: string;
   riskNote: string;
   breachesFloor: boolean;
   breachDay?: string;
   selected: boolean;
-  sparklineData: Array<{ day: string; cash: number }>;
+  sparklineData: { day: string; cash: number }[];
+}
+
+export interface HeroRecommendation {
+  title: string;
+  confidence: number;
+  breakdown: { label: string; amount: number }[];
+  reasoning: string;
 }

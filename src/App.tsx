@@ -13,6 +13,7 @@ import { Financing } from './pages/Financing';
 import { ScenarioSimulator } from './pages/ScenarioSimulator';
 import { AgentActivity } from './pages/AgentActivity';
 import { DecisionHistory } from './pages/DecisionHistory';
+import { DataStreamInspector } from './pages/DataStreamInspector';
 
 export function App() {
   const [currentPage, setCurrentPage] = useState<PageId>('command-center');
@@ -65,6 +66,8 @@ export function App() {
         return <AgentActivity />;
       case 'decision-history':
         return <DecisionHistory onOpenDrawer={(id) => setDrawerInvoiceId(id)} />;
+      case 'data-stream':
+        return <DataStreamInspector />;
       default:
         return <CommandCenter onOpenDrawer={(id) => setDrawerInvoiceId(id)} onNavigate={(p) => setCurrentPage(p)} />;
     }

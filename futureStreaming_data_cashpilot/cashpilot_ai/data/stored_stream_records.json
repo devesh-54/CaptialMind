@@ -1,5 +1,14 @@
 [
   {
+    "id": "evt_auto_1787959339229",
+    "time": "04:52:19",
+    "event_type": "NEW_INVOICE",
+    "stage": "FORECAST",
+    "title": "\ud83c\udfed Bosch Ltd Powertrain Component Invoice INV_TML_0270 (\u20b91.81L)",
+    "detail": "New powertrain electronics invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+    "impact": "Added to Decision Pool"
+  },
+  {
     "id": "evt_auto_1787959328297",
     "time": "04:52:08",
     "event_type": "RECEIVABLE_DELAYED",

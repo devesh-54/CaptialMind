@@ -30,6 +30,7 @@ app.add_middleware(
 )
 
 event_subscribers = []
+is_streaming_active = True
 
 async def auto_stream_generator():
     """
@@ -37,6 +38,7 @@ async def auto_stream_generator():
     Ingests live future data, updates data store models, re-runs 0/1 Knapsack DP decision pipeline,
     records decision history, and broadcasts updates over SSE channel every 10 seconds!
     """
+    global is_streaming_active
     sequence_events = [
         {
             "event_type": "RECEIVABLE_DELAYED",
@@ -71,6 +73,8 @@ async def auto_stream_generator():
     idx = 0
     while True:
         await asyncio.sleep(10.0)
+        if not is_streaming_active:
+            continue
 
         evt = sequence_events[idx % len(sequence_events)]
         idx += 1
@@ -196,6 +200,26 @@ async def auto_stream_generator():
 @app.on_event("startup")
 async def startup_event():
     asyncio.create_task(auto_stream_generator())
+
+@app.get("/api/stream/status")
+def get_stream_status():
+    return {
+        "is_streaming": is_streaming_active,
+        "stored_stream_count": len(store.stream_ledger),
+        "total_cash": store.get_total_cash()
+    }
+
+@app.post("/api/stream/start")
+def start_stream():
+    global is_streaming_active
+    is_streaming_active = True
+    return {"status": "STARTED", "is_streaming": True}
+
+@app.post("/api/stream/pause")
+def pause_stream():
+    global is_streaming_active
+    is_streaming_active = False
+    return {"status": "PAUSED", "is_streaming": False}
 
 @app.get("/")
 def read_root():

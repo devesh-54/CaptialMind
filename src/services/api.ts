@@ -60,35 +60,27 @@ export async function fetchFinancingData() {
   return null;
 }
 
-export async function fetchAgentActivityData() {
+export async function executeAction(invoiceId: string, action: string) {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/agent-activity`);
+    const res = await fetch(`${API_BASE_URL}/execute`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ invoice_id: invoiceId, action })
+    });
     if (res.ok) {
       return await res.json();
     }
   } catch (err) {
-    console.warn('Failed to fetch agent activity from API:', err);
+    console.warn('Failed to execute action:', err);
   }
-  return null;
-}
-
-export async function fetchDecisionHistoryData() {
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/decision-history`);
-    if (res.ok) {
-      return await res.json();
-    }
-  } catch (err) {
-    console.warn('Failed to fetch decision history from API:', err);
-  }
-  return null;
+  return { success: true };
 }
 
 export async function triggerSimulatedEvent(
-  eventType: str = 'RECEIVABLE_DELAYED',
-  desc: string = 'Customer payment delayed',
-  delayDays: number = 10,
-  outflowLakhs: number = 0
+  eventType = 'RECEIVABLE_DELAYED',
+  description = 'VRL Logistics Fleet Payment Delayed',
+  delayDays = 10,
+  outflow = 0
 ) {
   try {
     const res = await fetch(`${API_BASE_URL}/api/simulate-event`, {
@@ -96,10 +88,9 @@ export async function triggerSimulatedEvent(
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         event_type: eventType,
-        description: desc,
-        receivable_delay_days: delayDays,
-        extra_outflow_lakhs: outflowLakhs,
-        customer_id: 'CUST011'
+        description,
+        delay_days: delayDays,
+        outflow
       })
     });
     if (res.ok) {
@@ -111,61 +102,65 @@ export async function triggerSimulatedEvent(
   return null;
 }
 
-export async function runWhatIfSimulation(delayDays: number, cashDropLakhs: number) {
+export async function fetchStreamStatus() {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/what-if`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        receivable_delay_days: delayDays,
-        cash_drop_lakhs: cashDropLakhs
-      })
-    });
-    if (res.ok) {
-      return await res.json();
-    }
+    const res = await fetch(`${API_BASE_URL}/api/stream/status`);
+    if (res.ok) return await res.json();
   } catch (err) {
-    console.warn('Failed to run what-if simulation:', err);
+    console.warn('Failed to fetch stream status:', err);
   }
-  return null;
+  return { is_streaming: true, stored_stream_count: 0 };
 }
 
-export async function executeAction(invoiceId: string, action: string) {
+export async function startStream() {
   try {
-    const res = await fetch(`${API_BASE_URL}/execute`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        invoice_id: invoiceId,
-        action: action
-      })
-    });
-    if (res.ok) {
-      return await res.json();
-    }
+    const res = await fetch(`${API_BASE_URL}/api/stream/start`, { method: 'POST' });
+    if (res.ok) return await res.json();
   } catch (err) {
-    console.warn('Failed to execute action via API:', err);
+    console.warn('Failed to start stream:', err);
   }
-  return { success: true, message: `Executed ${action} for ${invoiceId}` };
+  return { is_streaming: true };
 }
 
-export function subscribeToSSEStream(onMessage: (data: any) => void) {
-  const eventSource = new EventSource(`${API_BASE_URL}/api/stream`);
+export async function pauseStream() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/stream/pause`, { method: 'POST' });
+    if (res.ok) return await res.json();
+  } catch (err) {
+    console.warn('Failed to pause stream:', err);
+  }
+  return { is_streaming: false };
+}
 
-  eventSource.onmessage = (event) => {
-    try {
-      const parsed = JSON.parse(event.data);
-      onMessage(parsed);
-    } catch (e) {
-      console.warn('Error parsing SSE event:', e);
-    }
-  };
+export function subscribeToSSEStream(onEventCallback: (data: any) => void) {
+  let eventSource: EventSource | null = null;
 
-  eventSource.onerror = (err) => {
-    console.warn('SSE stream error:', err);
-  };
+  try {
+    eventSource = new EventSource(`${API_BASE_URL}/api/stream`);
+
+    eventSource.onopen = () => {
+      onEventCallback({ event: 'CONNECTED', data: {} });
+    };
+
+    eventSource.onmessage = (event) => {
+      try {
+        const parsed = JSON.parse(event.data);
+        onEventCallback(parsed);
+      } catch (err) {
+        console.warn('Error parsing SSE event:', err);
+      }
+    };
+
+    eventSource.onerror = (err) => {
+      console.warn('SSE stream error, retrying connection:', err);
+    };
+  } catch (err) {
+    console.warn('Failed to connect SSE EventSource stream:', err);
+  }
 
   return () => {
-    eventSource.close();
+    if (eventSource) {
+      eventSource.close();
+    }
   };
 }

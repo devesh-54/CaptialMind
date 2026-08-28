@@ -18,7 +18,9 @@ import {
   ChevronRight,
   Lock,
   DollarSign,
-  Building2
+  Building2,
+  Table,
+  FileText
 } from 'lucide-react';
 import { fetchCommandCenterData, executeAction, subscribeToSSEStream } from '../services/api';
 
@@ -28,16 +30,22 @@ interface ExecutionSequenceProps {
 }
 
 export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: propsLiveData, onOpenDrawer }) => {
-  const [internalData, setInternalData] = useState<any>(null);
+  const [internalData, setInternalData] = useState<any>(propsLiveData || null);
   const [selectedChoice, setSelectedChoice] = useState<string>('OPT-1');
   const [executedSteps, setExecutedSteps] = useState<Record<string, boolean>>({});
   const [isExecuting, setIsExecuting] = useState<string | null>(null);
 
   useEffect(() => {
+    if (propsLiveData) {
+      setInternalData(propsLiveData);
+    }
+  }, [propsLiveData]);
+
+  useEffect(() => {
     async function loadData() {
       const realData = await fetchCommandCenterData();
       if (realData) {
-        setInternalData(realData);
+        setInternalData((prev: any) => ({ ...realData, ...prev }));
       }
     }
     loadData();
@@ -55,7 +63,8 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
           heroRecommendation: payload.heroRecommendation || prev?.heroRecommendation,
           candidates: payload.candidates || prev?.candidates,
           invoices: payload.invoices || prev?.invoices,
-          receivables: payload.receivables || prev?.receivables
+          receivables: payload.receivables || prev?.receivables,
+          activityFeed: payload.newEvent ? [payload.newEvent, ...(prev?.activityFeed || [])] : prev?.activityFeed
         }));
       }
     });
@@ -65,7 +74,7 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
     };
   }, []);
 
-  const data = propsLiveData || internalData;
+  const data = internalData || propsLiveData;
 
   const handleExecuteStep = async (stepId: string, invoiceId: string, actionType: string) => {
     setIsExecuting(stepId);
@@ -155,7 +164,7 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
       status: 'Ready',
       detail: 'Locks ₹16.50L in HDFC Operating Cash to guarantee 100% assembly line worker payroll coverage before any discretionary supplier payouts.'
     },
-    ...dynamicInvoices.slice(0, 4).map((inv: any, idx: number) => ({
+    ...dynamicInvoices.slice(0, 5).map((inv: any, idx: number) => ({
       stepNumber: idx + 2,
       id: `STEP-${idx + 2}`,
       title: `Execute ${inv.aiAction || 'Payout'} for ${inv.supplierName} (${inv.id})`,
@@ -169,8 +178,8 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
       detail: `Dispatches ${formatINR(inv.amount || 100000.0)} wire transfer for ${inv.supplierName}. 0/1 Knapsack Priority Score: ${inv.priorityScore || 85}/100.`
     })),
     {
-      stepNumber: (dynamicInvoices.slice(0, 4).length) + 2,
-      id: `STEP-${(dynamicInvoices.slice(0, 4).length) + 2}`,
+      stepNumber: (dynamicInvoices.slice(0, 5).length) + 2,
+      id: `STEP-${(dynamicInvoices.slice(0, 5).length) + 2}`,
       title: `Monitor Wire Inflow from ${customerAInflow.customerName || 'VRL Logistics Ltd'}`,
       eventTrigger: `Fleet Delivery Expected (${customerAInflow.collectionProbability || 87.0}% Bayesian Prob)`,
       targetEntity: `${customerAInflow.customerName || 'VRL Logistics Ltd'} Receivable`,
@@ -182,8 +191,8 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
       detail: `Monitors HDFC incoming wire channel with ${customerAInflow.collectionProbability || 87.0}% Bayesian collection probability. Automatically triggers re-optimization if delayed >3 days.`
     },
     {
-      stepNumber: (dynamicInvoices.slice(0, 4).length) + 3,
-      id: `STEP-${(dynamicInvoices.slice(0, 4).length) + 3}`,
+      stepNumber: (dynamicInvoices.slice(0, 5).length) + 3,
+      id: `STEP-${(dynamicInvoices.slice(0, 5).length) + 3}`,
       title: 'Maintain Deployable Buffer Above Reserve Floor (₹15.50L)',
       eventTrigger: 'Continuous Reserve Policy Constraint',
       targetEntity: 'ICICI Treasury Reserve Buffer',
@@ -217,7 +226,7 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
                 <Sparkles className="w-3 h-3 mr-1 text-blue-400" /> LIVE DATA DYNAMIC EXECUTION ENGINE
               </span>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 backdrop-blur-md animate-pulse">
-                10s SSE REFRESH ACTIVE
+                10s SSE REFRESH ACTIVE ({dynamicInvoices.length} INVOICES INGESTED)
               </span>
             </div>
             <h1 className="text-2xl font-bold text-slate-100 font-sans tracking-tight">
@@ -273,7 +282,7 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
               <span className="truncate">📥 CUSTOMER A INFLOW</span>
               <span className="shrink-0 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800 text-[9px]">EXPECTED IN 10d</span>
             </div>
-            <div className="text-xl font-bold text-slate-100">{formatINR(customerAInflow.amount || 31760.96)}</div>
+            <div className="text-xl font-bold text-slate-100">{formatINR(customerAInflow.amount || 317609.60)}</div>
             <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
               Expected wire on Sep 28. Live Bayesian probability: <strong className="text-emerald-400">{customerAInflow.collectionProbability || 87.0}%</strong>.
             </p>
@@ -283,10 +292,10 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
           <div className="backdrop-blur-xl bg-[#0F172A]/50 border border-blue-500/30 rounded-xl p-4 space-y-2 shadow-xl hover:border-blue-500/60 transition group relative overflow-hidden">
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-400/40 to-transparent"></div>
             <div className="flex items-center justify-between text-[10px] text-blue-400 font-bold gap-2">
-              <span className="truncate">🏭 BOSCH LTD RAW MATERIAL</span>
+              <span className="truncate">🏭 BOSCH/VALEO OEM</span>
               <span className="shrink-0 bg-blue-950/80 px-2 py-0.5 rounded border border-blue-800 text-[9px]">DISCOUNT IN 2d</span>
             </div>
-            <div className="text-xl font-bold text-slate-100">{formatINR(boschInvoice.amount || 68902.88)}</div>
+            <div className="text-xl font-bold text-slate-100">{formatINR(boschInvoice.amount || 22721445.28)}</div>
             <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
               {boschInvoice.discountPct || 2.0}% early discount active. Priority Score: <strong>{boschInvoice.priorityScore || 95}</strong>/100.
             </p>
@@ -495,6 +504,68 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* SECTION 4: LIVE STREAM INGESTED INVOICES LEDGER TABLE (EXPECTED OUTPUT STREAM VISIBILITY) */}
+      <div className="backdrop-blur-2xl bg-[#0F172A]/60 border border-white/10 rounded-2xl p-6 space-y-4 shadow-2xl">
+        <div className="flex items-center justify-between border-b border-white/10 pb-3">
+          <div className="flex items-center space-x-2">
+            <Table className="w-4 h-4 text-blue-400" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-200">
+              Section 4: Live Stream Ingested Invoice Candidates ({dynamicInvoices.length} Items Evaluated)
+            </h2>
+          </div>
+          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-950 text-blue-300 border border-blue-800">
+            0/1 KNAPSACK INPUT MATRIX
+          </span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr className="bg-slate-900/90 text-slate-400 font-bold border-b border-white/10 text-[10px] uppercase">
+                <th className="py-2.5 px-3">Invoice ID</th>
+                <th className="py-2.5 px-3">Supplier Name</th>
+                <th className="py-2.5 px-3">Amount (₹)</th>
+                <th className="py-2.5 px-3">Discount</th>
+                <th className="py-2.5 px-3">Due Date</th>
+                <th className="py-2.5 px-3">Priority Score</th>
+                <th className="py-2.5 px-3">AI 0/1 DP Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/5 font-mono text-slate-300">
+              {dynamicInvoices.map((inv: any) => (
+                <tr key={inv.id} className="hover:bg-white/5 transition">
+                  <td className="py-2.5 px-3 font-bold text-blue-400">{inv.id}</td>
+                  <td className="py-2.5 px-3 font-sans text-slate-200">{inv.supplierName}</td>
+                  <td className="py-2.5 px-3 font-bold text-slate-100">{formatINR(inv.amount)}</td>
+                  <td className="py-2.5 px-3">
+                    {inv.discountPct > 0 ? (
+                      <span className="text-emerald-400 font-bold">{inv.discountPct}% Active</span>
+                    ) : (
+                      <span className="text-slate-500">0%</span>
+                    )}
+                  </td>
+                  <td className="py-2.5 px-3 text-slate-400">{inv.dueDate}</td>
+                  <td className="py-2.5 px-3">
+                    <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-200 text-[10px] font-bold border border-slate-700">
+                      {inv.priorityScore || 85}/100
+                    </span>
+                  </td>
+                  <td className="py-2.5 px-3">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                      inv.aiAction === 'Pay Now' || inv.aiAction === 'CAPTURE_DISCOUNT'
+                        ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
+                        : 'bg-blue-950 text-blue-300 border-blue-800'
+                    }`}>
+                      {inv.aiAction || 'Pay Now'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 

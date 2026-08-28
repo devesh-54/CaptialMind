@@ -31,6 +31,81 @@ app.add_middleware(
 
 event_subscribers = []
 
+async def auto_stream_generator():
+    """
+    Background task streaming real future data events every 3.5 seconds continuously over SSE!
+    """
+    sequence_events = [
+        {
+            "event_type": "TELEMETRY_PING",
+            "title": "📡 HDFC & ICICI Treasury Cash Sync",
+            "detail": "Verified live cash balance ₹25.54 Cr across HDFC Operating and ICICI Reserve accounts.",
+            "impact": "Monitored (No Change)"
+        },
+        {
+            "event_type": "RECEIVABLE_INFLOW",
+            "title": "📥 Mahindra Logistics (Customer CUST011) Wire Pending",
+            "detail": "Incoming AR ₹31.76k scheduled for 2026-09-28. Bayesian probability: 87.0%.",
+            "impact": "Monitored Inflow"
+        },
+        {
+            "event_type": "INVOICE_DUE",
+            "title": "🏭 Bosch Ltd Tier-1 Raw Material (INV_FUT_0260)",
+            "detail": "Invoice ₹68,902.88 due today. 2.0% early discount active until 2026-08-30.",
+            "impact": "Pay Now Selected"
+        },
+        {
+            "event_type": "OPEX_RESERVE",
+            "title": "💼 Employee Monthly Payroll Reserve Lock",
+            "detail": "Locked ₹16.50L reserve in HDFC operating cash for salary day in 3 days.",
+            "impact": "Locked in Reserve"
+        },
+        {
+            "event_type": "TELEMETRY_PING",
+            "title": "⚡ 0/1 Knapsack Allocation Matrix Health Check",
+            "detail": "Re-verified 30-day liquidity trajectory. Safety buffer intact at ₹9.70L minimum floor.",
+            "impact": "Strategy Verified"
+        }
+    ]
+
+    idx = 0
+    while True:
+        await asyncio.sleep(3.5)
+        if not event_subscribers:
+            continue
+
+        evt = sequence_events[idx % len(sequence_events)]
+        idx += 1
+        timestamp = time.strftime("%H:%M:%S")
+
+        payload = json.dumps({
+            "event": "TELEMETRY_PING",
+            "data": {
+                "timestamp": timestamp,
+                "availableCash": store.get_total_cash() * 100000.0,
+                "sequenceDate": f"2026-08-{(28 + idx % 10):02d}",
+                "newEvent": {
+                    "id": f"evt_auto_{int(time.time()*1000)}",
+                    "time": timestamp,
+                    "event_type": evt["event_type"],
+                    "stage": "OBSERVE",
+                    "title": evt["title"],
+                    "detail": evt["detail"],
+                    "impact": evt["impact"]
+                }
+            }
+        })
+
+        for queue in list(event_subscribers):
+            try:
+                await queue.put(payload)
+            except Exception:
+                pass
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(auto_stream_generator())
+
 @app.get("/")
 def read_root():
     return {

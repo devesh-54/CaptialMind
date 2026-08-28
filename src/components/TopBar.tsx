@@ -29,7 +29,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onReoptimize, isOptimizing }) =>
         {/* Company Selector */}
         <div className="hidden md:flex items-center space-x-2 bg-slate-900/90 border border-slate-800 px-3 py-1.5 rounded-md cursor-pointer hover:border-slate-700 transition">
           <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-          <span className="text-xs font-medium text-slate-300">Acme Manufacturing Pvt Ltd</span>
+          <span className="text-xs font-medium text-slate-300 font-sans">Tata Motors Ltd</span>
           <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
         </div>
       </div>

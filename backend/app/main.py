@@ -16,8 +16,8 @@ from app.decision_engine import run_decision_pipeline
 from app.bayesian_engine import update_customer_bayesian_prior
 
 app = FastAPI(
-    title="CashPilot AI Backend API (CSI ORIGIN 2026)",
-    description="Autonomous Working-Capital Management Under Constraints Engine",
+    title="CashPilot AI — Tata Motors Working Capital Engine",
+    description="Autonomous Working-Capital Management Under Constraints Engine for Tata Motors Ltd",
     version="2.0.0"
 )
 
@@ -33,36 +33,36 @@ event_subscribers = []
 
 async def auto_stream_generator():
     """
-    Background stream generator:
+    Background stream generator for Tata Motors Ltd:
     Ingests live future data, updates data store models, re-runs 0/1 Knapsack DP decision pipeline,
-    records decision history, and broadcasts updates over SSE channel every 3.5 seconds!
+    records decision history, and broadcasts updates over SSE channel every 10 seconds!
     """
     sequence_events = [
         {
             "event_type": "RECEIVABLE_DELAYED",
-            "title": "⚠️ Customer A Wire Delayed (+10d)",
-            "detail": "Customer CUST011 payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+            "title": "⚠️ VRL Logistics Fleet CV Wire Delayed (+10d)",
+            "detail": "VRL Logistics Ltd fleet payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
             "impact": "Re-Optimizing Strategy",
             "action_code": "DELAY_AR"
         },
         {
             "event_type": "NEW_INVOICE",
-            "title": "🏭 Bosch Ltd Component Invoice INV_FUT_0270 (₹81.4k)",
-            "detail": "New raw material invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+            "title": "🏭 Bosch Ltd Powertrain Component Invoice INV_TML_0270 (₹1.81L)",
+            "detail": "New powertrain electronics invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
             "impact": "Added to Decision Pool",
             "action_code": "NEW_INV"
         },
         {
             "event_type": "OPEX_RESERVE",
-            "title": "💼 Operating Expense Payroll Lock (₹16.50L)",
+            "title": "💼 Plant Assembly Line Worker Payroll Reserve Lock (₹16.50L)",
             "detail": "Locked ₹16.50L reserve in HDFC operating cash for salary day in 3 days.",
             "impact": "Locked in Reserve",
             "action_code": "LOCK_OPEX"
         },
         {
             "event_type": "TELEMETRY_PING",
-            "title": "📡 HDFC Treasury Balance Sync",
-            "detail": "Verified live cash balance ₹25.54 Cr across HDFC Operating & ICICI Reserve accounts.",
+            "title": "📡 Tata Motors HDFC & ICICI Treasury Cash Sync",
+            "detail": "Verified live cash balance ₹45.04 Cr across Tata Motors HDFC & ICICI Treasury accounts.",
             "impact": "Monitored (No Change)",
             "action_code": "SYNC"
         }
@@ -82,18 +82,18 @@ async def auto_stream_generator():
         # 1. Update data store models based on live event type
         if evt["action_code"] == "DELAY_AR":
             for r in store.receivables:
-                if r.customer_name.startswith("Customer CUST011"):
+                if "VRL Logistics" in r.customer_name or r.customer_name.startswith("Customer CUST011"):
                     r.expected_delay_days += 1
                     r.collection_probability = max(0.65, r.collection_probability - 0.01)
         elif evt["action_code"] == "NEW_INV":
-            new_inv_id = f"INV_FUT_{270 + idx}"
+            new_inv_id = f"INV_TML_{270 + idx}"
             if not any(i.id == new_inv_id for i in store.invoices):
                 store.invoices.append(
                     Invoice(
                         id=new_inv_id,
-                        supplier_id="SUP003",
-                        supplier_name="Bosch Ltd",
-                        amount=0.814,
+                        supplier_id="SUP001",
+                        supplier_name="Bosch Ltd (Powertrain Electronics)",
+                        amount=1.814,
                         issue_date="2026-08-28",
                         due_date="2026-09-05",
                         due_days=7,
@@ -101,7 +101,7 @@ async def auto_stream_generator():
                         discount_deadline_days=3,
                         priority_score=91.0,
                         recommended_action=ActionType.PAY_NOW,
-                        action_reason="Bosch Tier-1 component invoice ingested into decision pool."
+                        action_reason="Bosch Powertrain Component invoice ingested into Tata Motors decision pool."
                     )
                 )
 
@@ -142,11 +142,11 @@ async def auto_stream_generator():
                     {
                         "id": "OPT-1",
                         "action": "Pay Now",
-                        "title": "Pay Now + Reserve Opex (Selected)",
+                        "title": "Pay Now + Reserve Plant Opex (Selected)",
                         "score": int(new_decision.achieved_utility * 100),
                         "subScores": { "liquidity": 98, "financial": 95, "supplier": 92, "risk": 96 },
                         "costBenefit": f"Covers ₹16.5L Opex & allocates {len(new_decision.allocations)} invoice payouts",
-                        "riskNote": f"Customer CUST011 AR inflow (Sep 28) maintains ₹{REQUIRED_30DAY_FLOOR}L reserve floor",
+                        "riskNote": f"VRL Logistics AR inflow maintains ₹15.50L reserve floor",
                         "breachesFloor": False,
                         "selected": True,
                         "sparklineData": [
@@ -154,7 +154,7 @@ async def auto_stream_generator():
                             {"day": "Aug 29", "cash": total_cash - 16.5},
                             {"day": "Sep 01", "cash": total_cash - 17.2},
                             {"day": "Sep 05", "cash": total_cash - 17.5},
-                            {"day": "Sep 28", "cash": total_cash + 0.3}
+                            {"day": "Sep 28", "cash": total_cash + 3.1}
                         ]
                     }
                 ],
@@ -162,7 +162,7 @@ async def auto_stream_generator():
                     {
                         "id": inv.id,
                         "supplierName": inv.supplier_name,
-                        "supplierCategory": "Raw Materials" if inv.supplier_id == "SUP003" else "Components",
+                        "supplierCategory": "Powertrain Systems" if inv.supplier_id == "SUP001" else "Auto Body Sheet Metal",
                         "amount": round(inv.amount * 100000.0, 2),
                         "dueDate": inv.due_date,
                         "discountPct": inv.discount_percentage,
@@ -212,27 +212,27 @@ def get_dashboard_summary():
         "company": store.company,
         "cash_position": {
             "total_cash": round(total_cash, 2),
-            "available_cash": round(total_cash - 9.70, 2),
-            "reserved_cash": 9.70,
-            "minimum_floor": REQUIRED_30DAY_FLOOR,
+            "available_cash": round(total_cash - 15.50, 2),
+            "reserved_cash": 15.50,
+            "minimum_floor": 15.50,
             "status": "HEALTHY"
         },
         "kpis": {
             "availableCash": round(total_cash * 100000.0, 2),
-            "protectedCash": 970000.0,
-            "deployableCapital": round((total_cash - 9.70) * 100000.0, 2),
+            "protectedCash": 15500000.0,
+            "deployableCapital": round((total_cash - 15.50) * 100000.0, 2),
             "risk30d": "LOW",
             "wcEfficiency": wc_efficiency,
-            "financingExposure": 1250000.0
+            "financingExposure": 15000000.0
         },
         "heroRecommendation": {
             "title": decision.chosen_action,
             "confidence": int(decision.confidence * 100),
             "breakdown": [
-                {"label": "Operating Expense & Payroll (Due Today)", "amount": 1650000.0},
-                {"label": "Bosch Ltd INV_FUT_0260 (Pay Now)", "amount": 68902.88},
-                {"label": "Bosch Ltd INV_FUT_0261 (Pay Now)", "amount": 140555.66},
-                {"label": "Retain Deployable Buffer", "amount": 694621.43}
+                {"label": "Plant Operating Expense & Worker Payroll (Due Today)", "amount": 1650000.0},
+                {"label": "Bosch Ltd INV_TML_0260 (Pay Now)", "amount": 168902.88},
+                {"label": "JSW Steel Ltd INV_TML_0261 (Pay Now)", "amount": 440555.66},
+                {"label": "Retain Deployable Buffer", "amount": 1584079.97}
             ],
             "reasoning": decision.reasoning
         },
@@ -240,22 +240,22 @@ def get_dashboard_summary():
             {
                 "id": "OPT-1",
                 "action": "Pay Now",
-                "title": "Pay Now + Reserve Opex (Selected)",
+                "title": "Pay Now + Reserve Plant Opex (Selected)",
                 "score": 96,
                 "subScores": { "liquidity": 98, "financial": 95, "supplier": 92, "risk": 96 },
-                "costBenefit": "Covers ₹16.5L Opex & clears INV_FUT_0260 (₹68.9k)",
-                "riskNote": "Customer CUST011 inflow (₹31.7k) on Sep 28 (87% Bayesian prob) guarantees floor safety",
+                "costBenefit": "Covers ₹16.5L Opex & clears INV_TML_0260 (₹1.68L)",
+                "riskNote": "VRL Logistics AR inflow (Sep 28) guarantees ₹15.50L floor safety",
                 "breachesFloor": False,
                 "selected": True,
                 "sparklineData": [
-                    {"day": "Aug 28", "cash": 25.5},
-                    {"day": "Aug 29", "cash": 9.0},
-                    {"day": "Sep 01", "cash": 8.3},
-                    {"day": "Sep 05", "cash": 8.0},
-                    {"day": "Sep 15", "cash": 8.3},
-                    {"day": "Sep 28", "cash": 25.8},
-                    {"day": "Oct 08", "cash": 26.7},
-                    {"day": "Oct 18", "cash": 28.0}
+                    {"day": "Aug 28", "cash": 45.0},
+                    {"day": "Aug 29", "cash": 28.5},
+                    {"day": "Sep 01", "cash": 27.8},
+                    {"day": "Sep 05", "cash": 27.0},
+                    {"day": "Sep 15", "cash": 27.5},
+                    {"day": "Sep 28", "cash": 30.8},
+                    {"day": "Oct 08", "cash": 31.7},
+                    {"day": "Oct 18", "cash": 33.0}
                 ]
             },
             {
@@ -269,32 +269,32 @@ def get_dashboard_summary():
                 "breachesFloor": False,
                 "selected": False,
                 "sparklineData": [
-                    {"day": "Aug 28", "cash": 25.5},
-                    {"day": "Aug 29", "cash": 9.0},
-                    {"day": "Sep 01", "cash": 9.0},
-                    {"day": "Sep 05", "cash": 9.0},
-                    {"day": "Sep 15", "cash": 8.3},
-                    {"day": "Sep 28", "cash": 25.8},
-                    {"day": "Oct 08", "cash": 26.7},
-                    {"day": "Oct 18", "cash": 27.5}
+                    {"day": "Aug 28", "cash": 45.0},
+                    {"day": "Aug 29", "cash": 28.5},
+                    {"day": "Sep 01", "cash": 28.5},
+                    {"day": "Sep 05", "cash": 28.5},
+                    {"day": "Sep 15", "cash": 27.8},
+                    {"day": "Sep 28", "cash": 30.8},
+                    {"day": "Oct 08", "cash": 31.7},
+                    {"day": "Oct 18", "cash": 32.5}
                 ]
             }
         ],
         "forecast": [
-            {"day": "Aug 28", "cash": 25.5, "pessimistic": 24.0},
-            {"day": "Aug 29 (Opex)", "cash": 9.0, "pessimistic": 8.5},
-            {"day": "Sep 01", "cash": 8.3, "pessimistic": 7.8},
-            {"day": "Sep 05", "cash": 8.0, "pessimistic": 7.5},
-            {"day": "Sep 15 (REC_0365)", "cash": 8.3, "pessimistic": 7.8},
-            {"day": "Sep 28", "cash": 25.8, "pessimistic": 24.5},
-            {"day": "Oct 08", "cash": 26.7, "pessimistic": 25.0},
-            {"day": "Oct 18", "cash": 28.0, "pessimistic": 26.5}
+            {"day": "Aug 28", "cash": 45.0, "pessimistic": 43.0},
+            {"day": "Aug 29 (Opex)", "cash": 28.5, "pessimistic": 27.5},
+            {"day": "Sep 01", "cash": 27.8, "pessimistic": 26.8},
+            {"day": "Sep 05", "cash": 27.0, "pessimistic": 26.0},
+            {"day": "Sep 15 (REC_TML_0365)", "cash": 27.5, "pessimistic": 26.5},
+            {"day": "Sep 28", "cash": 30.8, "pessimistic": 29.5},
+            {"day": "Oct 08", "cash": 31.7, "pessimistic": 30.0},
+            {"day": "Oct 18", "cash": 33.0, "pessimistic": 31.5}
         ],
         "invoices": [
             {
                 "id": inv.id,
                 "supplierName": inv.supplier_name,
-                "supplierCategory": "Raw Materials" if inv.supplier_id == "SUP003" else "Components",
+                "supplierCategory": "Powertrain Systems" if inv.supplier_id == "SUP001" else "Auto Body Sheet Metal",
                 "amount": round(inv.amount * 100000.0, 2),
                 "dueDate": inv.due_date,
                 "discountPct": inv.discount_percentage,
@@ -308,9 +308,9 @@ def get_dashboard_summary():
         ],
         "receivables": [
             {
-                "id": "REC_FUT_0365",
-                "customerName": "Customer CUST011",
-                "amount": 31760.96,
+                "id": "REC_TML_0365",
+                "customerName": "VRL Logistics Ltd (Fleet CV Purchase)",
+                "amount": 317609.60,
                 "expectedDate": "2026-09-28",
                 "collectionProbability": 87.0,
                 "expectedDelayDays": 1,
@@ -341,7 +341,7 @@ def get_invoices():
         {
             "id": inv.id,
             "supplierName": inv.supplier_name,
-            "supplierCategory": "Raw Materials" if inv.supplier_id == "SUP003" else "Components",
+            "supplierCategory": "Powertrain Systems" if inv.supplier_id == "SUP001" else "Auto Body Sheet Metal",
             "amount": round(inv.amount * 100000.0, 2),
             "dueDate": inv.due_date,
             "discountPct": inv.discount_percentage,
@@ -383,9 +383,9 @@ def get_financing_options():
             "id": "FIN-01",
             "title": "Internal Cash Deployment",
             "recommended": True,
-            "impact": "₹2.09L Outflow + ₹16.5L Opex",
+            "impact": "₹6.09L Outflow + ₹16.5L Plant Opex",
             "cost": "₹0 (Zero Financing Interest)",
-            "verdict": "RECOMMENDED: Covers ₹16.5L Opex while paying INV_FUT_0260 & 0261.",
+            "verdict": "RECOMMENDED: Covers ₹16.5L Plant Opex while paying Bosch & JSW Steel.",
             "apr": "0.0%",
             "availability": "Instant (HDFC Treasury)"
         },
@@ -393,9 +393,9 @@ def get_financing_options():
             "id": "FIN-02",
             "title": "Dynamic Bank Credit Line",
             "recommended": False,
-            "impact": "₹0 Outflow Today (₹12.5L Line Drawn)",
-            "cost": "₹1,250 Interest Cost (8.5% APR)",
-            "verdict": "ALTERNATIVE: Preserves cash if CUST011 receivable is delayed >5 days.",
+            "impact": "₹0 Outflow Today (₹15.5L Line Drawn)",
+            "cost": "₹1,550 Interest Cost (8.5% APR)",
+            "verdict": "ALTERNATIVE: Preserves cash if VRL Logistics receivable is delayed >5 days.",
             "apr": "8.5% p.a.",
             "availability": "Pre-Approved (ICICI Bank)"
         }
@@ -411,7 +411,7 @@ async def receive_event(event: EventPayload):
     if event.event_type == "RECEIVABLE_DELAYED":
         target_rec = None
         for r in store.receivables:
-            if r.id == event.target_id or r.customer_name.startswith("Customer CUST011"):
+            if r.id == event.target_id or "VRL Logistics" in r.customer_name or r.customer_name.startswith("Customer CUST011"):
                 target_rec = r
                 break
 
@@ -427,8 +427,8 @@ async def receive_event(event: EventPayload):
             "time": timestamp,
             "event_type": event.event_type,
             "stage": "FORECAST",
-            "title": f"⚠️ Material Delay: {event.description or 'Receivable delayed'}",
-            "detail": f"Receivable delayed by {event.delay_days or 10} days! Customer CUST011 Bayesian probability shifted to 76.9%.",
+            "title": f"⚠️ Material Delay: {event.description or 'VRL Logistics fleet receivable delayed'}",
+            "detail": f"Receivable delayed by {event.delay_days or 10} days! VRL Logistics Bayesian probability shifted to 76.9%.",
             "impact": "Strategy Re-Optimized"
         }
         store.events_log.insert(0, evt_item)
@@ -438,7 +438,7 @@ async def receive_event(event: EventPayload):
             "time": timestamp,
             "event_type": event.event_type,
             "stage": "OBSERVE",
-            "title": f"Telemetry Event: {event.description or 'Event processed'}",
+            "title": f"Telemetry Event: {event.description or 'Tata Motors telemetry processed'}",
             "detail": "Monitored telemetry event ingested.",
             "impact": "Monitored (No Material Change)"
         }
@@ -506,12 +506,12 @@ def simulate_scenario(req: Dict[str, Any] = Body(...)):
     sim_forecast = calculate_30day_forecast(total_cash, store.invoices, store.receivables, store.obligations, scenario=sim_scenario)
 
     min_cash = sim_forecast["min_pessimistic_floor"]
-    breaches_floor = min_cash < REQUIRED_30DAY_FLOOR
+    breaches_floor = min_cash < 15.50
 
     return {
         "minCashLakhs": min_cash * 10.0,
         "breachesFloor": breaches_floor,
-        "explanation": f"Simulating Customer CUST011 delay (+{delay_days}d) drops cash floor to ₹{min_cash:.1f} Cr. Strategy intact above ₹{REQUIRED_30DAY_FLOOR} Cr minimum reserve floor."
+        "explanation": f"Simulating VRL Logistics fleet delay (+{delay_days}d) drops cash floor to ₹{min_cash:.1f} Cr. Strategy intact above ₹15.50 Cr Tata Motors reserve floor."
     }
 
 @app.get("/decisions")
@@ -526,7 +526,7 @@ def get_decisions():
         result.append({
             "id": f"DEC-{8801 - idx}",
             "timestamp": dec.created_at or "2026-08-28 14:45",
-            "triggerEvent": f"Live Stream Ingestion & 0/1 Knapsack Re-Run ({dec.triggered_by_event_id or 'Auto'})",
+            "triggerEvent": f"Tata Motors Live Ingestion & 0/1 Knapsack Re-Run ({dec.triggered_by_event_id or 'Auto'})",
             "decision": dec.chosen_action,
             "amount": round(dec.total_budget_spent * 100000.0, 2),
             "confidence": int(dec.confidence * 100),
@@ -544,8 +544,8 @@ def get_agent_activity():
         activities.append({
             "stage": evt.get("stage", "OBSERVE"),
             "time": evt.get("time", "20:01:04"),
-            "title": evt.get("title", "Telemetry Sync"),
-            "detail": evt.get("detail", "Processed live event stream."),
+            "title": evt.get("title", "Tata Motors Telemetry Sync"),
+            "detail": evt.get("detail", "Processed Tata Motors live event stream."),
             "impact": evt.get("impact", "Monitored")
         })
     return activities
@@ -558,7 +558,7 @@ async def event_stream(request: Request):
 
     async def event_generator() -> AsyncGenerator[str, None]:
         try:
-            yield json.dumps({"event": "CONNECTED", "data": "CashPilot AI Modular Engine Active"})
+            yield json.dumps({"event": "CONNECTED", "data": "CashPilot AI Tata Motors Engine Active"})
 
             while True:
                 if await request.is_disconnected():

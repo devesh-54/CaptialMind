@@ -19,28 +19,29 @@ class DataStore:
 
     def reset_to_defaults(self):
         self.company = Company(
-            id="comp_tata001",
-            name="Tata Consumer Products",
+            id="comp_tatamotors_001",
+            name="Tata Motors Ltd",
             currency="INR",
-            minimum_30day_reserve=9.70
+            minimum_30day_reserve=15.50
         )
 
-        # Load real cash accounts from datasets
+        # Cash Accounts for Tata Motors Ltd
         self.accounts: List[CashAccount] = [
-            CashAccount(id="acc_1", name="Main Treasury (HDFC)", account_type="Operating Cash", balance=19.54, available_balance=19.54, yield_rate=0.04),
-            CashAccount(id="acc_2", name="Liquidity Reserve (ICICI)", account_type="Reserved Buffer", balance=9.70, available_balance=9.70, yield_rate=0.065),
-            CashAccount(id="acc_3", name="Revolving Credit Line", account_type="Credit Line", balance=12.50, available_balance=12.50, yield_rate=0.085),
+            CashAccount(id="acc_1", name="Main Operating Cash (HDFC Treasury)", account_type="Operating Cash", balance=29.54, available_balance=29.54, yield_rate=0.04),
+            CashAccount(id="acc_2", name="Liquidity Reserve (ICICI Treasury)", account_type="Reserved Buffer", balance=15.50, available_balance=15.50, yield_rate=0.065),
+            CashAccount(id="acc_3", name="Revolving Working Capital Line (SBI)", account_type="Credit Line", balance=25.00, available_balance=25.00, yield_rate=0.085),
         ]
 
-        # Load real suppliers from merged dataset
+        # Automotive Suppliers for Tata Motors Ltd
         self.suppliers: List[Supplier] = [
-            Supplier(id="SUP003", name="Bosch Ltd", strategic_importance=0.95, liquidity_risk="Low", payment_terms="2/10 Net-30", archetype=SupplierArchetype.CRITICAL),
-            Supplier(id="SUP002", name="JSW Steel Ltd", strategic_importance=0.82, liquidity_risk="Moderate", payment_terms="Net-30", archetype=SupplierArchetype.STANDARD),
-            Supplier(id="SUP006", name="Apollo Tyres Ltd", strategic_importance=0.75, liquidity_risk="Low", payment_terms="Net-30", archetype=SupplierArchetype.STANDARD),
-            Supplier(id="SUP001", name="Tata Steel Ltd", strategic_importance=0.90, liquidity_risk="Low", payment_terms="Net-30", archetype=SupplierArchetype.CRITICAL),
+            Supplier(id="SUP001", name="Bosch Ltd (Powertrain Electronics)", strategic_importance=0.95, liquidity_risk="Low", payment_terms="2/10 Net-30", archetype=SupplierArchetype.CRITICAL),
+            Supplier(id="SUP002", name="JSW Steel Ltd (Auto Sheet Metal)", strategic_importance=0.88, liquidity_risk="Moderate", payment_terms="Net-30", archetype=SupplierArchetype.CRITICAL),
+            Supplier(id="SUP003", name="Bharat Forge Ltd (Chassis & Forgings)", strategic_importance=0.92, liquidity_risk="Low", payment_terms="Net-30", archetype=SupplierArchetype.CRITICAL),
+            Supplier(id="SUP004", name="Apollo Tyres Ltd (Commercial CV Radial)", strategic_importance=0.82, liquidity_risk="Low", payment_terms="Net-30", archetype=SupplierArchetype.STANDARD),
+            Supplier(id="SUP005", name="Exide Industries Ltd (EV Battery Packs)", strategic_importance=0.85, liquidity_risk="Low", payment_terms="Net-30", archetype=SupplierArchetype.STANDARD),
         ]
 
-        # Historical transactions preprocessing
+        # Historical transactions preprocessing for Tata Motors Customer Accounts
         self.historical_txs = generate_historical_transactions()
         
         p1 = preprocess_customer_history("CUST011", self.historical_txs)
@@ -48,41 +49,41 @@ class DataStore:
         p3 = preprocess_customer_history("CUST009", self.historical_txs)
 
         self.customers: List[Customer] = [
-            Customer(id="CUST011", name="Customer CUST011 Enterprise", archetype=EntityArchetype.RELIABLE, alpha=p1["alpha"], beta=p1["beta"], on_time_probability=p1["on_time_probability"], average_delay_days=p1["average_delay_days"]),
-            Customer(id="CUST001", name="Customer CUST001 Logistics", archetype=EntityArchetype.AVERAGE, alpha=p2["alpha"], beta=p2["beta"], on_time_probability=p2["on_time_probability"], average_delay_days=p2["average_delay_days"]),
-            Customer(id="CUST009", name="Customer CUST009 Retail", archetype=EntityArchetype.RISKY, alpha=p3["alpha"], beta=p3["beta"], on_time_probability=p3["on_time_probability"], average_delay_days=p3["average_delay_days"]),
+            Customer(id="CUST011", name="VRL Logistics Ltd (Fleet Buyer)", archetype=EntityArchetype.RELIABLE, alpha=p1["alpha"], beta=p1["beta"], on_time_probability=p1["on_time_probability"], average_delay_days=p1["average_delay_days"]),
+            Customer(id="CUST001", name="TCI Express Ltd (Transport Operator)", archetype=EntityArchetype.AVERAGE, alpha=p2["alpha"], beta=p2["beta"], on_time_probability=p2["on_time_probability"], average_delay_days=p2["average_delay_days"]),
+            Customer(id="CUST009", name="South Eastern Freight Carriers", archetype=EntityArchetype.RISKY, alpha=p3["alpha"], beta=p3["beta"], on_time_probability=p3["on_time_probability"], average_delay_days=p3["average_delay_days"]),
         ]
 
-        # Real future open invoices parsed from dataset
+        # Tata Motors Open Invoices parsed from dynamic dataset
         self.invoices: List[Invoice] = [
-            Invoice(id="INV_FUT_0260", supplier_id="SUP003", supplier_name="Bosch Ltd", amount=0.689, issue_date="2026-08-28", due_date="2026-08-28", due_days=0, discount_percentage=2.0, discount_deadline_days=2, late_penalty_percentage=2.0, priority_score=95.0, recommended_action=ActionType.PAY_NOW, action_reason="Tier-1 critical supplier. Preserves delivery SLA and clears invoice due today."),
-            Invoice(id="INV_FUT_0261", supplier_id="SUP003", supplier_name="Bosch Ltd", amount=1.405, issue_date="2026-08-29", due_date="2026-08-29", due_days=1, discount_percentage=0.0, discount_deadline_days=0, late_penalty_percentage=2.0, priority_score=89.0, recommended_action=ActionType.PAY_NOW, action_reason="Bosch Component Invoice due tomorrow."),
-            Invoice(id="INV_FUT_0262", supplier_id="SUP002", supplier_name="JSW Steel Ltd", amount=0.215, issue_date="2026-08-31", due_date="2026-08-31", due_days=3, discount_percentage=0.0, discount_deadline_days=0, late_penalty_percentage=2.0, priority_score=65.0, recommended_action=ActionType.PAY_AT_MATURITY, action_reason="Standard terms; liquidity preservation until maturity."),
+            Invoice(id="INV_TML_0260", supplier_id="SUP001", supplier_name="Bosch Ltd (Powertrain Electronics)", amount=1.689, issue_date="2026-08-28", due_date="2026-08-28", due_days=0, discount_percentage=2.0, discount_deadline_days=2, late_penalty_percentage=2.0, priority_score=95.0, recommended_action=ActionType.PAY_NOW, action_reason="Tier-1 critical powertrain supplier. Preserves vehicle assembly SLA and clears invoice due today."),
+            Invoice(id="INV_TML_0261", supplier_id="SUP002", supplier_name="JSW Steel Ltd (Auto Sheet Metal)", amount=4.405, issue_date="2026-08-29", due_date="2026-08-29", due_days=1, discount_percentage=0.0, discount_deadline_days=0, late_penalty_percentage=2.0, priority_score=89.0, recommended_action=ActionType.PAY_NOW, action_reason="JSW Automotive Sheet Metal Invoice due tomorrow."),
+            Invoice(id="INV_TML_0262", supplier_id="SUP003", supplier_name="Bharat Forge Ltd (Chassis Components)", amount=2.215, issue_date="2026-08-31", due_date="2026-08-31", due_days=3, discount_percentage=0.0, discount_deadline_days=0, late_penalty_percentage=2.0, priority_score=65.0, recommended_action=ActionType.PAY_AT_MATURITY, action_reason="Standard terms; liquidity preservation until maturity."),
         ]
 
-        # Real future receivables parsed from dataset
+        # Tata Motors Fleet Purchase Receivables
         self.receivables: List[Receivable] = [
-            Receivable(id="REC_FUT_0365", customer_id="CUST011", customer_name="Customer CUST011", amount=0.317, expected_date="2026-09-28", due_days=31, collection_probability=p1["on_time_probability"], expected_delay_days=p1["average_delay_days"], probability_history=[0.85, 0.87, 0.89]),
-            Receivable(id="REC_FUT_0366", customer_id="CUST001", customer_name="Customer CUST001", amount=2.430, expected_date="2026-10-18", due_days=51, collection_probability=p2["on_time_probability"], expected_delay_days=p2["average_delay_days"], probability_history=[0.62, 0.64, 0.66]),
+            Receivable(id="REC_TML_0365", customer_id="CUST011", customer_name="VRL Logistics Ltd (Fleet CV Purchase)", amount=3.176, expected_date="2026-09-28", due_days=31, collection_probability=p1["on_time_probability"], expected_delay_days=p1["average_delay_days"], probability_history=[0.85, 0.87, 0.89]),
+            Receivable(id="REC_TML_0366", customer_id="CUST001", customer_name="TCI Express Ltd (Transport Delivery)", amount=24.30, expected_date="2026-10-18", due_days=51, collection_probability=p2["on_time_probability"], expected_delay_days=p2["average_delay_days"], probability_history=[0.62, 0.64, 0.66]),
         ]
 
-        # Real future obligations parsed from dataset
+        # Tata Motors Obligations
         self.obligations: List[Obligation] = [
-            Obligation(id="ob_1", description="Operating Expense & Monthly Salaries", amount=16.50, due_days=0, priority="CRITICAL"),
-            Obligation(id="ob_2", description="Bosch Ltd Invoice INV_FUT_0260", amount=0.689, due_days=0, priority="High"),
-            Obligation(id="ob_3", description="Bosch Ltd Invoice INV_FUT_0261", amount=1.405, due_days=1, priority="High"),
+            Obligation(id="ob_1", description="Plant Operating Expense & Assembly Worker Payroll", amount=16.50, due_days=0, priority="CRITICAL"),
+            Obligation(id="ob_2", description="Bosch Ltd Invoice INV_TML_0260 (Powertrain Systems)", amount=1.689, due_days=0, priority="High"),
+            Obligation(id="ob_3", description="JSW Steel Ltd Invoice INV_TML_0261 (Body Stampings)", amount=4.405, due_days=1, priority="High"),
         ]
 
-        # Real financing options
+        # Tata Motors Financing Options
         self.financing_options: List[FinancingOption] = [
-            FinancingOption(id="fin_1", provider="HDFC Treasury", type="Internal Cash Deployment", interest_rate_annual=0.0, credit_limit=25.54, available_amount=19.54, processing_fee=0.0, recommended=True),
-            FinancingOption(id="fin_2", provider="ICICI Bank", type="Dynamic Bank Credit Line", interest_rate_annual=8.5, credit_limit=12.50, available_amount=12.50, processing_fee=0.1, recommended=False),
+            FinancingOption(id="fin_1", provider="HDFC Treasury", type="Internal Cash Deployment", interest_rate_annual=0.0, credit_limit=29.54, available_amount=29.54, processing_fee=0.0, recommended=True),
+            FinancingOption(id="fin_2", provider="ICICI Bank", type="Dynamic Bank Credit Line", interest_rate_annual=8.5, credit_limit=15.50, available_amount=15.50, processing_fee=0.1, recommended=False),
         ]
 
         self.events_log: List[Dict[str, Any]] = [
-            {"id": "evt_101", "time": "20:01:04", "event_type": "CASH_UPDATED", "payload": {"text": "Cash position updated: ₹25.54 Cr across HDFC & ICICI treasury"}},
-            {"id": "evt_102", "time": "20:01:08", "event_type": "PAYMENT_RECEIVED", "payload": {"text": "Customer CUST011 invoice expected Sep 28: ₹31.76k incoming wire"}},
-            {"id": "evt_103", "time": "20:01:21", "event_type": "DISCOUNT_EXPIRING", "payload": {"text": "Bosch Ltd INV_FUT_0260 payment scheduled for today"}},
+            {"id": "evt_101", "time": "20:01:04", "event_type": "CASH_UPDATED", "payload": {"text": "Tata Motors Cash Position Verified: ₹45.04 Cr across HDFC & ICICI Treasury"}},
+            {"id": "evt_102", "time": "20:01:08", "event_type": "PAYMENT_RECEIVED", "payload": {"text": "VRL Logistics Ltd fleet purchase wire expected Sep 28: ₹3.17L incoming"}},
+            {"id": "evt_103", "time": "20:01:21", "event_type": "DISCOUNT_EXPIRING", "payload": {"text": "Bosch Ltd Powertrain INV_TML_0260 payment scheduled for today"}},
         ]
 
         self.decisions_history: List[Decision] = []
@@ -117,7 +118,7 @@ class DataStore:
         elif event_type in ["OPEX_OUTFLOW", "EMERGENCY_EXPENSE"]:
             # Deduct outflow from operating cash balance
             delta = amount / 100000.0 if amount > 100 else amount
-            self.accounts[0].balance = max(9.70, self.accounts[0].balance - delta)
+            self.accounts[0].balance = max(15.50, self.accounts[0].balance - delta)
             self.accounts[0].available_balance = self.accounts[0].balance
 
     def get_total_cash(self) -> float:

@@ -49,10 +49,18 @@ class ExplanationEngine:
             prob_type = "NONE"
             prob_amount = 0.0
 
+        # 2b. Dynamic Expected Date Determination
+        from datetime import datetime
+        exp_date = datetime.now().strftime("%Y-%m-%d")
+        if state.forecast.projected_points:
+            min_pt = min(state.forecast.projected_points, key=lambda x: x.get("raw_cash", 0.0))
+            if min_pt and min_pt.get("day"):
+                exp_date = str(min_pt.get("day"))
+
         problem_detected = {
             "type": prob_type,
             "amount": max(0.0, prob_amount),
-            "expected_date": "2026-08-28",
+            "expected_date": exp_date,
             "risk_reasons": risk_info.get("risk_reasons", [])
         }
 

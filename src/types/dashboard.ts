@@ -1,5 +1,7 @@
 export type PageId = 
   | 'command-center' 
+  | 'todays-decisions'
+  | 'execution-sequence'
   | 'invoices' 
   | 'receivables' 
   | 'suppliers' 
@@ -8,7 +10,6 @@ export type PageId =
   | 'agent-activity' 
   | 'decision-history'
   | 'data-stream'
-  | 'execution-sequence'
   | 'live-stream-table';
 
 export interface KPIState {

@@ -23,3 +23,11 @@ dist-isolation
 *.njsproj
 *.sln
 *.sw?
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pytest_cache/
+pipeline_audit.py
+

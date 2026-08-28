@@ -3,7 +3,7 @@ import { PageId } from './types/dashboard';
 import { TopBar } from './components/TopBar';
 import { Navigation } from './components/Navigation';
 import { ExplanationDrawer } from './components/ExplanationDrawer';
-import { subscribeToSSEStream, triggerSimulatedEvent } from './services/api';
+import { subscribeToSSEStream, triggerSimulatedEvent, fetchCommandCenterData } from './services/api';
 
 import { CommandCenter } from './pages/CommandCenter';
 import { Invoices } from './pages/Invoices';
@@ -20,15 +20,54 @@ export function App() {
   const [drawerInvoiceId, setDrawerInvoiceId] = useState<string | null>(null);
   const [isOptimizing, setIsOptimizing] = useState<boolean>(false);
   const [liveStreamStatus, setLiveStreamStatus] = useState<string>('Connecting...');
+  
+  // Real-time live streaming state passed dynamically to all views
+  const [liveData, setLiveData] = useState<any>(null);
 
   useEffect(() => {
-    const unsubscribe = subscribeToSSEStream((data) => {
-      if (data.event === 'CONNECTED') {
+    // Initial fetch from backend REST API
+    async function loadInitial() {
+      const data = await fetchCommandCenterData();
+      if (data) {
+        setLiveData(data);
+      }
+    }
+    loadInitial();
+
+    // Persistent SSE stream listener for real-time live updates
+    const unsubscribe = subscribeToSSEStream((streamEvent) => {
+      if (streamEvent.event === 'CONNECTED') {
         setLiveStreamStatus('LIVE SSE CONNECTED');
-      } else if (data.event === 'HEARTBEAT') {
-        setLiveStreamStatus(`LIVE • ${data.data.timestamp}`);
-      } else if (data.event === 'REALTIME_UPDATE') {
-        setLiveStreamStatus(`UPDATED • ${data.data.timestamp}`);
+      } else if (streamEvent.event === 'HEARTBEAT') {
+        setLiveStreamStatus(`LIVE • ${streamEvent.data.timestamp}`);
+      } else if (streamEvent.event === 'REALTIME_UPDATE') {
+        setLiveStreamStatus(`RE-OPTIMIZED • ${streamEvent.data.timestamp}`);
+        const payload = streamEvent.data;
+        setLiveData((prev: any) => ({
+          ...prev,
+          kpis: {
+            ...prev?.kpis,
+            availableCash: payload.availableCash ?? prev?.kpis?.availableCash ?? 2554079.97,
+            deployableCapital: (payload.availableCash ? payload.availableCash - 970000.0 : prev?.kpis?.deployableCapital)
+          },
+          heroRecommendation: payload.heroRecommendation || prev?.heroRecommendation,
+          candidates: payload.candidates || prev?.candidates,
+          forecast: payload.forecast || prev?.forecast,
+          receivables: payload.receivables || prev?.receivables,
+          activityFeed: payload.newEvent ? [payload.newEvent, ...(prev?.activityFeed || [])] : prev?.activityFeed
+        }));
+      } else if (streamEvent.event === 'TELEMETRY_PING') {
+        setLiveStreamStatus(`TELEMETRY PING • ${streamEvent.data.timestamp}`);
+        if (streamEvent.data?.availableCash) {
+          setLiveData((prev: any) => ({
+            ...prev,
+            kpis: {
+              ...prev?.kpis,
+              availableCash: streamEvent.data.availableCash,
+              deployableCapital: Math.max(0, streamEvent.data.availableCash - 970000.0)
+            }
+          }));
+        }
       }
     });
 
@@ -51,7 +90,7 @@ export function App() {
   const renderPage = () => {
     switch (currentPage) {
       case 'command-center':
-        return <CommandCenter onOpenDrawer={(id) => setDrawerInvoiceId(id)} onNavigate={(p) => setCurrentPage(p)} />;
+        return <CommandCenter liveData={liveData} onOpenDrawer={(id) => setDrawerInvoiceId(id)} onNavigate={(p) => setCurrentPage(p)} />;
       case 'invoices':
         return <Invoices onOpenDrawer={(id) => setDrawerInvoiceId(id)} />;
       case 'receivables':
@@ -69,7 +108,7 @@ export function App() {
       case 'data-stream':
         return <DataStreamInspector />;
       default:
-        return <CommandCenter onOpenDrawer={(id) => setDrawerInvoiceId(id)} onNavigate={(p) => setCurrentPage(p)} />;
+        return <CommandCenter liveData={liveData} onOpenDrawer={(id) => setDrawerInvoiceId(id)} onNavigate={(p) => setCurrentPage(p)} />;
     }
   };
 

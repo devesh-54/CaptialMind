@@ -16,23 +16,28 @@ import { AlternativesPanel } from '../components/AlternativesPanel';
 import { fetchCommandCenterData } from '../services/api';
 
 interface CommandCenterProps {
+  liveData?: any;
   onOpenDrawer: (invoiceId: string) => void;
   onNavigate: (page: PageId) => void;
 }
 
-export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNavigate }) => {
+export const CommandCenter: React.FC<CommandCenterProps> = ({ liveData: propsLiveData, onOpenDrawer, onNavigate }) => {
   const [previewCandidateId, setPreviewCandidateId] = useState<string | null>(null);
-  const [data, setData] = useState<any>(null);
+  const [internalData, setInternalData] = useState<any>(null);
 
   useEffect(() => {
-    async function loadData() {
-      const realData = await fetchCommandCenterData();
-      if (realData) {
-        setData(realData);
+    if (!propsLiveData) {
+      async function loadData() {
+        const realData = await fetchCommandCenterData();
+        if (realData) {
+          setInternalData(realData);
+        }
       }
+      loadData();
     }
-    loadData();
-  }, []);
+  }, [propsLiveData]);
+
+  const data = propsLiveData || internalData;
 
   const kpis = data?.kpis || {
     availableCash: 2554079.97,
@@ -123,9 +128,9 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNa
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
         <div className="bg-[#0F172A]/80 border border-slate-800/60 p-4 rounded-lg">
           <span className="text-[10px] font-semibold uppercase text-slate-400 tracking-wider font-mono">Available Cash</span>
-          <div className="text-xl font-mono font-bold text-slate-100 mt-1">{formatINR(kpis.availableCash)}</div>
-          <div className="text-[11px] text-emerald-400 font-mono mt-1">
-            Opening: ₹42.04L
+          <div className="text-xl font-mono font-bold text-slate-100 mt-1 transition-all duration-500">{formatINR(kpis.availableCash)}</div>
+          <div className="text-[11px] text-emerald-400 font-mono mt-1 flex items-center">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mr-1"></span> Live SSE Synced
           </div>
         </div>
 
@@ -137,7 +142,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNa
 
         <div className="bg-[#0F172A]/80 border border-slate-800/60 p-4 rounded-lg">
           <span className="text-[10px] font-semibold uppercase text-slate-400 tracking-wider font-mono">Deployable Capital</span>
-          <div className="text-xl font-mono font-bold text-blue-400 mt-1">{formatINR(kpis.deployableCapital)}</div>
+          <div className="text-xl font-mono font-bold text-blue-400 mt-1 transition-all duration-500">{formatINR(kpis.deployableCapital)}</div>
           <div className="text-[11px] text-slate-400 font-mono mt-1">Opex & 3 Obligations</div>
         </div>
 
@@ -173,8 +178,8 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNa
               Real-Time Treasury Context & Future Streaming Obligations
             </h3>
           </div>
-          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-950 text-amber-300 border border-amber-800/60">
-            PARSED FROM FUTURE STREAMING DATASET
+          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-950 text-amber-300 border border-amber-800/60 flex items-center">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mr-1"></span> LIVE AUTOMATED SSE STREAM
           </span>
         </div>
 
@@ -468,7 +473,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNa
           <div className="flex justify-between items-center">
             <h3 className="text-sm font-bold text-slate-200">Agent Activity Stream</h3>
             <span className="text-[10px] font-mono text-emerald-400 flex items-center">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 animate-pulse"></span> Live Stream
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 animate-pulse"></span> Live SSE Stream
             </span>
           </div>
           <div className="space-y-3">

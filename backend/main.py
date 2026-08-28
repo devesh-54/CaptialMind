@@ -25,30 +25,31 @@ app.add_middleware(
 )
 
 data_loader = DataLoader()
-engine = DecisionEngine(reserve_floor=1500000.0)
+engine = DecisionEngine(reserve_floor=970000.0)
 
 current_cash = data_loader.load_cash()
 receivables = data_loader.load_receivables()
 invoices = data_loader.load_invoices()
 suppliers = data_loader.load_suppliers()
 obligations = data_loader.load_obligations()
+future_sequence = data_loader.load_future_daily_sequence()
 
 activity_feed = [
     {
         "id": "ACT-105",
         "timestamp": "Just now",
         "stage": "DECIDE",
-        "title": "Optimized Capital Deployment for Employee Salary Day & Supplier Invoices",
-        "detail": f"Evaluated candidate options. Reserved ₹4.10Cr for Employee Salary Payroll due tomorrow and selected Pay Now (Score: 96/100) for {invoices[0]['supplierName'] if invoices else 'Valeo India'}.",
-        "impact": "+₹6.67L Net Yield"
+        "title": "Optimized Capital Deployment for Opex & Supplier Invoices",
+        "detail": f"Evaluated candidate options. Reserved ₹16.5L for Opex due today and selected Pay Now (Score: 96/100) for {invoices[0]['supplierName'] if invoices else 'Bosch Ltd'}.",
+        "impact": "+₹1.41L Net Yield"
     },
     {
         "id": "ACT-104",
         "timestamp": "2m ago",
         "stage": "FORECAST",
-        "title": "Customer A (Mahindra Logistics) Inflow & Salary Obligation Forecasted",
-        "detail": f"Customer A (₹2.45Cr, {receivables[0]['collectionProbability']}% Bayesian confidence) expected on Jan 15th. Employee Payroll (₹4.10Cr) scheduled for tomorrow.",
-        "impact": "Protected ₹15.0L Floor"
+        "title": "Customer CUST011 Inflow & Opex Obligation Forecasted",
+        "detail": f"Customer CUST011 (₹31.76k, {receivables[0]['collectionProbability']}% Bayesian confidence) expected on Sep 28. Opex (₹16.5L) scheduled for today.",
+        "impact": "Protected ₹9.70L Floor"
     },
     {
         "id": "ACT-103",
@@ -63,23 +64,23 @@ decision_history = [
     {
         "id": "DEC-8801",
         "timestamp": "2026-08-28 14:45",
-        "triggerEvent": "Daily Working Capital Run & Salary Day Alignment",
-        "decision": f"Reserve ₹4.10Cr Salary Payroll + Early Settlement for {invoices[0]['supplierName'] if invoices else 'Valeo India'} (Pay Now)",
-        "amount": invoices[0]['amount'] if invoices else 33381685.97,
+        "triggerEvent": "Daily Working Capital Run & Future Dataset Sync",
+        "decision": f"Reserve ₹16.5L Opex + Early Settlement for {invoices[0]['supplierName'] if invoices else 'Bosch Ltd'} (Pay Now)",
+        "amount": invoices[0]['amount'] if invoices else 68902.88,
         "confidence": 96,
         "status": "ACTIVE",
         "version": "v1.2",
         "validUntil": None,
         "reasons": [
-            "Employee Monthly Payroll (₹4.10Cr) prioritized as CRITICAL due tomorrow.",
+            "Operating Expense & Payroll (₹16.5L) prioritized as CRITICAL due today.",
             "Pay Now candidate scored 96/100 (runner-up Bank Finance scored 74/100).",
-            "2.0% discount captures ₹66.76L net value on Valeo India invoice.",
-            "Customer A (Mahindra Logistics) inflow of ₹2.45Cr on Jan 15th guarantees safety buffer above ₹15.0L floor."
+            "Customer CUST011 inflow of ₹31.76k on Sep 28 guarantees safety buffer above ₹9.70L floor."
         ]
     }
 ]
 
 event_subscribers = []
+current_sequence_index = 0
 
 class EventTriggerRequest(BaseModel):
     event_type: str
@@ -88,7 +89,7 @@ class EventTriggerRequest(BaseModel):
     extra_outflow_lakhs: float = 0.0
     prob_delta: float = 0.0
     risk_shift: bool = False
-    customer_id: str = "CUST-001"
+    customer_id: str = "CUST011"
 
 class WhatIfRequest(BaseModel):
     receivable_delay_days: int
@@ -99,7 +100,8 @@ def read_root():
     return {
         "status": "online",
         "system": "CashPilot AI Autonomous Decision Engine",
-        "version": "2.0.0"
+        "version": "2.0.0",
+        "data_source": "futureStreaming_data_cashpilot & historical_data_cashpilot"
     }
 
 @app.get("/api/command-center")
@@ -112,8 +114,8 @@ def get_command_center():
     return {
         "kpis": {
             "availableCash": current_cash,
-            "protectedCash": 1500000.0,
-            "deployableCapital": max(0.0, current_cash - 1500000.0),
+            "protectedCash": 970000.0,
+            "deployableCapital": max(0.0, current_cash - 970000.0),
             "risk30d": "LOW" if receivables[0]["collectionProbability"] >= 75 else "HIGH",
             "wcEfficiency": 88,
             "financingExposure": 1250000.0
@@ -154,9 +156,9 @@ def get_financing_options():
             "id": "FIN-01",
             "title": "Internal Cash Deployment",
             "recommended": True,
-            "impact": "₹3.34Cr Outflow + ₹4.10Cr Salary",
+            "impact": "₹2.09L Outflow + ₹16.5L Opex",
             "cost": "₹0 (Zero Financing Interest)",
-            "verdict": "RECOMMENDED: Captures ₹66.76L discount while covering ₹4.10Cr Salary Payroll due tomorrow.",
+            "verdict": "RECOMMENDED: Covers ₹16.5L Opex while paying INV_FUT_0260 & 0261.",
             "apr": "0.0%",
             "availability": "Instant (HDFC Treasury)"
         },
@@ -165,20 +167,10 @@ def get_financing_options():
             "title": "Dynamic Bank Credit Line",
             "recommended": False,
             "impact": "₹0 Outflow Today (₹12.5L Line Drawn)",
-            "cost": "₹18,500 Interest Cost (8.5% APR)",
-            "verdict": "ALTERNATIVE: Preserves cash if Customer A receivable is delayed >5 days.",
+            "cost": "₹1,250 Interest Cost (8.5% APR)",
+            "verdict": "ALTERNATIVE: Preserves cash if CUST011 receivable is delayed >5 days.",
             "apr": "8.5% p.a.",
             "availability": "Pre-Approved (ICICI Bank)"
-        },
-        {
-            "id": "FIN-03",
-            "title": "Supplier Reverse Factoring",
-            "recommended": False,
-            "impact": "₹3.34Cr Paid by Factoring Partner",
-            "cost": "₹78,000 Processing & Yield Fee",
-            "verdict": "SUB-OPTIMAL: Higher fee reduces net discount yield from 2.0% to 1.4%.",
-            "apr": "11.2% p.a.",
-            "availability": "Active (KredX Platform)"
         }
     ]
 
@@ -197,7 +189,6 @@ def get_decision_history():
 async def receive_event(req: EventTriggerRequest):
     global current_cash, activity_feed, decision_history, receivables
 
-    # Step 1: Evaluate Materiality Thresholds
     is_material, reason = MaterialityChangeDetector.is_material_change(
         event_type=req.event_type,
         delay_days=req.receivable_delay_days,
@@ -208,19 +199,17 @@ async def receive_event(req: EventTriggerRequest):
 
     timestamp_str = time.strftime("%H:%M:%S")
 
-    # IF NON-MATERIAL TELEMETRY (e.g. minor cash ping <2% or delay <3d)
     if not is_material:
         monitored_event = {
             "id": f"ACT-{int(time.time()) % 10000}",
             "timestamp": "Just now",
             "stage": "OBSERVE",
-            "title": f"Telemetry Telemetry Ingested: {req.description}",
+            "title": f"Telemetry Ingested: {req.description}",
             "detail": f"{reason} Existing capital allocation strategy retained.",
             "impact": "Monitored (No Material Change)"
         }
         activity_feed.insert(0, monitored_event)
 
-        # Broadcast telemetry ping over SSE
         payload = json.dumps({
             "event": "TELEMETRY_PING",
             "data": {
@@ -240,7 +229,6 @@ async def receive_event(req: EventTriggerRequest):
         }
 
     # IF MATERIAL CHANGE DETECTED: RUN RE-OPTIMIZER
-    # 1. Update Bayesian collection probabilities if receivable delay reported
     if req.receivable_delay_days > 0 or req.event_type == "RECEIVABLE_DELAYED":
         if receivables and len(receivables) > 0:
             receivables[0] = engine.update_bayesian_probability(receivables[0], on_time=False)
@@ -248,7 +236,6 @@ async def receive_event(req: EventTriggerRequest):
     if req.extra_outflow_lakhs > 0:
         current_cash -= (req.extra_outflow_lakhs * 100000.0)
 
-    # 2. Recompute 30-day cash timeline
     new_forecast = engine.forecast_30d_cash(
         current_cash,
         receivables=receivables,
@@ -256,14 +243,12 @@ async def receive_event(req: EventTriggerRequest):
         extra_outflow=req.extra_outflow_lakhs * 100000.0
     )
 
-    # 3. Mark previous active decision in history as SUPERSEDED
     if decision_history and len(decision_history) > 0:
         for dec in decision_history:
             if dec.get("status") == "ACTIVE":
                 dec["status"] = "SUPERSEDED"
                 dec["validUntil"] = time.strftime("%Y-%m-%d %H:%M")
 
-    # 4. Generate new ACTIVE decision via Knapsack & Dynamic Weighting
     new_hero = engine.generate_hero_recommendation(invoices, current_cash, receivables=receivables)
     new_candidates = engine.generate_candidates(current_cash, top_invoice=invoices[0] if invoices else None, receivables=receivables)
     
@@ -273,20 +258,19 @@ async def receive_event(req: EventTriggerRequest):
         "timestamp": time.strftime("%Y-%m-%d %H:%M"),
         "triggerEvent": req.description,
         "decision": new_hero["title"],
-        "amount": invoices[0]['amount'] if invoices else 33381685.97,
+        "amount": invoices[0]['amount'] if invoices else 68902.88,
         "confidence": new_hero["confidence"],
         "status": "ACTIVE",
         "version": f"v2.{len(decision_history)+1}",
         "validUntil": None,
         "reasons": [
             f"Material Change Detected: {reason}",
-            f"Bayesian Customer A Probability shifted to {receivables[0]['collectionProbability']}%.",
+            f"Bayesian Customer CUST011 Probability shifted to {receivables[0]['collectionProbability']}%.",
             f"Evaluated candidates. 0/1 Knapsack allocation re-optimized."
         ]
     }
     decision_history.insert(0, new_decision)
 
-    # 5. Log material event to Activity Stream
     material_event = {
         "id": f"ACT-{int(time.time()) % 10000}",
         "timestamp": "Just now",
@@ -297,7 +281,6 @@ async def receive_event(req: EventTriggerRequest):
     }
     activity_feed.insert(0, material_event)
 
-    # 6. Broadcast SSE live update
     payload = json.dumps({
         "event": "REALTIME_UPDATE",
         "data": {
@@ -308,6 +291,7 @@ async def receive_event(req: EventTriggerRequest):
             "heroRecommendation": new_hero,
             "candidates": new_candidates,
             "forecast": new_forecast,
+            "availableCash": current_cash,
             "materialChange": True,
             "timestamp": timestamp_str
         }
@@ -332,17 +316,17 @@ def run_what_if_simulation(req: WhatIfRequest):
         extra_outflow=req.cash_drop_lakhs * 100000.0
     )
     min_cash = min([item["cash"] for item in simulated_forecast])
-    breaches_floor = min_cash < 15.0
+    breaches_floor = min_cash < 9.7
 
     if breaches_floor:
         explanation = (
-            f"Action Shifted: Because simulated Customer A delay drops cash to ₹{min_cash:.1f}L (breaching reserve floor after Salary Day), "
-            f"CashPilot automatically shifts Valeo India payment to Bank Dynamic Credit Line to protect Employee Payroll."
+            f"Action Shifted: Because simulated CUST011 delay drops cash to ₹{min_cash:.1f}L (breaching ₹9.70L reserve floor), "
+            f"CashPilot automatically shifts invoice payment to Bank Dynamic Credit Line to protect Opex & Payroll."
         )
     else:
         explanation = (
-            f"Strategy Intact: Current stress parameters (Customer A +{req.receivable_delay_days}d delay, ₹{req.cash_drop_lakhs}L outflow) "
-            f"keep minimum liquidity at ₹{min_cash:.1f}L after Salary Payroll tomorrow, safely above floor."
+            f"Strategy Intact: Current stress parameters (CUST011 +{req.receivable_delay_days}d delay, ₹{req.cash_drop_lakhs}L outflow) "
+            f"keep minimum liquidity at ₹{min_cash:.1f}L after Opex today, safely above floor."
         )
 
     return {
@@ -352,6 +336,79 @@ def run_what_if_simulation(req: WhatIfRequest):
         "explanation": explanation
     }
 
+# BACKGROUND SSE LIVE AUTOMATED STREAM GENERATOR (Pushes future_daily_consolidated events every 5 seconds)
+async def auto_stream_generator():
+    global current_cash, current_sequence_index
+    while True:
+        await asyncio.sleep(5.0)
+        if future_sequence and len(future_sequence) > 0:
+            current_sequence_index = (current_sequence_index + 1) % len(future_sequence)
+            row = future_sequence[current_sequence_index]
+
+            date_str = row.get("date", "2026-08-28")
+            new_bal = row.get("balance", 2554079.97)
+            inflow = row.get("inflow", 0.0)
+            outflow = row.get("outflow", 0.0)
+
+            # Update cash balance from future sequence row
+            current_cash = new_bal
+
+            timestamp_str = time.strftime("%H:%M:%S")
+
+            # Evaluate materiality
+            is_material = outflow > 150000.0 or inflow > 200000.0
+
+            if is_material:
+                event_type = "FORECAST"
+                desc = f"Future Sequence Date {date_str}: Daily Outflow ₹{(outflow/100000.0):.2f}L / Inflow ₹{(inflow/100000.0):.2f}L Ingested"
+                new_event = {
+                    "id": f"ACT-FUT-{current_sequence_index}",
+                    "timestamp": "Just now",
+                    "stage": event_type,
+                    "title": f"⚡ Future Streaming Sequence Event ({date_str})",
+                    "detail": desc,
+                    "impact": f"Cash Balance: ₹{(new_bal/100000.0):.2f}L"
+                }
+                activity_feed.insert(0, new_event)
+
+                new_forecast = engine.forecast_30d_cash(current_cash, receivables=receivables)
+                new_hero = engine.generate_hero_recommendation(invoices, current_cash, receivables=receivables)
+                new_candidates = engine.generate_candidates(current_cash, top_invoice=invoices[0] if invoices else None, receivables=receivables)
+
+                payload = json.dumps({
+                    "event": "REALTIME_UPDATE",
+                    "data": {
+                        "newEvent": new_event,
+                        "availableCash": current_cash,
+                        "heroRecommendation": new_hero,
+                        "candidates": new_candidates,
+                        "forecast": new_forecast,
+                        "receivables": receivables,
+                        "timestamp": timestamp_str,
+                        "sequenceDate": date_str
+                    }
+                })
+            else:
+                payload = json.dumps({
+                    "event": "TELEMETRY_PING",
+                    "data": {
+                        "sequenceDate": date_str,
+                        "availableCash": current_cash,
+                        "status": f"Monitored Date {date_str} - Balance ₹{(new_bal/100000.0):.2f}L",
+                        "timestamp": timestamp_str
+                    }
+                })
+
+            for queue in list(event_subscribers):
+                try:
+                    await queue.put(payload)
+                except Exception:
+                    pass
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(auto_stream_generator())
+
 @app.get("/api/stream")
 async def event_stream(request: Request):
     queue = asyncio.Queue()
@@ -359,7 +416,7 @@ async def event_stream(request: Request):
 
     async def event_generator() -> AsyncGenerator[str, None]:
         try:
-            yield json.dumps({"event": "CONNECTED", "data": "CashPilot AI SSE Engine Active"})
+            yield json.dumps({"event": "CONNECTED", "data": "CashPilot AI Continuous Automated Streaming Engine Active"})
 
             while True:
                 if await request.is_disconnected():
@@ -373,7 +430,7 @@ async def event_stream(request: Request):
                         "event": "HEARTBEAT",
                         "data": {
                             "timestamp": time.strftime("%H:%M:%S"),
-                            "status": "ACTIVE"
+                            "status": "ACTIVE_AUTOMATED_STREAM"
                         }
                     })
                     yield heartbeat

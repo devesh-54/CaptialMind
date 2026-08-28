@@ -12,7 +12,13 @@ import {
   ShieldCheck,
   TrendingUp,
   SlidersHorizontal,
-  ChevronRight
+  Sparkles,
+  Zap,
+  Activity,
+  ChevronRight,
+  Lock,
+  DollarSign,
+  Building2
 } from 'lucide-react';
 import { fetchCommandCenterData, executeAction } from '../services/api';
 
@@ -166,88 +172,118 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ onOpenDraw
   ];
 
   return (
-    <div className="space-y-8 pb-12 font-mono">
-      {/* PAGE HEADER */}
-      <div className="border-b border-slate-800 pb-4">
-        <div className="flex items-center space-x-2">
-          <ListOrdered className="w-6 h-6 text-blue-400" />
-          <h1 className="text-xl font-bold text-slate-100 font-sans">Treasury Choices & Execution Sequence</h1>
+    <div className="space-y-8 pb-12 font-mono relative selection:bg-blue-600 selection:text-white">
+      
+      {/* AMBIENT BACKGROUND GLOW ORBS FOR LIQUID GLASS EFFECT */}
+      <div className="absolute -top-12 -left-12 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl pointer-events-none -z-10 animate-pulse"></div>
+      <div className="absolute top-1/3 -right-12 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
+      <div className="absolute bottom-12 left-1/4 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
+
+      {/* LIQUID GLASS HERO HEADER */}
+      <div className="backdrop-blur-2xl bg-[#0F172A]/60 border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+        
+        {/* Iridescent Top Reflection Highlight */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent"></div>
+
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center space-x-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-400/30 backdrop-blur-md flex items-center">
+                <Sparkles className="w-3 h-3 mr-1 text-blue-400" /> LIQUID GLASS TREASURY ENGINE
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 backdrop-blur-md">
+                0/1 KNAPSACK OPTIMAL
+              </span>
+            </div>
+            <h1 className="text-2xl font-bold text-slate-100 font-sans tracking-tight">
+              Treasury Context Choices & Order of Execution
+            </h1>
+            <p className="text-xs text-slate-300 font-sans">
+              Evaluates upcoming cash context signals, presents AI candidate choices, and enforces step-by-step capital allocation.
+            </p>
+          </div>
+
+          <div className="flex items-center space-x-3 text-xs shrink-0">
+            <div className="bg-slate-900/80 border border-slate-700/60 px-4 py-2 rounded-xl backdrop-blur-md shadow-inner text-right">
+              <div className="text-[10px] uppercase text-slate-400 font-bold">Deployable Capital</div>
+              <div className="text-base font-bold text-blue-400">{formatINR(1584079.97)}</div>
+            </div>
+          </div>
         </div>
-        <p className="text-xs text-slate-400 font-sans mt-1">
-          Evaluates upcoming cash context signals, presents AI choices, and enforces the optimal step-by-step order of execution.
-        </p>
       </div>
 
-      {/* SECTION 1: IMMINENT CONTEXT SIGNALS */}
-      <div className="bg-[#0F172A] border border-amber-500/40 rounded-lg p-5 space-y-4 shadow-lg">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+      {/* SECTION 1: IMMINENT CONTEXT SIGNALS (LIQUID GLASS GRID) */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Calendar className="w-4 h-4 text-amber-400" />
-            <h2 className="text-xs font-bold uppercase tracking-wider text-amber-400">
-              Section 1: Imminent Financial Signals & Context
+            <Zap className="w-4 h-4 text-amber-400" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-200">
+              Section 1: Imminent Financial Context Signals
             </h2>
           </div>
-          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-800">
-            REAL-TIME DATASET SIGNALS
-          </span>
+          <span className="text-[10px] text-slate-400">Parsed from real-time streaming dataset</span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           
           {/* Signal 1: Salaries */}
-          <div className="bg-amber-950/40 border border-amber-800/60 p-4 rounded-lg space-y-2">
+          <div className="backdrop-blur-xl bg-[#0F172A]/50 border border-amber-500/30 rounded-xl p-4 space-y-2 shadow-xl hover:border-amber-500/60 transition group relative overflow-hidden">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-400/40 to-transparent"></div>
             <div className="flex items-center justify-between text-[10px] text-amber-400 font-bold">
-              <span>💼 EMPLOYEE SALARIES & OPEX</span>
-              <span className="px-1.5 py-0.5 rounded bg-amber-500 text-black font-bold">DUE IN 3 DAYS</span>
+              <span>💼 SALARIES & OPEX</span>
+              <span className="px-2 py-0.5 rounded-full bg-amber-500 text-black font-bold shadow-sm">DUE IN 3 DAYS</span>
             </div>
-            <div className="text-lg font-bold text-slate-100">{formatINR(1650000)}</div>
-            <p className="text-[11px] text-slate-300 font-sans">
+            <div className="text-xl font-bold text-slate-100">{formatINR(1650000)}</div>
+            <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
               Critical payroll requirement due in 3 days. Must lock reserve before executing discretionary payouts.
             </p>
           </div>
 
           {/* Signal 2: Customer A */}
-          <div className="bg-emerald-950/40 border border-emerald-800/60 p-4 rounded-lg space-y-2">
+          <div className="backdrop-blur-xl bg-[#0F172A]/50 border border-emerald-500/30 rounded-xl p-4 space-y-2 shadow-xl hover:border-emerald-500/60 transition group relative overflow-hidden">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent"></div>
             <div className="flex items-center justify-between text-[10px] text-emerald-400 font-bold">
               <span>📥 CUSTOMER A (CUST011) INFLOW</span>
               <span>EXPECTED IN 10 DAYS</span>
             </div>
-            <div className="text-lg font-bold text-slate-100">{formatINR(31760.96)}</div>
-            <p className="text-[11px] text-slate-300 font-sans">
-              Expected wire on Sep 28. Bayesian probability: <strong>87.0%</strong> (11 historical observations).
+            <div className="text-xl font-bold text-slate-100">{formatINR(31760.96)}</div>
+            <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
+              Expected wire on Sep 28. Bayesian confidence: <strong className="text-emerald-400">87.0%</strong> (11 historical observations).
             </p>
           </div>
 
           {/* Signal 3: Bosch Invoice */}
-          <div className="bg-blue-950/40 border border-blue-800/60 p-4 rounded-lg space-y-2">
+          <div className="backdrop-blur-xl bg-[#0F172A]/50 border border-blue-500/30 rounded-xl p-4 space-y-2 shadow-xl hover:border-blue-500/60 transition group relative overflow-hidden">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-400/40 to-transparent"></div>
             <div className="flex items-center justify-between text-[10px] text-blue-400 font-bold">
               <span>🏭 BOSCH LTD RAW MATERIAL</span>
               <span>DISCOUNT IN 2 DAYS</span>
             </div>
-            <div className="text-lg font-bold text-slate-100">{formatINR(68902.88)}</div>
-            <p className="text-[11px] text-slate-300 font-sans">
+            <div className="text-xl font-bold text-slate-100">{formatINR(68902.88)}</div>
+            <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
               2.0% early discount deadline in 2 days. Early payout preserves critical supplier relationship.
             </p>
           </div>
 
           {/* Signal 4: Statutory Tax */}
-          <div className="bg-purple-950/40 border border-purple-800/60 p-4 rounded-lg space-y-2">
+          <div className="backdrop-blur-xl bg-[#0F172A]/50 border border-purple-500/30 rounded-xl p-4 space-y-2 shadow-xl hover:border-purple-500/60 transition group relative overflow-hidden">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-purple-400/40 to-transparent"></div>
             <div className="flex items-center justify-between text-[10px] text-purple-400 font-bold">
               <span>🏦 STATUTORY TAX OBLIGATION</span>
               <span>DUE IN 5 DAYS</span>
             </div>
-            <div className="text-lg font-bold text-slate-100">{formatINR(230000)}</div>
-            <p className="text-[11px] text-slate-300 font-sans">
-              Mandatory tax obligation due in 5 days. Must remain covered under 30-day liquidity horizon.
+            <div className="text-xl font-bold text-slate-100">{formatINR(230000)}</div>
+            <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
+              Mandatory tax obligation due in 5 days. Remained covered under 30-day liquidity horizon.
             </p>
           </div>
 
         </div>
       </div>
 
-      {/* SECTION 2: CHOICE EVALUATION MATRIX */}
-      <div className="bg-[#0F172A] border border-slate-800 rounded-lg p-5 space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+      {/* SECTION 2: CHOICE EVALUATION MATRIX (LIQUID GLASS PANELS) */}
+      <div className="backdrop-blur-2xl bg-[#0F172A]/60 border border-white/10 rounded-2xl p-6 space-y-4 shadow-2xl">
+        <div className="flex items-center justify-between border-b border-white/10 pb-3">
           <div className="flex items-center space-x-2">
             <SlidersHorizontal className="w-4 h-4 text-blue-400" />
             <h2 className="text-xs font-bold uppercase tracking-wider text-slate-200">
@@ -262,18 +298,18 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ onOpenDraw
             <div 
               key={choice.id}
               onClick={() => setSelectedChoice(choice.id)}
-              className={`p-4 rounded-lg border cursor-pointer transition space-y-3 ${
+              className={`p-5 rounded-xl border backdrop-blur-xl transition-all duration-300 cursor-pointer space-y-3 relative overflow-hidden ${
                 choice.recommended 
-                  ? 'bg-blue-950/40 border-blue-500/60 ring-1 ring-blue-500/30' 
+                  ? 'bg-blue-950/40 border-blue-500/60 shadow-lg shadow-blue-500/10 ring-1 ring-blue-500/30' 
                   : selectedChoice === choice.id
-                  ? 'bg-slate-900 border-slate-700'
-                  : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                  ? 'bg-slate-900/80 border-slate-600 shadow-md'
+                  : 'bg-slate-900/40 border-white/5 hover:border-white/20'
               }`}
             >
               <div className="flex items-center justify-between">
                 <span className="font-bold text-slate-100 text-xs font-sans">{choice.title}</span>
-                <span className={`px-2 py-0.5 rounded text-[11px] font-bold border ${
-                  choice.recommended ? 'bg-blue-900 text-blue-300 border-blue-700' : 'bg-slate-800 text-slate-400 border-slate-700'
+                <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border backdrop-blur-md ${
+                  choice.recommended ? 'bg-blue-500/20 text-blue-300 border-blue-400/40' : 'bg-slate-800/80 text-slate-400 border-slate-700'
                 }`}>
                   Score: {choice.score}/100
                 </span>
@@ -283,23 +319,23 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ onOpenDraw
               <div className="grid grid-cols-4 gap-2 text-[10px] font-mono">
                 <div>
                   <div className="text-slate-400 flex justify-between"><span>Liq</span><span>{choice.subScores.liquidity}</span></div>
-                  <div className="w-full bg-slate-800 h-1 rounded mt-0.5"><div style={{ width: `${choice.subScores.liquidity}%` }} className="bg-blue-500 h-full rounded"></div></div>
+                  <div className="w-full bg-slate-800/80 h-1 rounded-full mt-0.5 overflow-hidden"><div style={{ width: `${choice.subScores.liquidity}%` }} className="bg-blue-500 h-full rounded-full"></div></div>
                 </div>
                 <div>
                   <div className="text-slate-400 flex justify-between"><span>Fin</span><span>{choice.subScores.financial}</span></div>
-                  <div className="w-full bg-slate-800 h-1 rounded mt-0.5"><div style={{ width: `${choice.subScores.financial}%` }} className="bg-emerald-500 h-full rounded"></div></div>
+                  <div className="w-full bg-slate-800/80 h-1 rounded-full mt-0.5 overflow-hidden"><div style={{ width: `${choice.subScores.financial}%` }} className="bg-emerald-500 h-full rounded-full"></div></div>
                 </div>
                 <div>
                   <div className="text-slate-400 flex justify-between"><span>Supp</span><span>{choice.subScores.supplier}</span></div>
-                  <div className="w-full bg-slate-800 h-1 rounded mt-0.5"><div style={{ width: `${choice.subScores.supplier}%` }} className="bg-purple-500 h-full rounded"></div></div>
+                  <div className="w-full bg-slate-800/80 h-1 rounded-full mt-0.5 overflow-hidden"><div style={{ width: `${choice.subScores.supplier}%` }} className="bg-purple-500 h-full rounded-full"></div></div>
                 </div>
                 <div>
                   <div className="text-slate-400 flex justify-between"><span>Risk</span><span>{choice.subScores.risk}</span></div>
-                  <div className="w-full bg-slate-800 h-1 rounded mt-0.5"><div style={{ width: `${choice.subScores.risk}%` }} className="bg-amber-500 h-full rounded"></div></div>
+                  <div className="w-full bg-slate-800/80 h-1 rounded-full mt-0.5 overflow-hidden"><div style={{ width: `${choice.subScores.risk}%` }} className="bg-amber-500 h-full rounded-full"></div></div>
                 </div>
               </div>
 
-              <div className="text-[11px] space-y-1 text-slate-300 font-sans border-t border-slate-800/80 pt-2">
+              <div className="text-[11px] space-y-1 text-slate-300 font-sans border-t border-white/5 pt-2">
                 <div><strong>Cost & Benefit:</strong> {choice.benefit} ({choice.cost})</div>
                 <div>
                   <strong>Risk Assessment:</strong>{' '}
@@ -315,21 +351,25 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ onOpenDraw
         </div>
       </div>
 
-      {/* SECTION 3: ORDER OF EXECUTION PIPELINE */}
-      <div className="bg-[#0F172A] border border-slate-800 rounded-lg p-5 space-y-5">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+      {/* SECTION 3: ORDER OF EXECUTION PIPELINE (LIQUID GLASS SEQUENCED STEPS) */}
+      <div className="backdrop-blur-2xl bg-[#0F172A]/60 border border-white/10 rounded-2xl p-6 space-y-6 shadow-2xl">
+        <div className="flex items-center justify-between border-b border-white/10 pb-3">
           <div className="flex items-center space-x-2">
             <Layers className="w-4 h-4 text-emerald-400" />
             <h2 className="text-xs font-bold uppercase tracking-wider text-slate-200">
               Section 3: Optimal Order of Execution (0/1 Knapsack Output)
             </h2>
           </div>
-          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
+          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 backdrop-blur-md">
             SEQUENCED EXECUTION PIPELINE
           </span>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 relative">
+          
+          {/* Vertical Connecting Line */}
+          <div className="absolute left-6 top-6 bottom-6 w-0.5 bg-gradient-to-b from-blue-500 via-amber-500 to-emerald-500 opacity-30 -z-0"></div>
+
           {executionSteps.map((step) => {
             const isDone = executedSteps[step.id];
             const isRunning = isExecuting === step.id;
@@ -337,31 +377,31 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ onOpenDraw
             return (
               <div 
                 key={step.id}
-                className={`p-4 rounded-lg border transition ${
+                className={`p-5 rounded-xl border backdrop-blur-xl transition-all duration-300 space-y-3 relative z-10 ${
                   isDone 
-                    ? 'bg-emerald-950/30 border-emerald-800/60' 
+                    ? 'bg-emerald-950/30 border-emerald-500/40 shadow-lg shadow-emerald-950/20' 
                     : step.stepNumber === 1
-                    ? 'bg-amber-950/20 border-amber-800/60'
-                    : 'bg-slate-900 border-slate-800'
+                    ? 'bg-amber-950/20 border-amber-500/40 shadow-lg shadow-amber-950/20'
+                    : 'bg-slate-900/50 border-white/10 hover:border-white/20'
                 }`}
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   
-                  <div className="flex items-start space-x-3">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
+                  <div className="flex items-start space-x-4">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 shadow-lg ${
                       isDone 
-                        ? 'bg-emerald-500 text-black' 
+                        ? 'bg-emerald-500 text-black shadow-emerald-500/30' 
                         : step.stepNumber === 1
-                        ? 'bg-amber-500 text-black'
-                        : 'bg-blue-600 text-white'
+                        ? 'bg-amber-500 text-black shadow-amber-500/30'
+                        : 'bg-blue-600 text-white shadow-blue-600/30'
                     }`}>
                       {isDone ? <CheckCircle2 className="w-4 h-4" /> : step.stepNumber}
                     </div>
 
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
-                        <h3 className="font-bold text-slate-100 text-xs font-sans">{step.title}</h3>
-                        <span className={`px-2 py-0.2 rounded text-[10px] font-bold border ${
+                        <h3 className="font-bold text-slate-100 text-sm font-sans">{step.title}</h3>
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border backdrop-blur-md ${
                           isDone 
                             ? 'bg-emerald-950 text-emerald-400 border-emerald-800' 
                             : step.stepNumber === 1
@@ -372,46 +412,48 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ onOpenDraw
                         </span>
                       </div>
 
-                      <p className="text-[11px] text-slate-300 font-sans leading-relaxed">{step.detail}</p>
+                      <p className="text-xs text-slate-300 font-sans leading-relaxed">{step.detail}</p>
                       
-                      <div className="flex items-center space-x-4 text-[10px] text-slate-400 pt-1">
+                      <div className="flex flex-wrap items-center gap-4 text-[10px] text-slate-400 pt-1">
                         <span>🗓️ Signal: <strong>{step.eventTrigger}</strong></span>
-                        <span>⏱️ Execution Timing: <strong className="text-slate-200">{step.timing}</strong></span>
+                        <span>⏱️ Timing: <strong className="text-slate-200">{step.timing}</strong></span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between sm:flex-col sm:items-end shrink-0 space-y-1">
-                    <div className="text-sm font-bold text-slate-100">{formatINR(step.amount)}</div>
+                  <div className="flex items-center justify-between sm:flex-col sm:items-end shrink-0 space-y-2">
+                    <div className="text-base font-bold text-slate-100">{formatINR(step.amount)}</div>
                     
                     {step.actionType === 'PAY_NOW' || step.actionType === 'LOCK_RESERVE' ? (
                       <button
                         disabled={isDone || isRunning}
                         onClick={() => handleExecuteStep(step.id, step.invoiceId, step.actionType)}
-                        className={`py-1.5 px-3 rounded text-xs font-bold transition flex items-center space-x-1.5 ${
+                        className={`py-2 px-4 rounded-xl text-xs font-bold transition-all duration-300 shadow-lg flex items-center space-x-2 ${
                           isDone 
-                            ? 'bg-emerald-950 text-emerald-400 border border-emerald-800 cursor-default'
+                            ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 cursor-default'
                             : isRunning
                             ? 'bg-slate-800 text-slate-400 cursor-wait'
-                            : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30'
+                            : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/30 hover:scale-105 active:scale-95'
                         }`}
                       >
                         {isRunning ? (
                           <span>Executing...</span>
                         ) : isDone ? (
                           <>
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Done</span>
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                            <span>Executed</span>
                           </>
                         ) : (
                           <>
-                            <Play className="w-3 h-3" />
+                            <Play className="w-3.5 h-3.5 fill-current" />
                             <span>Execute Step</span>
                           </>
                         )}
                       </button>
                     ) : (
-                      <span className="text-[10px] text-slate-500 italic">Automated Trigger</span>
+                      <span className="text-[10px] text-slate-500 italic bg-slate-900/60 px-2 py-1 rounded border border-slate-800">
+                        Automated Trigger
+                      </span>
                     )}
                   </div>
 

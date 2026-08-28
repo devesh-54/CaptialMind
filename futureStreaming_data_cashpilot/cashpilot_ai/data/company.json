@@ -1,0 +1,7 @@
+{
+    "company_id": "TATA001",
+    "company_name": "Tata Motors Ltd",
+    "currency": "INR",
+    "minimum_cash_reserve": 600000.0,
+    "industry": "automotive_manufacturing"
+}

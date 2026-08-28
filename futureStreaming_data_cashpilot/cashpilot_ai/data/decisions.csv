@@ -1,0 +1,15 @@
+decision_id,company_id,created_at,decision_type,chosen_action,confidence,reasoning,status
+DEC_FUT_001,TATA001,2026-09-01,LIQUIDITY_MANAGEMENT,BANK_FINANCE,0.92,Future working capital tight. LOC drawn to maintain buffer.,EXECUTED
+DEC_FUT_002,TATA001,2026-09-09,LIQUIDITY_MANAGEMENT,BANK_FINANCE,0.92,Future working capital tight. LOC drawn to maintain buffer.,EXECUTED
+DEC_FUT_003,TATA001,2026-09-11,LIQUIDITY_MANAGEMENT,BANK_FINANCE,0.92,Future working capital tight. LOC drawn to maintain buffer.,EXECUTED
+DEC_FUT_004,TATA001,2026-09-23,LIQUIDITY_MANAGEMENT,BANK_FINANCE,0.92,Future working capital tight. LOC drawn to maintain buffer.,EXECUTED
+DEC_FUT_005,TATA001,2026-10-11,LIQUIDITY_MANAGEMENT,BANK_FINANCE,0.92,Future working capital tight. LOC drawn to maintain buffer.,EXECUTED
+DEC_FUT_006,TATA001,2026-10-23,LIQUIDITY_MANAGEMENT,BANK_FINANCE,0.92,Future working capital tight. LOC drawn to maintain buffer.,EXECUTED
+DEC_FUT_007,TATA001,2026-10-24,LIQUIDITY_MANAGEMENT,BANK_FINANCE,0.92,Future working capital tight. LOC drawn to maintain buffer.,EXECUTED
+DEC_FUT_008,TATA001,2026-10-31,LIQUIDITY_MANAGEMENT,BANK_FINANCE,0.92,Future working capital tight. LOC drawn to maintain buffer.,EXECUTED
+DEC_FUT_009,TATA001,2026-11-02,LIQUIDITY_MANAGEMENT,BANK_FINANCE,0.92,Future working capital tight. LOC drawn to maintain buffer.,EXECUTED
+DEC_FUT_010,TATA001,2026-11-04,LIQUIDITY_MANAGEMENT,BANK_FINANCE,0.92,Future working capital tight. LOC drawn to maintain buffer.,EXECUTED
+DEC_FUT_011,TATA001,2026-11-07,LIQUIDITY_MANAGEMENT,BANK_FINANCE,0.92,Future working capital tight. LOC drawn to maintain buffer.,EXECUTED
+DEC_FUT_012,TATA001,2026-11-10,LIQUIDITY_MANAGEMENT,BANK_FINANCE,0.92,Future working capital tight. LOC drawn to maintain buffer.,EXECUTED
+DEC_FUT_013,TATA001,2026-11-13,LIQUIDITY_MANAGEMENT,BANK_FINANCE,0.92,Future working capital tight. LOC drawn to maintain buffer.,EXECUTED
+DEC_FUT_014,TATA001,2026-12-03,LIQUIDITY_MANAGEMENT,BANK_FINANCE,0.92,Future working capital tight. LOC drawn to maintain buffer.,EXECUTED

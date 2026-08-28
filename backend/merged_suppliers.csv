@@ -1,0 +1,16 @@
+supplier_id,company_id,name,category,strategic_importance,strategic_importance_score,liquidity_risk,liquidity_risk_score,payment_terms_days,financing_available,financing_rate,data_source
+SUP001,COMP001,Tata Steel Ltd,Raw Materials,CRITICAL,0.93,LOW,0.12,30,True,11.5,HISTORICAL
+SUP002,COMP001,JSW Steel Ltd,Raw Materials,CRITICAL,0.88,LOW,0.15,30,True,12.0,HISTORICAL
+SUP003,COMP001,Bosch Ltd,Engine Components,CRITICAL,0.91,LOW,0.1,15,True,10.5,HISTORICAL
+SUP004,COMP001,Denso India Pvt Ltd,Engine Components,CRITICAL,0.87,LOW,0.18,30,True,11.0,HISTORICAL
+SUP005,COMP001,MRF Ltd,Tyres,MEDIUM,0.72,MEDIUM,0.35,45,True,13.0,HISTORICAL
+SUP006,COMP001,Apollo Tyres Ltd,Tyres,MEDIUM,0.65,MEDIUM,0.4,45,False,0.0,HISTORICAL
+SUP007,COMP001,Motherson Sumi Systems Ltd,Electrical,MEDIUM,0.7,MEDIUM,0.38,30,True,12.5,HISTORICAL
+SUP008,COMP001,Bharat Forge Ltd,Forged Components,MEDIUM,0.68,MEDIUM,0.42,45,False,0.0,HISTORICAL
+SUP009,COMP001,Sundaram-Clayton Ltd,Aluminium Castings,MEDIUM,0.6,MEDIUM,0.45,45,True,13.5,HISTORICAL
+SUP010,COMP001,Valeo India Pvt Ltd,Lighting Systems,MEDIUM,0.55,MEDIUM,0.5,60,False,0.0,HISTORICAL
+SUP011,COMP001,ZF Commercial Vehicle Control,Brakes,MEDIUM,0.62,MEDIUM,0.44,60,True,14.0,HISTORICAL
+SUP012,COMP001,Saint-Gobain India,Glass,LOW,0.3,HIGH,0.65,60,False,0.0,HISTORICAL
+SUP013,COMP001,3M India Ltd,Consumables,LOW,0.28,HIGH,0.68,60,False,0.0,HISTORICAL
+SUP014,COMP001,Asian Paints Industrial,Paints,LOW,0.25,HIGH,0.7,45,False,0.0,HISTORICAL
+SUP015,COMP001,Castrol India Ltd,Lubricants,LOW,0.22,HIGH,0.72,45,False,0.0,HISTORICAL

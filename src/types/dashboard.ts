@@ -18,11 +18,19 @@ export interface KPIState {
   financingExposure: number;
 }
 
+export interface SubScores {
+  liquidity: number;
+  financial: number;
+  supplier: number;
+  risk: number;
+}
+
 export interface OptionCandidate {
   id: string;
   action: 'Pay Now' | 'Pay at Maturity' | 'Finance' | 'Delay' | 'Retain';
   title: string;
   score: number;
+  subScores: SubScores;
   costBenefit: string;
   riskNote: string;
   breachesFloor: boolean;

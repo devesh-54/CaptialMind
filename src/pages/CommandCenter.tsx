@@ -5,11 +5,9 @@ import {
   HelpCircle, 
   Sparkles,
   ArrowRight,
-  AlertTriangle,
   Calendar,
-  ArrowDownLeft,
-  DollarSign,
-  Building
+  Layers,
+  Info
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine } from 'recharts';
 import { mockActivityFeed, mockInvoices, mockOptionCandidates } from '../data/mockData';
@@ -311,10 +309,17 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNa
         
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h3 className="text-sm font-bold text-slate-200 font-sans">
-              30-Day Projected Liquidity Curve Across Alternatives (Salary & Inflows Annotated)
-            </h3>
-            <p className="text-xs text-slate-400">
+            <div className="flex items-center space-x-2">
+              <h3 className="text-sm font-bold text-slate-200 font-sans">
+                30-Day Projected Liquidity Curve Across Alternatives
+              </h3>
+
+              {/* REQUIREMENT #5: PERSISTENT 30-DAY HORIZON CONSISTENCY LABEL */}
+              <span className="px-2.5 py-0.5 rounded bg-blue-950 text-blue-400 border border-blue-800/80 text-[10px] font-mono font-bold flex items-center">
+                <Info className="w-3 h-3 mr-1" /> All candidate decisions evaluated against this full 30-day forward horizon
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-1">
               Comparing baseline cash path against pessimistic receivable delays & candidate previews
             </p>
           </div>
@@ -393,10 +398,16 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNa
         </div>
       </div>
 
-      {/* 6. CAPITAL ALLOCATION WATERFALL */}
+      {/* 6. CAPITAL ALLOCATION WATERFALL (WITH 0/1 KNAPSACK BADGE) */}
       <div className="bg-[#0F172A]/80 border border-slate-800/60 rounded-lg p-5">
         <div className="flex justify-between items-center mb-3 font-mono">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Capital Flow Breakdown</span>
+          <div className="flex items-center space-x-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Capital Flow Breakdown</span>
+            {/* REQUIREMENT #3: DP KNAPSACK BADGE */}
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-950 text-purple-300 border border-purple-800/80 flex items-center">
+              <Layers className="w-3 h-3 mr-1 text-purple-400" /> Globally optimal allocation (0/1 knapsack, 10 invoices evaluated)
+            </span>
+          </div>
           <span className="text-xs text-slate-500">Total Capital: {formatINR(kpis.availableCash)}</span>
         </div>
         <div className="w-full h-8 bg-slate-900 rounded-lg flex overflow-hidden p-1 gap-1 border border-slate-800">

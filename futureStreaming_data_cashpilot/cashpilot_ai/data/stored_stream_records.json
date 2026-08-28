@@ -1,5 +1,275 @@
 [
   {
+    "id": "evt_auto_1787947826862",
+    "time": "01:40:26",
+    "event_type": "TELEMETRY_PING",
+    "stage": "OBSERVE",
+    "title": "\ud83d\udce1 Tata Motors HDFC & ICICI Treasury Cash Sync",
+    "detail": "Verified live cash balance \u20b945.04 Cr across Tata Motors HDFC & ICICI Treasury accounts.",
+    "impact": "Monitored (No Change)"
+  },
+  {
+    "id": "evt_auto_1787947804739",
+    "time": "01:40:04",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Plant Assembly Line Worker Payroll Reserve Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
+    "id": "evt_auto_1787947782646",
+    "time": "01:39:42",
+    "event_type": "NEW_INVOICE",
+    "stage": "FORECAST",
+    "title": "\ud83c\udfed Bosch Ltd Powertrain Component Invoice INV_TML_0270 (\u20b91.81L)",
+    "detail": "New powertrain electronics invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+    "impact": "Added to Decision Pool"
+  },
+  {
+    "id": "evt_auto_1787947760686",
+    "time": "01:39:20",
+    "event_type": "RECEIVABLE_DELAYED",
+    "stage": "FORECAST",
+    "title": "\u26a0\ufe0f VRL Logistics Fleet CV Wire Delayed (+10d)",
+    "detail": "VRL Logistics Ltd fleet payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+    "impact": "Re-Optimizing Strategy"
+  },
+  {
+    "id": "evt_auto_1787947748138",
+    "time": "01:39:08",
+    "event_type": "TELEMETRY_PING",
+    "stage": "OBSERVE",
+    "title": "\ud83d\udce1 Tata Motors HDFC & ICICI Treasury Cash Sync",
+    "detail": "Verified live cash balance \u20b945.04 Cr across Tata Motors HDFC & ICICI Treasury accounts.",
+    "impact": "Monitored (No Change)"
+  },
+  {
+    "id": "evt_auto_1787947736438",
+    "time": "01:38:56",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Plant Assembly Line Worker Payroll Reserve Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
+    "id": "evt_auto_1787947677490",
+    "time": "01:37:57",
+    "event_type": "NEW_INVOICE",
+    "stage": "FORECAST",
+    "title": "\ud83c\udfed Bosch Ltd Powertrain Component Invoice INV_TML_0270 (\u20b91.81L)",
+    "detail": "New powertrain electronics invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+    "impact": "Added to Decision Pool"
+  },
+  {
+    "id": "evt_auto_1787947663719",
+    "time": "01:37:43",
+    "event_type": "RECEIVABLE_DELAYED",
+    "stage": "FORECAST",
+    "title": "\u26a0\ufe0f VRL Logistics Fleet CV Wire Delayed (+10d)",
+    "detail": "VRL Logistics Ltd fleet payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+    "impact": "Re-Optimizing Strategy"
+  },
+  {
+    "id": "evt_auto_1787947646563",
+    "time": "01:37:26",
+    "event_type": "TELEMETRY_PING",
+    "stage": "OBSERVE",
+    "title": "\ud83d\udce1 Tata Motors HDFC & ICICI Treasury Cash Sync",
+    "detail": "Verified live cash balance \u20b945.04 Cr across Tata Motors HDFC & ICICI Treasury accounts.",
+    "impact": "Monitored (No Change)"
+  },
+  {
+    "id": "evt_auto_1787947634321",
+    "time": "01:37:14",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Plant Assembly Line Worker Payroll Reserve Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
+    "id": "evt_auto_1787947597783",
+    "time": "01:36:37",
+    "event_type": "NEW_INVOICE",
+    "stage": "FORECAST",
+    "title": "\ud83c\udfed Bosch Ltd Powertrain Component Invoice INV_TML_0270 (\u20b91.81L)",
+    "detail": "New powertrain electronics invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+    "impact": "Added to Decision Pool"
+  },
+  {
+    "id": "evt_auto_1787947586165",
+    "time": "01:36:26",
+    "event_type": "RECEIVABLE_DELAYED",
+    "stage": "FORECAST",
+    "title": "\u26a0\ufe0f VRL Logistics Fleet CV Wire Delayed (+10d)",
+    "detail": "VRL Logistics Ltd fleet payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+    "impact": "Re-Optimizing Strategy"
+  },
+  {
+    "id": "evt_auto_1787947571480",
+    "time": "01:36:11",
+    "event_type": "TELEMETRY_PING",
+    "stage": "OBSERVE",
+    "title": "\ud83d\udce1 Tata Motors HDFC & ICICI Treasury Cash Sync",
+    "detail": "Verified live cash balance \u20b945.04 Cr across Tata Motors HDFC & ICICI Treasury accounts.",
+    "impact": "Monitored (No Change)"
+  },
+  {
+    "id": "evt_auto_1787947559531",
+    "time": "01:35:59",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Plant Assembly Line Worker Payroll Reserve Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
+    "id": "evt_auto_1787947548222",
+    "time": "01:35:48",
+    "event_type": "NEW_INVOICE",
+    "stage": "FORECAST",
+    "title": "\ud83c\udfed Bosch Ltd Powertrain Component Invoice INV_TML_0270 (\u20b91.81L)",
+    "detail": "New powertrain electronics invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+    "impact": "Added to Decision Pool"
+  },
+  {
+    "id": "evt_auto_1787947536944",
+    "time": "01:35:36",
+    "event_type": "RECEIVABLE_DELAYED",
+    "stage": "FORECAST",
+    "title": "\u26a0\ufe0f VRL Logistics Fleet CV Wire Delayed (+10d)",
+    "detail": "VRL Logistics Ltd fleet payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+    "impact": "Re-Optimizing Strategy"
+  },
+  {
+    "id": "evt_auto_1787947525980",
+    "time": "01:35:25",
+    "event_type": "TELEMETRY_PING",
+    "stage": "OBSERVE",
+    "title": "\ud83d\udce1 Tata Motors HDFC & ICICI Treasury Cash Sync",
+    "detail": "Verified live cash balance \u20b945.04 Cr across Tata Motors HDFC & ICICI Treasury accounts.",
+    "impact": "Monitored (No Change)"
+  },
+  {
+    "id": "evt_auto_1787947515259",
+    "time": "01:35:15",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Plant Assembly Line Worker Payroll Reserve Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
+    "id": "evt_auto_1787947504365",
+    "time": "01:35:04",
+    "event_type": "NEW_INVOICE",
+    "stage": "FORECAST",
+    "title": "\ud83c\udfed Bosch Ltd Powertrain Component Invoice INV_TML_0270 (\u20b91.81L)",
+    "detail": "New powertrain electronics invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+    "impact": "Added to Decision Pool"
+  },
+  {
+    "id": "evt_auto_1787947493436",
+    "time": "01:34:53",
+    "event_type": "RECEIVABLE_DELAYED",
+    "stage": "FORECAST",
+    "title": "\u26a0\ufe0f VRL Logistics Fleet CV Wire Delayed (+10d)",
+    "detail": "VRL Logistics Ltd fleet payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+    "impact": "Re-Optimizing Strategy"
+  },
+  {
+    "id": "evt_auto_1787947482199",
+    "time": "01:34:42",
+    "event_type": "TELEMETRY_PING",
+    "stage": "OBSERVE",
+    "title": "\ud83d\udce1 Tata Motors HDFC & ICICI Treasury Cash Sync",
+    "detail": "Verified live cash balance \u20b945.04 Cr across Tata Motors HDFC & ICICI Treasury accounts.",
+    "impact": "Monitored (No Change)"
+  },
+  {
+    "id": "evt_auto_1787947471180",
+    "time": "01:34:31",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Plant Assembly Line Worker Payroll Reserve Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
+    "id": "evt_auto_1787947459875",
+    "time": "01:34:19",
+    "event_type": "NEW_INVOICE",
+    "stage": "FORECAST",
+    "title": "\ud83c\udfed Bosch Ltd Powertrain Component Invoice INV_TML_0270 (\u20b91.81L)",
+    "detail": "New powertrain electronics invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+    "impact": "Added to Decision Pool"
+  },
+  {
+    "id": "evt_auto_1787947448485",
+    "time": "01:34:08",
+    "event_type": "RECEIVABLE_DELAYED",
+    "stage": "FORECAST",
+    "title": "\u26a0\ufe0f VRL Logistics Fleet CV Wire Delayed (+10d)",
+    "detail": "VRL Logistics Ltd fleet payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+    "impact": "Re-Optimizing Strategy"
+  },
+  {
+    "id": "evt_auto_1787947437090",
+    "time": "01:33:57",
+    "event_type": "TELEMETRY_PING",
+    "stage": "OBSERVE",
+    "title": "\ud83d\udce1 Tata Motors HDFC & ICICI Treasury Cash Sync",
+    "detail": "Verified live cash balance \u20b945.04 Cr across Tata Motors HDFC & ICICI Treasury accounts.",
+    "impact": "Monitored (No Change)"
+  },
+  {
+    "id": "evt_auto_1787947424297",
+    "time": "01:33:44",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Plant Assembly Line Worker Payroll Reserve Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
+    "id": "evt_auto_1787947412785",
+    "time": "01:33:32",
+    "event_type": "NEW_INVOICE",
+    "stage": "FORECAST",
+    "title": "\ud83c\udfed Bosch Ltd Powertrain Component Invoice INV_TML_0270 (\u20b91.81L)",
+    "detail": "New powertrain electronics invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+    "impact": "Added to Decision Pool"
+  },
+  {
+    "id": "evt_auto_1787947401317",
+    "time": "01:33:21",
+    "event_type": "RECEIVABLE_DELAYED",
+    "stage": "FORECAST",
+    "title": "\u26a0\ufe0f VRL Logistics Fleet CV Wire Delayed (+10d)",
+    "detail": "VRL Logistics Ltd fleet payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+    "impact": "Re-Optimizing Strategy"
+  },
+  {
+    "id": "evt_auto_1787947390392",
+    "time": "01:33:10",
+    "event_type": "TELEMETRY_PING",
+    "stage": "OBSERVE",
+    "title": "\ud83d\udce1 Tata Motors HDFC & ICICI Treasury Cash Sync",
+    "detail": "Verified live cash balance \u20b945.04 Cr across Tata Motors HDFC & ICICI Treasury accounts.",
+    "impact": "Monitored (No Change)"
+  },
+  {
+    "id": "evt_auto_1787947379452",
+    "time": "01:32:59",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Plant Assembly Line Worker Payroll Reserve Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
     "id": "evt_auto_1787947368206",
     "time": "01:32:48",
     "event_type": "NEW_INVOICE",

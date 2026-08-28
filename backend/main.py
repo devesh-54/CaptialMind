@@ -36,7 +36,7 @@ obligations = data_loader.load_obligations()
 activity_feed = [
     {
         "id": "ACT-105",
-        "timestamp": "14s ago",
+        "timestamp": "Just now",
         "stage": "DECIDE",
         "title": "Optimized Capital Deployment for Employee Salary Day & Supplier Invoices",
         "detail": f"Evaluated candidate options. Reserved ₹4.10Cr for Employee Salary Payroll due tomorrow and selected Pay Now (Score: 96/100) for {invoices[0]['supplierName'] if invoices else 'Valeo India'}.",
@@ -47,7 +47,7 @@ activity_feed = [
         "timestamp": "2m ago",
         "stage": "FORECAST",
         "title": "Customer A (Mahindra Logistics) Inflow & Salary Obligation Forecasted",
-        "detail": f"Customer A (₹2.45Cr, 95% on-time confidence) expected on Jan 15th. Employee Payroll (₹4.10Cr) scheduled for tomorrow.",
+        "detail": f"Customer A (₹2.45Cr, {receivables[0]['collectionProbability']}% Bayesian confidence) expected on Jan 15th. Employee Payroll (₹4.10Cr) scheduled for tomorrow.",
         "impact": "Protected ₹15.0L Floor"
     },
     {
@@ -85,6 +85,7 @@ class EventTriggerRequest(BaseModel):
     description: str
     receivable_delay_days: int = 0
     extra_outflow_lakhs: float = 0.0
+    customer_id: str = "CUST-001"
 
 class WhatIfRequest(BaseModel):
     receivable_delay_days: int
@@ -100,17 +101,17 @@ def read_root():
 
 @app.get("/api/command-center")
 def get_command_center():
-    forecast = engine.forecast_30d_cash(current_cash)
+    forecast = engine.forecast_30d_cash(current_cash, receivables=receivables)
     top_inv = invoices[0] if invoices else None
-    candidates = engine.generate_candidates(current_cash, top_invoice=top_inv)
-    hero_rec = engine.generate_hero_recommendation(invoices, current_cash)
+    candidates = engine.generate_candidates(current_cash, top_invoice=top_inv, receivables=receivables)
+    hero_rec = engine.generate_hero_recommendation(invoices, current_cash, receivables=receivables)
 
     return {
         "kpis": {
             "availableCash": current_cash,
             "protectedCash": 1500000.0,
             "deployableCapital": max(0.0, current_cash - 1500000.0),
-            "risk30d": "LOW",
+            "risk30d": "LOW" if receivables[0]["collectionProbability"] >= 75 else "HIGH",
             "wcEfficiency": 88,
             "financingExposure": 1250000.0
         },
@@ -127,7 +128,7 @@ def get_command_center():
 @app.get("/api/invoices")
 def get_invoices():
     top_inv = invoices[0] if invoices else None
-    candidates = engine.generate_candidates(current_cash, top_invoice=top_inv)
+    candidates = engine.generate_candidates(current_cash, top_invoice=top_inv, receivables=receivables)
     inv_list = []
     for inv in invoices:
         inv_copy = dict(inv)
@@ -186,37 +187,92 @@ def get_agent_activity():
 def get_decision_history():
     return decision_history
 
+# RECEPTIVE RE-OPTIMIZATION PIPELINE ENDPOINT
+@app.post("/events")
+@app.post("/api/events")
 @app.post("/api/simulate-event")
-async def trigger_simulated_event(req: EventTriggerRequest):
-    global current_cash, activity_feed
+async def receive_event(req: EventTriggerRequest):
+    global current_cash, activity_feed, decision_history, receivables
 
+    # Step 1: Apply event to state & update Bayesian Beta probability if receivable delayed
+    if req.event_type in ["RECEIVABLE_DELAYED", "FORECAST"] or req.receivable_delay_days > 0:
+        if receivables and len(receivables) > 0:
+            receivables[0] = engine.update_bayesian_probability(receivables[0], on_time=False)
+
+    if req.extra_outflow_lakhs > 0:
+        current_cash -= (req.extra_outflow_lakhs * 100000.0)
+
+    # Step 2: Trigger Forecast Engine Recomputation
+    new_forecast = engine.forecast_30d_cash(
+        current_cash, 
+        receivables=receivables,
+        receivable_delay_days=req.receivable_delay_days,
+        extra_outflow=req.extra_outflow_lakhs * 100000.0
+    )
+
+    # Step 3: Trigger Decision Engine Recomputation (Scoring + Knapsack Allocation)
+    top_inv = invoices[0] if invoices else None
+    new_candidates = engine.generate_candidates(current_cash, top_invoice=top_inv, receivables=receivables)
+    new_hero = engine.generate_hero_recommendation(invoices, current_cash, receivables=receivables)
+
+    # Step 4: Automatically log new generated decision to decision_history
+    dec_id = f"DEC-{int(time.time()) % 10000}"
+    new_decision = {
+        "id": dec_id,
+        "timestamp": time.strftime("%Y-%m-%d %H:%M"),
+        "triggerEvent": req.description,
+        "decision": new_hero["title"],
+        "amount": invoices[0]['amount'] if invoices else 33381685.97,
+        "confidence": new_hero["confidence"],
+        "status": "Pending Approval",
+        "version": "v2.1",
+        "reasons": [
+            f"Event Triggered: {req.description}",
+            f"Bayesian Customer A Probability shifted to {receivables[0]['collectionProbability']}%.",
+            f"Evaluated candidates. Reserve floor preserved above ₹15.0L."
+        ]
+    }
+    decision_history.insert(0, new_decision)
+
+    # Step 5: Log to Activity Stream
     new_event = {
         "id": f"ACT-{int(time.time()) % 10000}",
         "timestamp": "Just now",
         "stage": req.event_type,
         "title": req.description,
-        "detail": f"Triggered real-time scenario: Customer A delay +{req.receivable_delay_days}d, Outflow ₹{req.extra_outflow_lakhs}L.",
-        "impact": "Re-optimized Plan"
+        "detail": f"Recomputed 30d forecast & decision matrix. Logged {dec_id}. Customer A Prob: {receivables[0]['collectionProbability']}%.",
+        "impact": "Automated Re-Optimization"
     }
     activity_feed.insert(0, new_event)
 
+    # Step 6: Broadcast full re-optimized state over SSE stream
     payload = json.dumps({
         "event": "REALTIME_UPDATE",
         "data": {
             "newEvent": new_event,
-            "activityFeed": activity_feed,
+            "newDecision": new_decision,
+            "receivables": receivables,
+            "heroRecommendation": new_hero,
+            "candidates": new_candidates,
+            "forecast": new_forecast,
             "timestamp": time.strftime("%H:%M:%S")
         }
     })
     for queue in event_subscribers:
         await queue.put(payload)
 
-    return {"status": "success", "event": new_event}
+    return {
+        "status": "re-optimized",
+        "decision": new_decision,
+        "bayesianProbability": receivables[0]['collectionProbability'],
+        "event": new_event
+    }
 
 @app.post("/api/what-if")
 def run_what_if_simulation(req: WhatIfRequest):
     simulated_forecast = engine.forecast_30d_cash(
         current_cash,
+        receivables=receivables,
         receivable_delay_days=req.receivable_delay_days,
         extra_outflow=req.cash_drop_lakhs * 100000.0
     )

@@ -2,12 +2,17 @@ import os
 import json
 import pandas as pd
 from typing import Dict, Any, List
+from preprocessor import HistoricalPreprocessor
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "historical_data_cashpilot", "data", "historical")
 
 class DataLoader:
     def __init__(self, data_dir: str = DATA_DIR):
         self.data_dir = os.path.abspath(data_dir)
+        self.preprocessor = HistoricalPreprocessor(self.data_dir)
+        # Run preprocessing once at startup
+        self.customer_features = self.preprocessor.preprocess_customer_history()
+        self.supplier_features = self.preprocessor.preprocess_supplier_history()
 
     def load_company(self) -> Dict[str, Any]:
         path = os.path.join(self.data_dir, "company.json")
@@ -47,12 +52,15 @@ class DataLoader:
                     sup_id = str(row.get("supplier_id", ""))
                     imp_val = str(row.get("strategic_importance", "MEDIUM")).upper()
                     imp_score = 5 if "CRITICAL" in imp_val else 3 if "MEDIUM" in imp_val else 2
+                    
+                    sup_feat = self.supplier_features.get(sup_id, {})
                     suppliers[sup_id] = {
                         "name": str(row.get("name", "Tata Steel Ltd")),
                         "category": str(row.get("category", "Raw Materials")),
                         "strategicImportance": imp_score,
                         "isCritical": "CRITICAL" in imp_val,
-                        "liquidityRisk": str(row.get("liquidity_risk", "LOW")).upper()
+                        "liquidityRisk": str(row.get("liquidity_risk", "LOW")).upper(),
+                        "capturedDiscountTotal": sup_feat.get("captured_discount_total", 667633.71)
                     }
             except Exception as e:
                 print(f"Error reading suppliers.csv: {e}")
@@ -82,7 +90,6 @@ class DataLoader:
             except Exception as e:
                 print(f"Error loading obligations.csv: {e}")
         
-        # Real fallback obligations matching dataset
         return [
             {
                 "id": "OBL-001",
@@ -102,7 +109,7 @@ class DataLoader:
             },
             {
                 "id": "OBL-003",
-                "supplierName": "Bosch Ltd Quarterly Tax Obligation",
+                "supplierName": "Bosch Ltd Statutory Tax Obligation",
                 "amount": 23009047.23,
                 "dueDate": "Due Jan 10",
                 "priority": "CRITICAL",
@@ -110,7 +117,7 @@ class DataLoader:
             },
             {
                 "id": "OBL-004",
-                "supplierName": "Denso India Utility Power & Gas",
+                "supplierName": "Denso India Plant Utility Power & Gas",
                 "amount": 17875657.24,
                 "dueDate": "Due Jan 12",
                 "priority": "HIGH",
@@ -125,10 +132,12 @@ class DataLoader:
                 df = pd.read_csv(path)
                 suppliers = []
                 for _, row in df.head(8).iterrows():
+                    sup_id = str(row.get("supplier_id", "SUP001"))
                     imp_val = str(row.get("strategic_importance", "MEDIUM")).upper()
                     imp_score = 5 if "CRITICAL" in imp_val else 3 if "MEDIUM" in imp_val else 2
+                    sup_feat = self.supplier_features.get(sup_id, {})
                     suppliers.append({
-                        "id": str(row.get("supplier_id", "SUP001")),
+                        "id": sup_id,
                         "name": str(row.get("name", "Tata Steel Ltd")),
                         "category": str(row.get("category", "Raw Materials")),
                         "strategicImportance": imp_score,
@@ -136,8 +145,8 @@ class DataLoader:
                         "liquidityRisk": str(row.get("liquidity_risk", "LOW")),
                         "outstandingInvoices": 2,
                         "outstandingAmount": 33381685.97,
-                        "onTimePaymentPct": 94.0,
-                        "capturedDiscountTotal": 667633.71
+                        "onTimePaymentPct": sup_feat.get("on_time_payment_pct", 94.0),
+                        "capturedDiscountTotal": sup_feat.get("captured_discount_total", 667633.71)
                     })
                 if suppliers:
                     return suppliers
@@ -202,21 +211,25 @@ class DataLoader:
         if os.path.exists(path):
             try:
                 df = pd.read_csv(path)
-                for _, row in df.head(8).iterrows():
+                for idx, row in df.head(8).iterrows():
+                    cust_id = f"CUST-00{idx+1}"
+                    cust_feat = self.customer_features.get(cust_id, {"alpha": 10, "beta": 2, "observations_count": 11, "on_time_probability": 91.7, "average_delay_days": 0.5})
                     amount = float(row.get("amount", 2450000.0))
-                    prob = float(row.get("collection_probability", row.get("on_time_probability", 0.85)))
-                    if prob <= 1.0:
-                        prob = prob * 100.0
-                    delay = int(row.get("expected_delay_days", row.get("delay_days", 0)))
+                    prob = cust_feat["on_time_probability"]
+                    delay = int(cust_feat["average_delay_days"])
                     status = "On Time" if delay == 0 else "Slight Delay" if delay <= 5 else "At Risk"
                     
                     receivables.append({
                         "id": str(row.get("receivable_id", row.get("id", "REC-901"))),
                         "customerName": str(row.get("customer_name", "Mahindra Logistics")),
+                        "customerId": cust_id,
                         "amount": amount,
                         "expectedDate": str(row.get("expected_date", "2026-01-15")),
                         "collectionProbability": round(prob, 1),
                         "expectedDelayDays": delay,
+                        "alpha": cust_feat["alpha"],
+                        "beta": cust_feat["beta"],
+                        "observationsCount": cust_feat["observations_count"],
                         "status": status
                     })
                 if receivables:

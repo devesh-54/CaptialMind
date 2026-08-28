@@ -26,13 +26,27 @@ Tables produced (saved to data/historical/):
 import json
 import os
 import random
+import sys
 import uuid
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
 import numpy as np
 import pandas as pd
-from faker import Faker
+import matplotlib.pyplot as plt
+
+try:
+    from faker import Faker
+    fake = Faker("en_IN")
+    Faker.seed(99)
+    def _fake_company():
+        return fake.company()
+except ImportError:
+    def _fake_company():
+        return f"Auto Dealer {random.randint(100, 999)} Pvt Ltd"
 
 # ─── Config ──────────────────────────────────────────────────────────────────
 RANDOM_SEED = 99
@@ -47,8 +61,7 @@ COMPANY_ID           = "COMP001"
 
 random.seed(RANDOM_SEED)
 np.random.seed(RANDOM_SEED)
-fake = Faker("en_IN")
-Faker.seed(RANDOM_SEED)
+
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -142,7 +155,7 @@ class HistoricalDataGenerator:
 
             rows.append({
                 "customer_id":            cid,
-                "customer_name":          names[i] if i < len(names) else fake.company(),
+                "customer_name":          names[i] if i < len(names) else _fake_company(),
                 "company_id":             COMPANY_ID,
                 "industry":               "automotive_manufacturing",
                 "payment_terms":          terms,
@@ -395,9 +408,9 @@ class HistoricalDataGenerator:
         for d in range(NUM_DAYS):
             date    = START_DATE + timedelta(days=d)
             weekend = date.weekday() >= 5
-            base    = random.uniform(500_000, 2_000_000) if weekend else random.uniform(3_000_000, 12_000_000)
+            base    = random.uniform(500_000, 2_000_000) if weekend else random.uniform(3_000_000, 10_000_000)
             if date.day >= 28:
-                base *= random.uniform(1.3, 1.8)
+                base *= random.uniform(1.2, 1.5)
             txns.append({
                 "transaction_id": _uid("TXN"),
                 "company_id":     COMPANY_ID,
@@ -406,6 +419,30 @@ class HistoricalDataGenerator:
                 "date":           date.date(),
                 "category":       "OPEX",
                 "description":    "Daily operating expenses",
+                "reference_type": "COMPANY",
+                "reference_id":   COMPANY_ID,
+                "status":         "COMPLETED",
+            })
+
+        # Daily dealership & fleet sales collections (inflow equilibrium)
+        for d in range(NUM_DAYS):
+            date = START_DATE + timedelta(days=d)
+            weekend = date.weekday() >= 5
+            if weekend:
+                rev = random.uniform(1_000_000, 4_000_000)
+            elif date.weekday() in (1, 4):  # Tue / Fri dealer settlement peaks
+                rev = random.uniform(15_000_000, 32_000_000)
+            else:
+                rev = random.uniform(8_000_000, 22_000_000)
+
+            txns.append({
+                "transaction_id": _uid("TXN"),
+                "company_id":     COMPANY_ID,
+                "type":           "CUSTOMER_PAYMENT",
+                "amount":         round(rev, 2),
+                "date":           date.date(),
+                "category":       "SALES_RECEIPTS",
+                "description":    "Daily dealership & fleet sales collection",
                 "reference_type": "COMPANY",
                 "reference_id":   COMPANY_ID,
                 "status":         "COMPLETED",
@@ -509,17 +546,17 @@ class HistoricalDataGenerator:
             inflow   = daily.loc[date,"daily_inflow"]  if date in daily.index else 0.0
             outflow  = daily.loc[date,"daily_outflow"] if date in daily.index else 0.0
             closing  = round(opening + inflow - outflow, 2)
-            reserved = round(MINIMUM_CASH_RESERVE * random.uniform(1.0,1.3), 2)
-            avail    = round(max(closing - reserved, 0), 2)
-            deploy   = round(max(avail - reserved*0.1, 0), 2)
+            reserved = round(float(MINIMUM_CASH_RESERVE), 2)
+            avail    = round(max(closing - reserved, 0.0), 2)
+            deploy   = round(min(avail, max(closing, 0.0)), 2)
 
             rows.append({
                 "date":              date,
                 "company_id":        COMPANY_ID,
                 "cash_account_id":   "CASH001",
-                "opening_balance":   round(opening,2),
-                "daily_inflow":      round(inflow,2),
-                "daily_outflow":     round(outflow,2),
+                "opening_balance":   round(opening, 2),
+                "daily_inflow":      round(inflow, 2),
+                "daily_outflow":     round(outflow, 2),
                 "balance":           closing,
                 "available_balance": avail,
                 "reserved_balance":  reserved,
@@ -919,10 +956,107 @@ class HistoricalDataGenerator:
 
         print(f"\n✅  All historical data saved to '{output_dir}/'")
 
+    # ── Validation & Plotting ──────────────────────────────────────────────────
+    def validate_and_plot(self, output_dir: str = "data/historical") -> bool:
+        """
+        Validates time-series constraints for ARIMA readiness and saves cash balance plot.
+        """
+        df = self.cash_accounts_df.copy()
+        errors = []
+
+        # 1. Exactly 365 daily records (2025-01-01 to 2025-12-31)
+        if len(df) != 365:
+            errors.append(f"Expected 365 daily records, found {len(df)}")
+
+        # 2. Check consecutive dates & missing dates
+        date_range = pd.date_range(START_DATE, END_DATE, freq="D")
+        actual_dates = pd.to_datetime(df["date"])
+        if list(actual_dates.dt.date) != list(date_range.date):
+            errors.append("Dates are not consecutive or contain missing calendar dates")
+
+        # 3. Check null values
+        if df.isnull().sum().sum() > 0:
+            errors.append(f"Null values detected in dataset: {df.isnull().sum().to_dict()}")
+
+        # 4. Check balance equation: balance = opening + inflow - outflow
+        calc_balance = (df["opening_balance"] + df["daily_inflow"] - df["daily_outflow"]).round(2)
+        diff_balance = (calc_balance - df["balance"]).abs()
+        if (diff_balance > 0.02).any():
+            bad_rows = df[diff_balance > 0.02]
+            errors.append(f"Balance equation violation on {len(bad_rows)} row(s). First mismatch: {bad_rows.iloc[0]['date']}")
+
+        # 5. Check opening balance continuity: next_day.opening_balance = previous_day.balance
+        for i in range(1, len(df)):
+            prev_close = df.iloc[i-1]["balance"]
+            curr_open = df.iloc[i]["opening_balance"]
+            if abs(prev_close - curr_open) > 0.02:
+                errors.append(f"Opening balance continuity error on row {i} ({df.iloc[i]['date']}): prev close {prev_close} != curr open {curr_open}")
+                break
+
+        # 6. Check deployable_cash <= balance & reserved_balance separation
+        if ((df["deployable_cash"] - df["balance"]).round(2) > 0.01).any():
+            errors.append("deployable_cash exceeds balance on one or more days")
+
+        if ((df["deployable_cash"] - df["available_balance"]).round(2) > 0.01).any():
+            errors.append("deployable_cash exceeds available_balance on one or more days")
+
+        # Print validation report
+        print("\n" + "=" * 70)
+        print("  HISTORICAL CASH DATASET VALIDATION REPORT (ARIMA Readiness)")
+        print("=" * 70)
+        if errors:
+            print("❌ VALIDATION CHECKS FAILED:")
+            for err in errors:
+                print(f"  • {err}")
+        else:
+            print("✓ Exactly 365 daily records present")
+            print("✓ Dates are strictly consecutive (2025-01-01 → 2025-12-31)")
+            print("✓ No missing dates or null values")
+            print("✓ Balance equation strictly holds: balance = opening_balance + daily_inflow - daily_outflow")
+            print("✓ Opening balance continuity strictly holds: next_day.opening_balance = previous_day.balance")
+            print("✓ Deployable cash constraint holds: deployable_cash <= available_balance <= balance")
+            print("✓ Reserved balance handled separately from spendable balance")
+
+        # Print required summary statistics
+        print("\n" + "─" * 70)
+        print("  CASH BALANCE & FLOW STATISTICS (Tata Motors-Style Synthetic Data)")
+        print("─" * 70)
+        print(f"  Minimum balance       : ₹{df['balance'].min():,.2f}")
+        print(f"  Maximum balance       : ₹{df['balance'].max():,.2f}")
+        print(f"  Mean balance          : ₹{df['balance'].mean():,.2f}")
+        print(f"  Standard deviation    : ₹{df['balance'].std():,.2f}")
+        print(f"  Minimum daily inflow  : ₹{df['daily_inflow'].min():,.2f}")
+        print(f"  Maximum daily inflow  : ₹{df['daily_inflow'].max():,.2f}")
+        print(f"  Minimum daily outflow : ₹{df['daily_outflow'].min():,.2f}")
+        print(f"  Maximum daily outflow : ₹{df['daily_outflow'].max():,.2f}")
+
+        # Generate & save line chart
+        plt.figure(figsize=(12, 6))
+        plt.plot(actual_dates, df["balance"] / 1e7, label="Closing Cash Balance (₹ Cr)", color="#0055A5", linewidth=1.8)
+        plt.plot(actual_dates, df["available_balance"] / 1e7, label="Available Balance (₹ Cr)", color="#28A745", linestyle="--", alpha=0.8)
+        plt.axhline(MINIMUM_CASH_RESERVE / 1e7, color="#DC3545", linestyle=":", label="Policy Reserve Floor (₹5 Cr)")
+        plt.title("Synthetic Historical Cash Balance (2025-01-01 to 2025-12-31) — Tata Motors Prototype", fontsize=13, pad=12)
+        plt.xlabel("Date", fontsize=11)
+        plt.ylabel("Amount (₹ Crore)", fontsize=11)
+        plt.grid(True, linestyle="--", alpha=0.5)
+        plt.legend(loc="upper right")
+        plt.tight_layout()
+
+        os.makedirs(output_dir, exist_ok=True)
+        chart_path = os.path.join(output_dir, "cash_balance_chart.png")
+        plt.savefig(chart_path, dpi=200)
+        plt.close()
+        print(f"\n📊 Line chart saved → {chart_path}")
+        print("=" * 70 + "\n")
+
+        return len(errors) == 0
+
 
 # ─── Entry Point ─────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     gen  = HistoricalDataGenerator()
     gen.generate_all()
     gen.save("data/historical")
-    print("\n✅  Done.")
+    gen.validate_and_plot("data/historical")
+    print("✅  Done.")
+

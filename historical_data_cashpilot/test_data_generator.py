@@ -7,19 +7,27 @@ Run with:  python test_data_generator.py
 
 import sys
 import pandas as pd
-from data_generator import FinancialDataGenerator
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
+from historical_data_generator import HistoricalDataGenerator
 
 
 def main():
     print("=" * 70)
-    print("  CashPilot AI – Data Generator Validation")
+    print("  CashPilot AI – Historical Data Generator Validation")
     print("=" * 70)
 
     # ------------------------------------------------------------------
     # 1. Generate all data
     # ------------------------------------------------------------------
-    gen = FinancialDataGenerator()
+    gen = HistoricalDataGenerator()
     data = gen.generate_all()
+    gen.save("data/historical")
+    success = gen.validate_and_plot("data/historical")
+    if not success:
+        sys.exit(1)
 
     # ------------------------------------------------------------------
     # 2. Print record counts
@@ -63,23 +71,23 @@ def main():
     else:
         print("✅  No negative cash balances.")
 
-    # ---- 4c. All invoice customer_ids exist in customers ----
-    valid_custs = set(data["customers"]["customer_id"])
-    inv_custs = set(data["invoices"]["customer_id"])
-    orphan_inv = inv_custs - valid_custs
+    # ---- 4c. All invoice supplier_ids exist in suppliers ----
+    valid_sups = set(data["suppliers"]["supplier_id"])
+    inv_sups = set(data["invoices"]["supplier_id"])
+    orphan_inv = inv_sups - valid_sups
     if orphan_inv:
-        errors.append(f"Invoices reference unknown customers: {orphan_inv}")
+        errors.append(f"Invoices reference unknown suppliers: {orphan_inv}")
     else:
-        print("✅  All invoice customer IDs are valid.")
+        print("✅  All invoice supplier IDs are valid.")
 
-    # ---- 4d. All receivable invoice_ids exist in invoices ----
-    valid_invs = set(data["invoices"]["invoice_id"])
-    recv_invs = set(data["receivables"]["invoice_id"])
-    orphan_recv = recv_invs - valid_invs
+    # ---- 4d. All receivables reference valid customers ----
+    valid_custs = set(data["customers"]["customer_id"])
+    recv_custs = set(data["receivables"]["customer_id"])
+    orphan_recv = recv_custs - valid_custs
     if orphan_recv:
-        errors.append(f"Receivables reference unknown invoices: {orphan_recv}")
+        errors.append(f"Receivables reference unknown customers: {orphan_recv}")
     else:
-        print("✅  All receivable invoice IDs are valid.")
+        print("✅  All receivable customer IDs are valid.")
 
     # ---- 4e. All obligation supplier_ids exist in suppliers ----
     valid_sups = set(data["suppliers"]["supplier_id"])
@@ -132,14 +140,14 @@ def main():
         else:
             print("✅  All decision-item decision IDs are valid.")
 
-    # ---- 4i. Receivables only for PENDING/OVERDUE invoices ----
+    # ---- 4i. Receivables have valid status ----
     if len(data["receivables"]) > 0:
         recv_statuses = set(data["receivables"]["status"])
-        invalid_statuses = recv_statuses - {"PENDING", "OVERDUE"}
+        invalid_statuses = recv_statuses - {"PENDING", "OVERDUE", "PAID"}
         if invalid_statuses:
             errors.append(f"Receivables have unexpected statuses: {invalid_statuses}")
         else:
-            print("✅  All receivables are PENDING or OVERDUE.")
+            print("✅  All receivables have valid statuses (PAID, PENDING, OVERDUE).")
 
     # ------------------------------------------------------------------
     # 5. Summary statistics for ARIMA

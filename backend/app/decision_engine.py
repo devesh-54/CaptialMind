@@ -79,7 +79,7 @@ def evaluate_all_candidate_actions(
         if inv.status != "PENDING":
             continue
 
-        supp = supplier_map.get(inv.supplier_id, Supplier(id="s_default", company_id="comp_novatech", name=inv.supplier_name, strategic_importance=0.5, liquidity_risk="Low", payment_terms="Net-30"))
+        supp = supplier_map.get(inv.supplier_id, Supplier(id="s_default", company_id="comp_tatamotors", name=inv.supplier_name, strategic_importance=0.5, liquidity_risk="Low", payment_terms="Net-30"))
         
         # Available Actions for this invoice
         actions = [ActionType.PAY_NOW, ActionType.PAY_AT_MATURITY, ActionType.DELAY, ActionType.BANK_FINANCE, ActionType.RETAIN_CASH]
@@ -147,37 +147,22 @@ def evaluate_all_candidate_actions(
 
             utility = round((w_liq * nl + w_fin * nf + w_supp * ns + w_risk * nr) * 100.0, 1)
 
-            # Generate synthetic 30-day sparkline trajectory for candidate preview
-            sparkline = [round(max(0, current_cash - cash_cost - (d * 0.35)), 1) for d in range(10)]
-
-            if action == ActionType.CAPTURE_DISCOUNT:
-                reasoning = f"Captures {inv.discount_percentage}% early payment discount (saves ₹{(inv.amount * inv.discount_percentage / 100):.2f} Cr)."
-            elif action == ActionType.BANK_FINANCE:
-                reasoning = f"Finances payout via revolving credit, preserving cash floor above ₹{REQUIRED_30DAY_FLOOR} Cr."
-            elif action == ActionType.PAY_NOW:
-                reasoning = f"Direct cash payment to critical supplier ({inv.supplier_name})."
-            elif action == ActionType.DELAY:
-                reasoning = f"Defers payout by 10 days to shield cash runway under tight liquidity."
-            else:
-                reasoning = "Retains cash in treasury reserve."
-
             scored_candidates.append(CandidateActionScore(
-                action=action,
                 invoice_id=inv.id,
                 invoice_name=inv.supplier_name,
-                raw_liquidity=round(raw_liqs[i], 2),
-                raw_financial=round(raw_fins[i], 2),
-                raw_supplier=round(raw_supps[i], 2),
-                raw_risk=round(raw_risks[i], 2),
+                action=action,
+                cost_cash=cash_cost,
+                cost_financing=fin_cost,
+                raw_liquidity=raw_liqs[i],
+                raw_financial=raw_fins[i],
+                raw_supplier=raw_supps[i],
+                raw_risk=raw_risks[i],
                 norm_liquidity=nl,
                 norm_financial=nf,
                 norm_supplier=ns,
                 norm_risk=nr,
                 utility_score=utility,
-                cost_cash=round(cash_cost, 2),
-                cost_financing=round(fin_cost, 2),
-                sparkline_cash_trajectory=sparkline,
-                reasoning=reasoning
+                reasoning=f"Evaluated {action} for {inv.supplier_name} under min-max normalization."
             ))
 
         candidates_by_invoice[inv.id] = scored_candidates
@@ -202,7 +187,7 @@ def solve_knapsack_01_allocation(
     if not items_to_consider:
         return [], 0.0, 0.0
 
-    # Budget in integer units (units of ₹0.1 Cr)
+    # Budget in integer units
     budget_units = int(available_budget * 10)
     dp = [0.0] * (budget_units + 1)
     selection = [[] for _ in range(budget_units + 1)]
@@ -250,7 +235,7 @@ def run_decision_pipeline(
     triggered_by_event_id: str = None
 ) -> Decision:
     """
-    Executes full 6-step decision pipeline.
+    Executes full 6-step decision pipeline dynamically.
     """
     available_cash = max(0.0, current_cash - REQUIRED_30DAY_FLOOR)
     weights = compute_dynamic_weights(available_cash, REQUIRED_30DAY_FLOOR, invoices, suppliers)
@@ -264,24 +249,39 @@ def run_decision_pipeline(
 
     all_flattened_candidates.sort(key=lambda x: x.utility_score, reverse=True)
 
+    total_spent = sum(a.expected_cost for a in allocations)
+    
+    if allocations:
+        paid_invs = [a.invoice_name for a in allocations if a.action in [ActionType.PAY_NOW, ActionType.CAPTURE_DISCOUNT]]
+        financed_invs = [a.invoice_name for a in allocations if a.action == ActionType.BANK_FINANCE]
+        
+        if paid_invs and financed_invs:
+            chosen_action = f"Pay {paid_invs[0]} & Finance {financed_invs[0]}"
+        elif paid_invs:
+            chosen_action = f"Pay {paid_invs[0]} + Lock Plant Opex"
+        else:
+            chosen_action = "Preserve Liquidity & Defer Non-Critical Payouts"
+    else:
+        chosen_action = "Lock Plant Opex & Preserve Reserve Floor"
+
     summary_reasoning = (
-        f"Globally optimal capital allocation computed via 0/1 Knapsack DP ({len(invoices)} invoices evaluated). "
-        f"Recommends paying ABC Components (₹8.2 Cr) for 8.5% discount and financing XYZ Metals (₹5.0 Cr) via credit facility. "
-        f"30-day liquidity floor remains protected above target reserve of ₹{REQUIRED_30DAY_FLOOR} Cr."
+        f"0/1 Knapsack DP re-evaluated {len(invoices)} candidate invoices against stream ledger. "
+        f"Allocated {len(allocations)} invoice payouts totaling ₹{total_spent:.2f} Cr. "
+        f"Tata Motors liquidity buffer remains protected above target reserve floor of ₹{REQUIRED_30DAY_FLOOR} Cr."
     )
 
     return Decision(
-        id=f"dec_{int(available_cash*100)}",
+        id=f"dec_{int(available_cash*100)}_{len(invoices)}",
         created_at="2026-08-28 20:10:00",
-        chosen_action="PAY_ABC_AND_FINANCE_XYZ",
+        chosen_action=chosen_action,
         allocations=allocations,
         alternatives=all_flattened_candidates[:5],
         weights=weights,
         cash_buffer_ratio=weights["cash_buffer_ratio"],
-        total_budget_spent=round(sum(a.expected_cost for a in allocations), 2),
+        total_budget_spent=round(total_spent, 2),
         achieved_utility=round(total_utility, 1),
         next_best_gap=next_best_gap,
-        confidence=91.0,
+        confidence=0.91,
         status=DecisionStatus.RECOMMENDED,
         triggered_by_event_id=triggered_by_event_id,
         reasoning=summary_reasoning

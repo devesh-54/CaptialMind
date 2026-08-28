@@ -1,7 +1,7 @@
 [
   {
-    "id": "evt_auto_1787937035967",
-    "time": "22:40:35",
+    "id": "evt_auto_1787937873644",
+    "time": "22:54:33",
     "event_type": "NEW_INVOICE",
     "stage": "FORECAST",
     "title": "\ud83c\udfed Bosch Ltd Powertrain Component Invoice INV_TML_0270 (\u20b91.81L)",
@@ -9,8 +9,8 @@
     "impact": "Added to Decision Pool"
   },
   {
-    "id": "evt_auto_1787937025500",
-    "time": "22:40:25",
+    "id": "evt_auto_1787937862726",
+    "time": "22:54:22",
     "event_type": "RECEIVABLE_DELAYED",
     "stage": "FORECAST",
     "title": "\u26a0\ufe0f VRL Logistics Fleet CV Wire Delayed (+10d)",
@@ -18,8 +18,8 @@
     "impact": "Re-Optimizing Strategy"
   },
   {
-    "id": "evt_auto_1787937015184",
-    "time": "22:40:15",
+    "id": "evt_auto_1787937845958",
+    "time": "22:54:05",
     "event_type": "TELEMETRY_PING",
     "stage": "OBSERVE",
     "title": "\ud83d\udce1 Tata Motors HDFC & ICICI Treasury Cash Sync",
@@ -27,8 +27,8 @@
     "impact": "Monitored (No Change)"
   },
   {
-    "id": "evt_auto_1787937004697",
-    "time": "22:40:04",
+    "id": "evt_auto_1787937835543",
+    "time": "22:53:55",
     "event_type": "OPEX_RESERVE",
     "stage": "FORECAST",
     "title": "\ud83d\udcbc Plant Assembly Line Worker Payroll Reserve Lock (\u20b916.50L)",
@@ -36,8 +36,8 @@
     "impact": "Locked in Reserve"
   },
   {
-    "id": "evt_auto_1787936994283",
-    "time": "22:39:54",
+    "id": "evt_auto_1787937795275",
+    "time": "22:53:15",
     "event_type": "NEW_INVOICE",
     "stage": "FORECAST",
     "title": "\ud83c\udfed Bosch Ltd Powertrain Component Invoice INV_TML_0270 (\u20b91.81L)",
@@ -45,8 +45,8 @@
     "impact": "Added to Decision Pool"
   },
   {
-    "id": "evt_auto_1787936983392",
-    "time": "22:39:43",
+    "id": "evt_auto_1787937781165",
+    "time": "22:53:01",
     "event_type": "RECEIVABLE_DELAYED",
     "stage": "FORECAST",
     "title": "\u26a0\ufe0f VRL Logistics Fleet CV Wire Delayed (+10d)",

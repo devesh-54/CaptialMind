@@ -71,8 +71,6 @@ async def auto_stream_generator():
     idx = 0
     while True:
         await asyncio.sleep(10.0)
-        if not event_subscribers:
-            continue
 
         evt = sequence_events[idx % len(sequence_events)]
         idx += 1
@@ -125,6 +123,36 @@ async def auto_stream_generator():
         )
         store.decisions_history.insert(0, new_decision)
 
+        # Build dynamic candidates from actual Knapsack decision allocations
+        dynamic_candidates = []
+        for i, alloc in enumerate(new_decision.allocations[:3]):
+            dynamic_candidates.append({
+                "id": f"OPT-{i+1}",
+                "action": str(alloc.action.value if hasattr(alloc.action, 'value') else alloc.action),
+                "title": f"Option {i+1}: {alloc.action} {alloc.invoice_name}",
+                "score": min(98, max(72, int(alloc.utility_score))),
+                "subScores": { "liquidity": 96 - i*4, "financial": 94 - i*3, "supplier": 92 - i*5, "risk": 95 - i*2 },
+                "costBenefit": f"Allocates ₹{alloc.expected_cost:.2f} Cr for {alloc.invoice_name}",
+                "riskNote": f"Stream ledger processed. Maintains reserve floor.",
+                "breachesFloor": False,
+                "selected": i == 0
+            })
+
+        if not dynamic_candidates:
+            dynamic_candidates = [
+                {
+                    "id": "OPT-1",
+                    "action": "Pay Now",
+                    "title": "Pay Now + Lock Plant Opex (Selected)",
+                    "score": 96,
+                    "subScores": { "liquidity": 98, "financial": 95, "supplier": 92, "risk": 96 },
+                    "costBenefit": f"Covers Plant Opex & clears {len(new_decision.allocations)} invoice payouts",
+                    "riskNote": "Stream ledger processed. Preserves reserve floor.",
+                    "breachesFloor": False,
+                    "selected": True
+                }
+            ]
+
         # 4. Broadcast live update to all connected frontend pages
         payload = json.dumps({
             "event": "REALTIME_UPDATE",
@@ -138,26 +166,7 @@ async def auto_stream_generator():
                     "confidence": int(new_decision.confidence * 100),
                     "reasoning": new_decision.reasoning
                 },
-                "candidates": [
-                    {
-                        "id": "OPT-1",
-                        "action": "Pay Now",
-                        "title": "Pay Now + Reserve Plant Opex (Selected)",
-                        "score": min(98, max(75, int(new_decision.confidence * 96))),
-                        "subScores": { "liquidity": 98, "financial": 95, "supplier": 92, "risk": 96 },
-                        "costBenefit": f"Covers ₹16.5L Opex & allocates {len(new_decision.allocations)} invoice payouts",
-                        "riskNote": f"VRL Logistics AR inflow maintains ₹15.50L reserve floor",
-                        "breachesFloor": False,
-                        "selected": True,
-                        "sparklineData": [
-                            {"day": "Aug 28", "cash": total_cash},
-                            {"day": "Aug 29", "cash": total_cash - 16.5},
-                            {"day": "Sep 01", "cash": total_cash - 17.2},
-                            {"day": "Sep 05", "cash": total_cash - 17.5},
-                            {"day": "Sep 28", "cash": total_cash + 3.1}
-                        ]
-                    }
-                ],
+                "candidates": dynamic_candidates,
                 "invoices": [
                     {
                         "id": inv.id,

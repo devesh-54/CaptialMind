@@ -5,7 +5,11 @@ import {
   HelpCircle, 
   Sparkles,
   ArrowRight,
-  AlertTriangle
+  AlertTriangle,
+  Calendar,
+  ArrowDownLeft,
+  DollarSign,
+  Building
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine } from 'recharts';
 import { mockActivityFeed, mockInvoices, mockOptionCandidates } from '../data/mockData';
@@ -63,6 +67,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNa
     { day: 'Feb 12', cash: 4740.0, pessimistic: 4715.0 },
     { day: 'Feb 20', cash: 4780.0, pessimistic: 4750.0 },
   ];
+  
   const obligationsList = data?.obligations || [
     {
       id: 'OBL-001',
@@ -97,8 +102,8 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNa
       aiAction: 'Pay Now'
     }
   ];
-  const activityList = data?.activityFeed || mockActivityFeed;
 
+  const activityList = data?.activityFeed || mockActivityFeed;
   const activeCandidate = candidates.find(c => c.id === previewCandidateId);
 
   const chartData = forecast.map((point: any, idx: number) => {
@@ -115,7 +120,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNa
   return (
     <div className="space-y-8 pb-12">
       
-      {/* 2. DECLUTTERED KPI STRIP */}
+      {/* 1. DECLUTTERED KPI STRIP */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
         <div className="bg-[#0F172A]/80 border border-slate-800/60 p-4 rounded-lg">
           <span className="text-[10px] font-semibold uppercase text-slate-400 tracking-wider font-mono">Available Cash</span>
@@ -160,7 +165,66 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNa
         </div>
       </div>
 
-      {/* 2. REFINED HERO CARD (Showing Salary Day & Customer A context) */}
+      {/* PROMINENT REAL-TIME BUSINESS CONTEXT & OBLIGATIONS BANNER */}
+      <div className="bg-[#0F172A] border border-amber-500/40 rounded-lg p-4 space-y-3 shadow-lg">
+        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+          <div className="flex items-center space-x-2">
+            <Calendar className="w-4 h-4 text-amber-400" />
+            <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-amber-400">
+              Real-Time Treasury Context & Imminent Obligations
+            </h3>
+          </div>
+          <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-950 text-amber-300 border border-amber-800/60">
+            PARSED FROM HISTORICAL DATASET
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-xs">
+          
+          {/* Card 1: Employee Salary */}
+          <div className="bg-amber-950/30 border border-amber-800/60 p-3 rounded-lg space-y-1">
+            <div className="flex items-center justify-between text-[10px] text-amber-400 font-bold uppercase">
+              <span>Employee Salary Day</span>
+              <span className="px-1.5 py-0.2 rounded bg-amber-500 text-black font-bold">DUE TOMORROW</span>
+            </div>
+            <div className="text-base font-bold text-slate-100">₹4.10Cr</div>
+            <div className="text-[10px] text-slate-400">Critical Monthly Payroll lock</div>
+          </div>
+
+          {/* Card 2: Customer A Inflow */}
+          <div className="bg-emerald-950/30 border border-emerald-800/60 p-3 rounded-lg space-y-1">
+            <div className="flex items-center justify-between text-[10px] text-emerald-400 font-bold uppercase">
+              <span>Customer A (Mahindra) Inflow</span>
+              <span>EXPECTED JAN 15</span>
+            </div>
+            <div className="text-base font-bold text-slate-100">₹2.45Cr</div>
+            <div className="text-[10px] text-slate-400">95% Collection Confidence</div>
+          </div>
+
+          {/* Card 3: Valeo India Invoice */}
+          <div className="bg-blue-950/30 border border-blue-800/60 p-3 rounded-lg space-y-1">
+            <div className="flex items-center justify-between text-[10px] text-blue-400 font-bold uppercase">
+              <span>Valeo India Raw Material</span>
+              <span>2.0% DISCOUNT</span>
+            </div>
+            <div className="text-base font-bold text-slate-100">₹3.34Cr</div>
+            <div className="text-[10px] text-emerald-400 font-bold">Saves ₹66.76L net discount</div>
+          </div>
+
+          {/* Card 4: Bosch Tax Obligation */}
+          <div className="bg-purple-950/30 border border-purple-800/60 p-3 rounded-lg space-y-1">
+            <div className="flex items-center justify-between text-[10px] text-purple-400 font-bold uppercase">
+              <span>Bosch Ltd Tax Obligation</span>
+              <span>DUE JAN 10</span>
+            </div>
+            <div className="text-base font-bold text-slate-100">₹2.30Cr</div>
+            <div className="text-[10px] text-slate-400">Statutory Tax & Regulatory</div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* 2. REFINED HERO CARD */}
       <div className="bg-[#0F172A] border-l-4 border-l-blue-500 border-y border-r border-slate-800 rounded-lg overflow-hidden shadow-xl">
         
         <div className="bg-slate-900/90 px-6 py-2 border-b border-slate-800 flex items-center justify-between text-xs font-mono">
@@ -184,9 +248,6 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNa
             <div className="flex items-center space-x-2">
               <span className="px-2.5 py-1 rounded bg-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider flex items-center font-mono">
                 <Sparkles className="w-3.5 h-3.5 mr-1.5" /> AI Priority Recommendation
-              </span>
-              <span className="px-2 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800/60 text-[10px] font-mono font-bold">
-                ⚠️ Employee Salary Payroll Due Tomorrow
               </span>
             </div>
 
@@ -354,10 +415,8 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNa
         </div>
       </div>
 
-      {/* BOTTOM ROW: UPCOMING REAL OBLIGATIONS + LIVE FEED */}
+      {/* BOTTOM ROW: UPCOMING OBLIGATIONS + LIVE FEED */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
-        
-        {/* Real Obligations parsed from obligations.csv */}
         <div className="bg-[#0F172A]/90 border border-slate-800 rounded-lg p-5 space-y-3">
           <div className="flex justify-between items-center">
             <div>
@@ -395,7 +454,6 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({ onOpenDrawer, onNa
           </div>
         </div>
 
-        {/* Live Activity Feed */}
         <div className="bg-[#0F172A]/90 border border-slate-800 rounded-lg p-5 space-y-3">
           <div className="flex justify-between items-center">
             <h3 className="text-sm font-bold text-slate-200">Agent Activity Stream</h3>

@@ -185,7 +185,7 @@ async def auto_stream_generator():
                         "strategicImportance": 5,
                         "reasoning": inv.action_reason
                     }
-                    for inv in store.invoices[:6]
+                    for inv in store.invoices
                 ],
                 "timestamp": timestamp
             }
@@ -337,7 +337,7 @@ def get_dashboard_summary():
                 "strategicImportance": 5,
                 "reasoning": inv.action_reason
             }
-            for inv in store.invoices[:6]
+            for inv in store.invoices
         ],
         "receivables": [
             {

@@ -20,7 +20,7 @@ import {
   DollarSign,
   Building2
 } from 'lucide-react';
-import { fetchCommandCenterData, executeAction } from '../services/api';
+import { fetchCommandCenterData, executeAction, subscribeToSSEStream } from '../services/api';
 
 interface ExecutionSequenceProps {
   liveData?: any;
@@ -34,16 +34,36 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
   const [isExecuting, setIsExecuting] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!propsLiveData) {
-      async function loadData() {
-        const realData = await fetchCommandCenterData();
-        if (realData) {
-          setInternalData(realData);
-        }
+    async function loadData() {
+      const realData = await fetchCommandCenterData();
+      if (realData) {
+        setInternalData(realData);
       }
-      loadData();
     }
-  }, [propsLiveData]);
+    loadData();
+
+    const unsubscribe = subscribeToSSEStream((streamEvent) => {
+      if (streamEvent.event === 'REALTIME_UPDATE') {
+        const payload = streamEvent.data;
+        setInternalData((prev: any) => ({
+          ...prev,
+          kpis: {
+            ...prev?.kpis,
+            availableCash: payload.availableCash ?? prev?.kpis?.availableCash ?? 45040000.0,
+            deployableCapital: Math.max(0, (payload.availableCash ?? 45040000.0) - 15500000.0)
+          },
+          heroRecommendation: payload.heroRecommendation || prev?.heroRecommendation,
+          candidates: payload.candidates || prev?.candidates,
+          invoices: payload.invoices || prev?.invoices,
+          receivables: payload.receivables || prev?.receivables
+        }));
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const data = propsLiveData || internalData;
 

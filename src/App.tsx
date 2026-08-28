@@ -51,6 +51,7 @@ export function App() {
           },
           heroRecommendation: payload.heroRecommendation || prev?.heroRecommendation,
           candidates: payload.candidates || prev?.candidates,
+          invoices: payload.invoices || prev?.invoices,
           forecast: payload.forecast || prev?.forecast,
           receivables: payload.receivables || prev?.receivables,
           activityFeed: payload.newEvent ? [payload.newEvent, ...(prev?.activityFeed || [])] : prev?.activityFeed

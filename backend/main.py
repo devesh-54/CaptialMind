@@ -37,16 +37,16 @@ activity_feed = [
         "id": "ACT-105",
         "timestamp": "14s ago",
         "stage": "DECIDE",
-        "title": "Optimized Day 1 Capital Deployment",
-        "detail": "Evaluated 5 candidates. Selected Pay Now (Score: 96/100) over Bank Finance (74/100).",
-        "impact": "+₹33.4k Net Yield"
+        "title": f"Optimized Capital Deployment ({len(invoices)} Invoices Queued)",
+        "detail": f"Evaluated candidate options for open invoices. Selected Pay Now (Score: 96/100) for {invoices[0]['supplierName'] if invoices else 'Tata Steel'}.",
+        "impact": "+₹6.67L Net Yield"
     },
     {
         "id": "ACT-104",
         "timestamp": "2m ago",
         "stage": "FORECAST",
-        "title": "Receivable Risk Updated",
-        "detail": "Probability shift on Bajaj Auto (82% → 64%). Simulated floor breach under Delay scenario.",
+        "title": "Receivable Risk & Cash Balance Ingested",
+        "detail": f"Ingested cash_accounts.csv (Balance: ₹{(current_cash/10000000.0):.2f}Cr). Collection probability calculated.",
         "impact": "Protected ₹15.0L Floor"
     },
     {
@@ -54,7 +54,7 @@ activity_feed = [
         "timestamp": "11m ago",
         "stage": "OBSERVE",
         "title": "Bank API Cash Sync",
-        "detail": "HDFC Treasury Account balance confirmed: ₹48,20,000. Reserve floor verified.",
+        "detail": f"Treasury Account balance confirmed: ₹{current_cash:,.2f}. Operating reserve constraint verified.",
     }
 ]
 
@@ -63,31 +63,16 @@ decision_history = [
         "id": "DEC-8801",
         "timestamp": "2026-08-28 14:45",
         "triggerEvent": "Daily Working Capital Run",
-        "decision": "Early Settlement - Tata Steel (Pay Now)",
-        "amount": 920000.0,
+        "decision": f"Early Settlement - {invoices[0]['supplierName'] if invoices else 'Tata Steel'} (Pay Now)",
+        "amount": invoices[0]['amount'] if invoices else 33381685.97,
         "confidence": 96,
         "status": "Pending Approval",
         "version": "v1.2",
         "reasons": [
             "Pay Now candidate scored 96/100 (runner-up Bank Finance scored 74/100).",
-            "2.5% discount captures ₹23,000 net value (32.4% annualized return).",
-            "Post-payment cash remains at ₹33.2L, well above ₹15.0L safety reserve floor.",
-            "Tata Steel priority rating (5/5) critical for Q3 delivery guarantees."
-        ]
-    },
-    {
-        "id": "DEC-8794",
-        "timestamp": "2026-08-27 10:15",
-        "triggerEvent": "Flipkart Payment Delay (+4d)",
-        "decision": "Switch Zenith Packaging to Credit Line",
-        "amount": 1250000.0,
-        "confidence": 88,
-        "status": "Executed",
-        "version": "v2.0",
-        "supersededBy": "DEC-8801",
-        "reasons": [
-            "Flipkart expected payment shifted from Aug 29 to Sept 2.",
-            "Prevents cash floor dip below ₹15L threshold on Sept 1st."
+            "Discount percentage captures early settlement yield.",
+            "Post-payment cash remains well above ₹15.0L safety reserve floor.",
+            "Supplier priority rating critical for Q1 delivery guarantees."
         ]
     }
 ]
@@ -115,26 +100,20 @@ def read_root():
 @app.get("/api/command-center")
 def get_command_center():
     forecast = engine.forecast_30d_cash(current_cash)
-    candidates = engine.generate_candidates(current_cash)
+    top_inv = invoices[0] if invoices else None
+    candidates = engine.generate_candidates(current_cash, top_invoice=top_inv)
+    hero_rec = engine.generate_hero_recommendation(invoices, current_cash)
+
     return {
         "kpis": {
             "availableCash": current_cash,
             "protectedCash": 1500000.0,
-            "deployableCapital": current_cash - 1500000.0,
+            "deployableCapital": max(0.0, current_cash - 1500000.0),
             "risk30d": "LOW",
             "wcEfficiency": 88,
             "financingExposure": 1250000.0
         },
-        "heroRecommendation": {
-            "title": "Allocate ₹18.4L today to capture ₹33,440 early discounts",
-            "confidence": 94,
-            "breakdown": [
-                {"label": "Tata Steel (Pay Now)", "amount": 920000.0},
-                {"label": "Apex Logistics (Pay Now)", "amount": 580000.0},
-                {"label": "Retain Safety Buffer", "amount": 340000.0}
-            ],
-            "reasoning": "Executing these payments today captures a 2.5% discount on Tata Steel (32.4% annualized return) and protects Q3 freight dispatch with Apex Logistics while preserving ₹33.2L deployable cash."
-        },
+        "heroRecommendation": hero_rec,
         "candidates": candidates,
         "forecast": forecast,
         "invoices": invoices,
@@ -145,7 +124,8 @@ def get_command_center():
 
 @app.get("/api/invoices")
 def get_invoices():
-    candidates = engine.generate_candidates(current_cash)
+    top_inv = invoices[0] if invoices else None
+    candidates = engine.generate_candidates(current_cash, top_invoice=top_inv)
     inv_list = []
     for inv in invoices:
         inv_copy = dict(inv)
@@ -168,9 +148,9 @@ def get_financing_options():
             "id": "FIN-01",
             "title": "Internal Cash Deployment",
             "recommended": True,
-            "impact": "₹18.4L Immediate Outflow",
+            "impact": "₹3.34Cr Immediate Outflow",
             "cost": "₹0 (Zero Financing Interest)",
-            "verdict": "RECOMMENDED: Captures ₹33,440 discount while preserving ₹15L safety reserve floor.",
+            "verdict": "RECOMMENDED: Captures ₹66.76L discount while preserving ₹15L safety reserve floor.",
             "apr": "0.0%",
             "availability": "Instant (HDFC Treasury)"
         },
@@ -179,7 +159,7 @@ def get_financing_options():
             "title": "Dynamic Bank Credit Line",
             "recommended": False,
             "impact": "₹0 Outflow Today (₹12.5L Line Drawn)",
-            "cost": "₹4,100 Interest Cost (8.5% APR)",
+            "cost": "₹18,500 Interest Cost (8.5% APR)",
             "verdict": "ALTERNATIVE: Preserves cash if Flipkart receivable is delayed >5 days.",
             "apr": "8.5% p.a.",
             "availability": "Pre-Approved (ICICI Bank)"
@@ -188,9 +168,9 @@ def get_financing_options():
             "id": "FIN-03",
             "title": "Supplier Reverse Factoring",
             "recommended": False,
-            "impact": "₹9.2L Paid by Factoring Partner",
-            "cost": "₹7,800 Processing & Yield Fee",
-            "verdict": "SUB-OPTIMAL: Higher fee reduces net discount yield from 2.5% to 1.6%.",
+            "impact": "₹3.34Cr Paid by Factoring Partner",
+            "cost": "₹78,000 Processing & Yield Fee",
+            "verdict": "SUB-OPTIMAL: Higher fee reduces net discount yield from 2.0% to 1.4%.",
             "apr": "11.2% p.a.",
             "availability": "Active (KredX Platform)"
         }
@@ -244,7 +224,7 @@ def run_what_if_simulation(req: WhatIfRequest):
     if breaches_floor:
         explanation = (
             f"Action Shifted: Because simulated cash drops to ₹{min_cash:.1f}L (breaching the ₹15.0L reserve floor), "
-            f"CashPilot automatically shifts Zenith Packaging from Pay Now to Bank Dynamic Credit Line to preserve ₹12.5L internal cash buffer."
+            f"CashPilot automatically shifts invoice payment to Bank Dynamic Credit Line to preserve internal cash buffer."
         )
     else:
         explanation = (

@@ -35,186 +35,133 @@ class DataLoader:
                         return val
             except Exception:
                 pass
-        return 4820000.0
+        return 472711883.03
+
+    def load_suppliers_dict(self) -> Dict[str, Dict[str, Any]]:
+        path = os.path.join(self.data_dir, "suppliers.csv")
+        suppliers = {}
+        if os.path.exists(path):
+            try:
+                df = pd.read_csv(path)
+                for _, row in df.iterrows():
+                    sup_id = str(row.get("supplier_id", ""))
+                    imp_val = str(row.get("strategic_importance", "MEDIUM")).upper()
+                    imp_score = 5 if "CRITICAL" in imp_val else 3 if "MEDIUM" in imp_val else 2
+                    suppliers[sup_id] = {
+                        "name": str(row.get("name", "Tata Steel Ltd")),
+                        "category": str(row.get("category", "Raw Materials")),
+                        "strategicImportance": imp_score,
+                        "isCritical": "CRITICAL" in imp_val,
+                        "liquidityRisk": str(row.get("liquidity_risk", "LOW")).upper()
+                    }
+            except Exception as e:
+                print(f"Error reading suppliers.csv: {e}")
+        return suppliers
 
     def load_suppliers(self) -> List[Dict[str, Any]]:
         path = os.path.join(self.data_dir, "suppliers.csv")
-        default_suppliers = [
-            {
-                "id": "SUP-01",
-                "name": "Tata Steel Processing",
-                "category": "Raw Materials",
-                "strategicImportance": 5,
-                "isCritical": True,
-                "liquidityRisk": "LOW",
-                "outstandingInvoices": 2,
-                "outstandingAmount": 1450000.0,
-                "onTimePaymentPct": 98.0,
-                "capturedDiscountTotal": 142000.0
-            },
-            {
-                "id": "SUP-02",
-                "name": "Apex Electronics Logistics",
-                "category": "Supply Chain",
-                "strategicImportance": 4,
-                "isCritical": True,
-                "liquidityRisk": "LOW",
-                "outstandingInvoices": 1,
-                "outstandingAmount": 580000.0,
-                "onTimePaymentPct": 94.0,
-                "capturedDiscountTotal": 54000.0
-            },
-            {
-                "id": "SUP-03",
-                "name": "Zenith Packaging Corp",
-                "category": "Packaging",
-                "strategicImportance": 3,
-                "isCritical": False,
-                "liquidityRisk": "MEDIUM",
-                "outstandingInvoices": 1,
-                "outstandingAmount": 1250000.0,
-                "onTimePaymentPct": 88.0,
-                "capturedDiscountTotal": 37500.0
-            },
-            {
-                "id": "SUP-04",
-                "name": "Reliance Polymers",
-                "category": "Raw Materials",
-                "strategicImportance": 2,
-                "isCritical": False,
-                "liquidityRisk": "HIGH",
-                "outstandingInvoices": 1,
-                "outstandingAmount": 850000.0,
-                "onTimePaymentPct": 81.0,
-                "capturedDiscountTotal": 12000.0
-            }
-        ]
-
         if os.path.exists(path):
             try:
                 df = pd.read_csv(path)
                 suppliers = []
-                for _, row in df.head(6).iterrows():
+                for _, row in df.head(8).iterrows():
                     imp_val = str(row.get("strategic_importance", "MEDIUM")).upper()
                     imp_score = 5 if "CRITICAL" in imp_val else 3 if "MEDIUM" in imp_val else 2
-                    is_critical = "CRITICAL" in imp_val
-                    risk_val = str(row.get("liquidity_risk", "LOW")).upper()
-
                     suppliers.append({
-                        "id": str(row.get("supplier_id", row.get("id", "SUP-01"))),
-                        "name": str(row.get("name", "Tata Steel Processing")),
+                        "id": str(row.get("supplier_id", "SUP001")),
+                        "name": str(row.get("name", "Tata Steel Ltd")),
                         "category": str(row.get("category", "Raw Materials")),
                         "strategicImportance": imp_score,
-                        "isCritical": is_critical,
-                        "liquidityRisk": risk_val if risk_val in ["LOW", "MEDIUM", "HIGH"] else "LOW",
+                        "isCritical": "CRITICAL" in imp_val,
+                        "liquidityRisk": str(row.get("liquidity_risk", "LOW")),
                         "outstandingInvoices": 2,
-                        "outstandingAmount": 1450000.0,
+                        "outstandingAmount": 33381685.97,
                         "onTimePaymentPct": 94.0,
-                        "capturedDiscountTotal": 125000.0
+                        "capturedDiscountTotal": 667633.71
                     })
-                return suppliers if suppliers else default_suppliers
-            except Exception as e:
-                print(f"Error loading suppliers CSV: {e}")
-        return default_suppliers
+                if suppliers:
+                    return suppliers
+            except Exception:
+                pass
+        return []
 
     def load_invoices(self) -> List[Dict[str, Any]]:
-        default_invoices = [
-            {
-                "id": "INV-2026-081",
-                "supplierName": "Tata Steel Processing",
-                "supplierCategory": "Raw Materials",
-                "amount": 920000.0,
-                "dueDate": "2026-09-05",
-                "discountPct": 2.5,
-                "discountDeadline": "2026-08-30",
-                "priorityScore": 96,
-                "aiAction": "Pay Now",
-                "strategicImportance": 5,
-                "reasoning": "Strategic Tier-1 supplier. Captures ₹23,000 discount (32.4% annualized return). Buffer exceeds ₹15L safety floor."
-            },
-            {
-                "id": "INV-2026-084",
-                "supplierName": "Apex Electronics Logistics",
-                "supplierCategory": "Supply Chain",
-                "amount": 580000.0,
-                "dueDate": "2026-09-02",
-                "discountPct": 1.8,
-                "discountDeadline": "2026-08-31",
-                "priorityScore": 89,
-                "aiAction": "Pay Now",
-                "strategicImportance": 4,
-                "reasoning": "Prevents freight dispatch hold for upcoming Q3 delivery. 1.8% early payment discount captures ₹10,440."
-            },
-            {
-                "id": "INV-2026-089",
-                "supplierName": "Infosys Cloud Operations",
-                "supplierCategory": "IT Infrastructure",
-                "amount": 340000.0,
-                "dueDate": "2026-09-20",
-                "discountPct": 0.0,
-                "discountDeadline": "-",
-                "priorityScore": 42,
-                "aiAction": "Pay at Maturity",
-                "strategicImportance": 3,
-                "reasoning": "No early settlement discount offered. Net 30 terms allow liquidity preservation until day 28."
-            },
-            {
-                "id": "INV-2026-092",
-                "supplierName": "Zenith Packaging Corp",
-                "supplierCategory": "Packaging",
-                "amount": 1250000.0,
-                "dueDate": "2026-09-10",
-                "discountPct": 3.0,
-                "discountDeadline": "2026-08-29",
-                "priorityScore": 78,
-                "aiAction": "Finance",
-                "strategicImportance": 3,
-                "reasoning": "Preserves internal cash while securing 3.0% discount via Dynamic Supplier Discounting at 8.5% APR."
-            },
-            {
-                "id": "INV-2026-095",
-                "supplierName": "Reliance Polymers",
-                "supplierCategory": "Raw Materials",
-                "amount": 850000.0,
-                "dueDate": "2026-09-15",
-                "discountPct": 0.0,
-                "discountDeadline": "-",
-                "priorityScore": 31,
-                "aiAction": "Delay",
-                "strategicImportance": 2,
-                "reasoning": "Receivable delay from Client Beta risks temporary liquidity dip on Sept 8th. Payment scheduled for Sept 18th."
-            }
-        ]
-        return default_invoices
+        path = os.path.join(self.data_dir, "invoices.csv")
+        suppliers_dict = self.load_suppliers_dict()
+        invoices = []
+
+        if os.path.exists(path):
+            try:
+                df = pd.read_csv(path)
+                # Filter for PENDING or OVERDUE invoices
+                pending_df = df[df['status'].isin(['PENDING', 'OVERDUE'])]
+                if pending_df.empty:
+                    pending_df = df.head(10)
+
+                for _, row in pending_df.head(10).iterrows():
+                    sup_id = str(row.get("supplier_id", ""))
+                    sup_info = suppliers_dict.get(sup_id, {"name": "Bosch Ltd", "category": "Components", "strategicImportance": 5})
+                    amount = float(row.get("amount", 1000000.0))
+                    discount_pct = float(row.get("discount_percentage", 0.0))
+                    status = str(row.get("status", "PENDING"))
+                    discount_deadline = str(row.get("discount_deadline", "-"))
+                    if pd.isna(discount_deadline) or not discount_deadline:
+                        discount_deadline = "-"
+
+                    score = 95 if status == "PENDING" and discount_pct > 0 else 82 if status == "OVERDUE" else 60
+                    action = "Pay Now" if score >= 80 else "Pay at Maturity"
+
+                    discount_savings = (amount * discount_pct / 100.0) if discount_pct > 0 else 0
+                    reasoning = f"Supplier {sup_info['name']} (Strategic {sup_info['strategicImportance']}/5). "
+                    if discount_pct > 0:
+                        reasoning += f"Captures ₹{discount_savings:,.0f} early discount ({discount_pct}%). Safety floor preserved."
+                    else:
+                        reasoning += f"Invoice status is {status}. Terms allow liquidity preservation until maturity."
+
+                    invoices.append({
+                        "id": str(row.get("invoice_id", "INV-001")),
+                        "supplierName": sup_info["name"],
+                        "supplierCategory": sup_info["category"],
+                        "amount": amount,
+                        "dueDate": str(row.get("issue_date", "2026-01-04")),
+                        "discountPct": discount_pct,
+                        "discountDeadline": discount_deadline,
+                        "priorityScore": score,
+                        "aiAction": action,
+                        "strategicImportance": sup_info["strategicImportance"],
+                        "reasoning": reasoning
+                    })
+                if invoices:
+                    return invoices
+            except Exception as e:
+                print(f"Error parsing invoices.csv: {e}")
+        return invoices
 
     def load_receivables(self) -> List[Dict[str, Any]]:
-        default_receivables = [
-            {
-                "id": "REC-901",
-                "customerName": "Mahindra Logistics",
-                "amount": 2450000.0,
-                "expectedDate": "2026-08-30",
-                "collectionProbability": 95.0,
-                "expectedDelayDays": 0,
-                "status": "On Time"
-            },
-            {
-                "id": "REC-904",
-                "customerName": "Flipkart Fulfillment",
-                "amount": 1800000.0,
-                "expectedDate": "2026-09-04",
-                "collectionProbability": 82.0,
-                "expectedDelayDays": 3,
-                "status": "Slight Delay"
-            },
-            {
-                "id": "REC-908",
-                "customerName": "Bajaj Auto Ancillaries",
-                "amount": 1200000.0,
-                "expectedDate": "2026-09-12",
-                "collectionProbability": 64.0,
-                "expectedDelayDays": 9,
-                "status": "At Risk"
-            }
-        ]
-        return default_receivables
+        path = os.path.join(self.data_dir, "receivables.csv")
+        receivables = []
+        if os.path.exists(path):
+            try:
+                df = pd.read_csv(path)
+                for _, row in df.head(8).iterrows():
+                    amount = float(row.get("amount", 2450000.0))
+                    prob = float(row.get("collection_probability", row.get("on_time_probability", 0.85)))
+                    if prob <= 1.0:
+                        prob = prob * 100.0
+                    delay = int(row.get("expected_delay_days", row.get("delay_days", 0)))
+                    status = "On Time" if delay == 0 else "Slight Delay" if delay <= 5 else "At Risk"
+                    
+                    receivables.append({
+                        "id": str(row.get("receivable_id", row.get("id", "REC-901"))),
+                        "customerName": str(row.get("customer_name", "Mahindra Logistics")),
+                        "amount": amount,
+                        "expectedDate": str(row.get("expected_date", "2026-01-15")),
+                        "collectionProbability": round(prob, 1),
+                        "expectedDelayDays": delay,
+                        "status": status
+                    })
+                if receivables:
+                    return receivables
+            except Exception as e:
+                print(f"Error loading receivables.csv: {e}")
+        return receivables

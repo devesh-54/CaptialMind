@@ -6,42 +6,30 @@ from typing import Dict, Any, List
 class HistoricalPreprocessor:
     def __init__(self, data_dir: str):
         self.data_dir = data_dir
-        self.master_path = os.path.join(self.data_dir, "historical_master_merged.csv")
+        self.vertical_merged_path = os.path.join(self.data_dir, "historical_relational_vertical_merged.csv")
 
-    def get_table(self, table_name: str) -> pd.DataFrame:
-        """Returns DataFrame for table_name from historical_master_merged.csv if available, else individual CSV."""
-        if os.path.exists(self.master_path):
+    def load_vertical_dataset(self) -> pd.DataFrame:
+        if os.path.exists(self.vertical_merged_path):
             try:
-                master_df = pd.read_csv(self.master_path, low_memory=False)
-                sub_df = master_df[master_df['source_table'] == table_name].dropna(how='all', axis=1)
-                if not sub_df.empty:
-                    return sub_df
+                return pd.read_csv(self.vertical_merged_path, low_memory=False)
             except Exception as e:
-                print(f"Error reading master merged file for {table_name}: {e}")
-
-        # Fallback to individual CSV file
-        single_path = os.path.join(self.data_dir, f"{table_name}.csv")
-        if os.path.exists(single_path):
-            try:
-                return pd.read_csv(single_path)
-            except Exception:
-                pass
+                print(f"Error reading vertical merged file: {e}")
         return pd.DataFrame()
 
     def preprocess_customer_history(self) -> Dict[str, Dict[str, Any]]:
-        df = self.get_table("transactions")
+        merged_df = self.load_vertical_dataset()
         customer_features = {}
 
-        if not df.empty:
+        if not merged_df.empty:
             try:
-                cust_col = 'customer_id' if 'customer_id' in df.columns else 'entity_id' if 'entity_id' in df.columns else None
-                if cust_col:
-                    for cust_id, group in df.groupby(cust_col):
-                        paid_dates = group.get('actual_payment_date', group.get('payment_date'))
-                        due_dates = group.get('due_date', group.get('expected_date'))
-                        
+                cust_rows = merged_df[merged_df['customer_id'].notna()]
+                if not cust_rows.empty:
+                    for cust_id, group in cust_rows.groupby('customer_id'):
                         on_time = 0
                         delays = []
+
+                        paid_dates = group.get('actual_payment_date', group.get('payment_date'))
+                        due_dates = group.get('expected_date', group.get('due_date'))
 
                         if paid_dates is not None and due_dates is not None:
                             for p_date, d_date in zip(paid_dates, due_dates):
@@ -73,20 +61,6 @@ class HistoricalPreprocessor:
             except Exception as e:
                 print(f"Error in preprocess_customer_history: {e}")
 
-        # Also check customers table if available
-        cust_df = self.get_table("customers")
-        if not cust_df.empty:
-            for _, row in cust_df.iterrows():
-                cid = str(row.get("customer_id", ""))
-                if cid and cid not in customer_features:
-                    customer_features[cid] = {
-                        "alpha": int(row.get("on_time_payments", 8)) + 1,
-                        "beta": int(row.get("late_payments", 2)) + 1,
-                        "observations_count": int(row.get("total_historical_payments", 10)),
-                        "on_time_probability": float(row.get("on_time_probability", 80.0)) * 100.0 if float(row.get("on_time_probability", 0.8)) <= 1.0 else float(row.get("on_time_probability", 80.0)),
-                        "average_delay_days": float(row.get("average_delay_days", 1.0))
-                    }
-
         if not customer_features:
             customer_features = {
                 "CUST011": {"alpha": 10, "beta": 2, "observations_count": 11, "on_time_probability": 87.0, "average_delay_days": 1.0},
@@ -95,13 +69,14 @@ class HistoricalPreprocessor:
         return customer_features
 
     def preprocess_supplier_history(self) -> Dict[str, Dict[str, Any]]:
-        df = self.get_table("invoices")
+        merged_df = self.load_vertical_dataset()
         supplier_features = {}
 
-        if not df.empty:
+        if not merged_df.empty:
             try:
-                if 'supplier_id' in df.columns:
-                    for sup_id, group in df.groupby('supplier_id'):
+                sup_rows = merged_df[merged_df['supplier_id'].notna()]
+                if not sup_rows.empty:
+                    for sup_id, group in sup_rows.groupby('supplier_id'):
                         total_inv = len(group)
                         paid_inv = group[group['status'] == 'PAID'] if 'status' in group.columns else group
                         

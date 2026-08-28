@@ -6,18 +6,17 @@ import {
   RefreshCw, 
   FileSpreadsheet, 
   Play, 
-  CheckCircle2, 
   Clock, 
   Zap,
-  Code2,
-  Server
+  CheckCircle2,
+  ShieldAlert,
+  SlidersHorizontal
 } from 'lucide-react';
 import { fetchCommandCenterData, triggerSimulatedEvent, subscribeToSSEStream } from '../services/api';
 
 export const DataStreamInspector: React.FC = () => {
   const [activeSubTab, setActiveSubTab] = useState<'live-stream' | 'historical-data'>('live-stream');
   const [streamStatus, setStreamStatus] = useState<string>('Connected to SSE Stream');
-  const [lastHeartbeat, setLastHeartbeat] = useState<string>('Just now');
   const [streamLogs, setStreamLogs] = useState<any[]>([]);
   const [commandCenterData, setCommandCenterData] = useState<any>(null);
   const [selectedCsv, setSelectedCsv] = useState<string>('invoices');
@@ -32,17 +31,17 @@ export const DataStreamInspector: React.FC = () => {
     }
     loadData();
 
-    // Subscribe to real-time Server-Sent Events stream from http://localhost:8000/api/stream
     const unsubscribe = subscribeToSSEStream((eventData) => {
       const timestamp = new Date().toLocaleTimeString();
-      setLastHeartbeat(timestamp);
 
       if (eventData.event === 'CONNECTED') {
         setStreamStatus('ACTIVE SSE CHANNEL');
       } else if (eventData.event === 'HEARTBEAT') {
         setStreamStatus(`LIVE PULSE (${eventData.data.timestamp})`);
       } else if (eventData.event === 'REALTIME_UPDATE') {
-        setStreamStatus(`EVENT RECEIVED (${eventData.data.timestamp})`);
+        setStreamStatus(`RE-OPTIMIZED (${eventData.data.timestamp})`);
+      } else if (eventData.event === 'TELEMETRY_PING') {
+        setStreamStatus(`TELEMETRY MONITORED (${eventData.data.timestamp})`);
       }
 
       setStreamLogs((prev) => [
@@ -52,7 +51,7 @@ export const DataStreamInspector: React.FC = () => {
           event: eventData.event,
           payload: eventData.data
         },
-        ...prev.slice(0, 49) // Keep last 50 logs
+        ...prev.slice(0, 49)
       ]);
     });
 
@@ -79,10 +78,10 @@ export const DataStreamInspector: React.FC = () => {
         <div>
           <div className="flex items-center space-x-2">
             <Database className="w-5 h-5 text-blue-400" />
-            <h1 className="text-xl font-bold text-slate-100">Data Ingestion & Event Stream Inspector</h1>
+            <h1 className="text-xl font-bold text-slate-100 font-sans">Dual-Frequency Ingestion & Materiality Stream Inspector</h1>
           </div>
           <p className="text-xs text-slate-400 font-sans mt-0.5">
-            Real-time monitoring of historical dataset ingestion (`historical_data_cashpilot`) and FastAPI SSE stream payloads (`http://localhost:8000/api/stream`).
+            Frequent telemetry pings are monitored without spamming decision history — Re-optimization triggers ONLY on Material Change thresholds.
           </p>
         </div>
 
@@ -143,44 +142,54 @@ export const DataStreamInspector: React.FC = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Zap className="w-4 h-4 text-blue-400" />
-                <h3 className="text-xs font-bold uppercase text-slate-200">Inject Real-Time Demo Event Stream</h3>
+                <h3 className="text-xs font-bold uppercase text-slate-200">Test Dual-Frequency Ingestion Pipeline</h3>
               </div>
-              <span className="text-[10px] text-slate-400">Triggers immediate SSE broadcast over FastAPI</span>
+              <span className="text-[10px] text-slate-400">Triggers materiality threshold evaluation over FastAPI</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              
+              {/* NON-MATERIAL TELEMETRY PING */}
+              <button
+                disabled={isSimulating}
+                onClick={() => handleTriggerSimulatedEvent('OBSERVE', 'Minor Cash Ping (₹49.99Cr → ₹49.98Cr)', 0, 1.2)}
+                className="py-2.5 px-3 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white rounded text-xs text-left transition flex items-center justify-between"
+              >
+                <div>
+                  <div className="font-bold flex items-center">
+                    <CheckCircle2 className="w-3 h-3 mr-1 text-slate-400" /> Minor Ping (&lt;2% Cash Delta)
+                  </div>
+                  <div className="text-[10px] text-slate-500">Monitored (No Material Change)</div>
+                </div>
+                <Play className="w-3.5 h-3.5 shrink-0 ml-2" />
+              </button>
+
+              {/* MATERIAL RECEIVABLE DELAY */}
               <button
                 disabled={isSimulating}
                 onClick={() => handleTriggerSimulatedEvent('FORECAST', 'Customer A (Mahindra) payment delayed by 10 days', 10, 0)}
                 className="py-2.5 px-3 bg-slate-900 hover:bg-slate-800 border border-amber-500/40 text-amber-400 hover:text-amber-300 rounded text-xs text-left transition flex items-center justify-between"
               >
                 <div>
-                  <div className="font-bold">⚠️ Customer A Delay (+10d)</div>
-                  <div className="text-[10px] text-slate-400">Triggers Cash Flow Re-Forecast</div>
+                  <div className="font-bold flex items-center">
+                    <ShieldAlert className="w-3 h-3 mr-1 text-amber-400" /> Material Delay (+10d)
+                  </div>
+                  <div className="text-[10px] text-amber-400">Triggers Re-Optimization & Decision Bump</div>
                 </div>
                 <Play className="w-3.5 h-3.5 shrink-0 ml-2" />
               </button>
 
+              {/* MATERIAL OUTFLOW OUTBREAK */}
               <button
                 disabled={isSimulating}
                 onClick={() => handleTriggerSimulatedEvent('DECIDE', 'Unexpected plant equipment outflow ₹6.0L', 0, 6)}
                 className="py-2.5 px-3 bg-slate-900 hover:bg-slate-800 border border-red-500/40 text-red-400 hover:text-red-300 rounded text-xs text-left transition flex items-center justify-between"
               >
                 <div>
-                  <div className="font-bold">🚨 Outflow Outbreak (₹6.0L)</div>
-                  <div className="text-[10px] text-slate-400">Triggers Re-Allocation Engine</div>
-                </div>
-                <Play className="w-3.5 h-3.5 shrink-0 ml-2" />
-              </button>
-
-              <button
-                disabled={isSimulating}
-                onClick={() => handleTriggerSimulatedEvent('OBSERVE', 'Bank Treasury Cash Sync Confirmed: ₹47.27Cr', 0, 0)}
-                className="py-2.5 px-3 bg-slate-900 hover:bg-slate-800 border border-emerald-500/40 text-emerald-400 hover:text-emerald-300 rounded text-xs text-left transition flex items-center justify-between"
-              >
-                <div>
-                  <div className="font-bold">✅ Treasury Cash Sync</div>
-                  <div className="text-[10px] text-slate-400">Pushes HDFC Balance Pulse</div>
+                  <div className="font-bold flex items-center">
+                    <Zap className="w-3 h-3 mr-1 text-red-400" /> Material Outflow (₹6.0L)
+                  </div>
+                  <div className="text-[10px] text-red-400">Triggers Re-Allocation & Version Bump</div>
                 </div>
                 <Play className="w-3.5 h-3.5 shrink-0 ml-2" />
               </button>
@@ -198,7 +207,7 @@ export const DataStreamInspector: React.FC = () => {
               {streamLogs.length === 0 ? (
                 <div className="p-8 text-center text-slate-500 text-xs">
                   <Clock className="w-6 h-6 mx-auto mb-2 opacity-50" />
-                  Listening to `/api/stream` SSE stream... Heartbeats and events will appear here in real time.
+                  Listening to `/api/stream` SSE stream... Heartbeats, telemetry pings, and material re-optimizations will appear here in real time.
                 </div>
               ) : (
                 streamLogs.map((log) => (
@@ -206,11 +215,11 @@ export const DataStreamInspector: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
-                          log.event === 'CONNECTED' ? 'bg-blue-950 text-blue-400 border-blue-800' :
+                          log.event === 'TELEMETRY_PING' ? 'bg-slate-900 text-slate-400 border-slate-700' :
                           log.event === 'REALTIME_UPDATE' ? 'bg-emerald-950 text-emerald-400 border-emerald-800 animate-pulse' :
-                          'bg-slate-800 text-slate-400 border-slate-700'
+                          'bg-blue-950 text-blue-400 border-blue-800'
                         }`}>
-                          {log.event}
+                          {log.event === 'TELEMETRY_PING' ? 'MONITORED (No Material Change)' : log.event}
                         </span>
                         <span className="text-slate-400">{log.timestamp}</span>
                       </div>

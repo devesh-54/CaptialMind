@@ -1,10 +1,53 @@
 import numpy as np
 import pandas as pd
-from typing import Dict, Any, List
+import time
+from typing import Dict, Any, List, Tuple
+
+class MaterialityChangeDetector:
+    """Evaluates whether an incoming financial telemetry event constitutes a material change requiring re-optimization."""
+
+    @staticmethod
+    def is_material_change(
+        event_type: str,
+        delay_days: int = 0,
+        outflow_lakhs: float = 0.0,
+        prob_delta: float = 0.0,
+        risk_shift: bool = False,
+        rate_shift_pct: float = 0.0
+    ) -> Tuple[bool, str]:
+        
+        # 1. Receivable delay > 3 days
+        if delay_days >= 3:
+            return True, f"Material Receivable Delay: Expected payment delayed by +{delay_days} days."
+
+        # 2. Cash balance / outflow change > 2% of deployable capital (> ₹5.0L)
+        if outflow_lakhs >= 5.0:
+            return True, f"Material Cash Outflow: Significant capital shift of ₹{outflow_lakhs:.1f}L."
+
+        # 3. Collection probability shift > 15% (e.g. 85% -> 55%)
+        if abs(prob_delta) >= 15.0:
+            return True, f"Material Bayesian Probability Shift: Customer collection confidence shifted by {prob_delta:.1f}%."
+
+        # 4. Supplier risk shift (e.g. LOW -> HIGH)
+        if risk_shift:
+            return True, "Material Supplier Risk Shift: Tier-1 supplier liquidity risk escalated."
+
+        # 5. Financing APR rate shift > 1.5%
+        if abs(rate_shift_pct) >= 1.5:
+            return True, f"Material Interest Rate Shift: Financing line APR changed by {rate_shift_pct:.1f}%."
+
+        # 6. Specific explicit event overrides
+        if event_type in ["RECEIVABLE_DELAYED", "REOPTIMIZE_TRIGGER"]:
+            return True, f"Material Trigger Event: {event_type} invoked."
+
+        # Non-material telemetry ping (e.g. minor cash fluctuation <2%)
+        return False, "Monitored telemetry update — below materiality threshold (<2% cash delta, <3d delay). Strategy retained."
+
 
 class DecisionEngine:
     def __init__(self, reserve_floor: float = 1500000.0):
         self.reserve_floor = reserve_floor
+        self.change_detector = MaterialityChangeDetector()
 
     def update_bayesian_probability(self, receivable: Dict[str, Any], on_time: bool = False) -> Dict[str, Any]:
         """Performs Beta-Binomial updating on customer collection probability: Beta(alpha + 1, beta) or Beta(alpha, beta + 1)"""
@@ -39,7 +82,6 @@ class DecisionEngine:
         days = ['Jan 04', 'Jan 05 (Salary)', 'Jan 10', 'Jan 15 (Customer A)', 'Jan 20', 'Feb 05', 'Feb 12', 'Feb 20']
         base_cash_lakhs = current_cash / 100000.0
         
-        # Calculate expected receivable cash inflow using Beta probabilities
         cust_a_prob = 0.95
         if receivables and len(receivables) > 0:
             cust_a_prob = (receivables[0].get("collectionProbability", 95.0)) / 100.0
@@ -50,7 +92,6 @@ class DecisionEngine:
             if idx == 1:
                 cash -= 41.0  # Salary payroll outflow (₹4.10Cr)
             if idx == 3:
-                # Expected value formula: E[Cash] = P(on-time) * Cash
                 expected_inflow = 24.5 * cust_a_prob
                 if receivable_delay_days > 0:
                     expected_inflow = expected_inflow * max(0.2, 1.0 - (receivable_delay_days * 0.1))

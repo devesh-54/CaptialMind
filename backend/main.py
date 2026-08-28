@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
 from data_loader import DataLoader
-from engine import DecisionEngine
+from engine import DecisionEngine, MaterialityChangeDetector
 
 app = FastAPI(
     title="CashPilot AI Backend Engine",
@@ -67,8 +67,9 @@ decision_history = [
         "decision": f"Reserve ₹4.10Cr Salary Payroll + Early Settlement for {invoices[0]['supplierName'] if invoices else 'Valeo India'} (Pay Now)",
         "amount": invoices[0]['amount'] if invoices else 33381685.97,
         "confidence": 96,
-        "status": "Pending Approval",
+        "status": "ACTIVE",
         "version": "v1.2",
+        "validUntil": None,
         "reasons": [
             "Employee Monthly Payroll (₹4.10Cr) prioritized as CRITICAL due tomorrow.",
             "Pay Now candidate scored 96/100 (runner-up Bank Finance scored 74/100).",
@@ -85,6 +86,8 @@ class EventTriggerRequest(BaseModel):
     description: str
     receivable_delay_days: int = 0
     extra_outflow_lakhs: float = 0.0
+    prob_delta: float = 0.0
+    risk_shift: bool = False
     customer_id: str = "CUST-001"
 
 class WhatIfRequest(BaseModel):
@@ -187,35 +190,83 @@ def get_agent_activity():
 def get_decision_history():
     return decision_history
 
-# RECEPTIVE RE-OPTIMIZATION PIPELINE ENDPOINT
+# DUAL-FREQUENCY INGESTION & MATERIALITY CHANGE DETECTOR PIPELINE
 @app.post("/events")
 @app.post("/api/events")
 @app.post("/api/simulate-event")
 async def receive_event(req: EventTriggerRequest):
     global current_cash, activity_feed, decision_history, receivables
 
-    # Step 1: Apply event to state & update Bayesian Beta probability if receivable delayed
-    if req.event_type in ["RECEIVABLE_DELAYED", "FORECAST"] or req.receivable_delay_days > 0:
+    # Step 1: Evaluate Materiality Thresholds
+    is_material, reason = MaterialityChangeDetector.is_material_change(
+        event_type=req.event_type,
+        delay_days=req.receivable_delay_days,
+        outflow_lakhs=req.extra_outflow_lakhs,
+        prob_delta=req.prob_delta,
+        risk_shift=req.risk_shift
+    )
+
+    timestamp_str = time.strftime("%H:%M:%S")
+
+    # IF NON-MATERIAL TELEMETRY (e.g. minor cash ping <2% or delay <3d)
+    if not is_material:
+        monitored_event = {
+            "id": f"ACT-{int(time.time()) % 10000}",
+            "timestamp": "Just now",
+            "stage": "OBSERVE",
+            "title": f"Telemetry Telemetry Ingested: {req.description}",
+            "detail": f"{reason} Existing capital allocation strategy retained.",
+            "impact": "Monitored (No Material Change)"
+        }
+        activity_feed.insert(0, monitored_event)
+
+        # Broadcast telemetry ping over SSE
+        payload = json.dumps({
+            "event": "TELEMETRY_PING",
+            "data": {
+                "monitoredEvent": monitored_event,
+                "materialChange": False,
+                "timestamp": timestamp_str
+            }
+        })
+        for queue in event_subscribers:
+            await queue.put(payload)
+
+        return {
+            "status": "monitored, no material change",
+            "material_change": False,
+            "reason": reason,
+            "active_decision_id": decision_history[0]["id"] if decision_history else None
+        }
+
+    # IF MATERIAL CHANGE DETECTED: RUN RE-OPTIMIZER
+    # 1. Update Bayesian collection probabilities if receivable delay reported
+    if req.receivable_delay_days > 0 or req.event_type == "RECEIVABLE_DELAYED":
         if receivables and len(receivables) > 0:
             receivables[0] = engine.update_bayesian_probability(receivables[0], on_time=False)
 
     if req.extra_outflow_lakhs > 0:
         current_cash -= (req.extra_outflow_lakhs * 100000.0)
 
-    # Step 2: Trigger Forecast Engine Recomputation
+    # 2. Recompute 30-day cash timeline
     new_forecast = engine.forecast_30d_cash(
-        current_cash, 
+        current_cash,
         receivables=receivables,
         receivable_delay_days=req.receivable_delay_days,
         extra_outflow=req.extra_outflow_lakhs * 100000.0
     )
 
-    # Step 3: Trigger Decision Engine Recomputation (Scoring + Knapsack Allocation)
-    top_inv = invoices[0] if invoices else None
-    new_candidates = engine.generate_candidates(current_cash, top_invoice=top_inv, receivables=receivables)
-    new_hero = engine.generate_hero_recommendation(invoices, current_cash, receivables=receivables)
+    # 3. Mark previous active decision in history as SUPERSEDED
+    if decision_history and len(decision_history) > 0:
+        for dec in decision_history:
+            if dec.get("status") == "ACTIVE":
+                dec["status"] = "SUPERSEDED"
+                dec["validUntil"] = time.strftime("%Y-%m-%d %H:%M")
 
-    # Step 4: Automatically log new generated decision to decision_history
+    # 4. Generate new ACTIVE decision via Knapsack & Dynamic Weighting
+    new_hero = engine.generate_hero_recommendation(invoices, current_cash, receivables=receivables)
+    new_candidates = engine.generate_candidates(current_cash, top_invoice=invoices[0] if invoices else None, receivables=receivables)
+    
     dec_id = f"DEC-{int(time.time()) % 10000}"
     new_decision = {
         "id": dec_id,
@@ -224,38 +275,41 @@ async def receive_event(req: EventTriggerRequest):
         "decision": new_hero["title"],
         "amount": invoices[0]['amount'] if invoices else 33381685.97,
         "confidence": new_hero["confidence"],
-        "status": "Pending Approval",
-        "version": "v2.1",
+        "status": "ACTIVE",
+        "version": f"v2.{len(decision_history)+1}",
+        "validUntil": None,
         "reasons": [
-            f"Event Triggered: {req.description}",
+            f"Material Change Detected: {reason}",
             f"Bayesian Customer A Probability shifted to {receivables[0]['collectionProbability']}%.",
-            f"Evaluated candidates. Reserve floor preserved above ₹15.0L."
+            f"Evaluated candidates. 0/1 Knapsack allocation re-optimized."
         ]
     }
     decision_history.insert(0, new_decision)
 
-    # Step 5: Log to Activity Stream
-    new_event = {
+    # 5. Log material event to Activity Stream
+    material_event = {
         "id": f"ACT-{int(time.time()) % 10000}",
         "timestamp": "Just now",
         "stage": req.event_type,
-        "title": req.description,
-        "detail": f"Recomputed 30d forecast & decision matrix. Logged {dec_id}. Customer A Prob: {receivables[0]['collectionProbability']}%.",
-        "impact": "Automated Re-Optimization"
+        "title": f"⚠️ Material Change: {req.description}",
+        "detail": f"{reason} Superseded previous decision. Generated {dec_id} (ACTIVE).",
+        "impact": "Strategy Re-Optimized"
     }
-    activity_feed.insert(0, new_event)
+    activity_feed.insert(0, material_event)
 
-    # Step 6: Broadcast full re-optimized state over SSE stream
+    # 6. Broadcast SSE live update
     payload = json.dumps({
         "event": "REALTIME_UPDATE",
         "data": {
-            "newEvent": new_event,
+            "newEvent": material_event,
             "newDecision": new_decision,
+            "decisionHistory": decision_history,
             "receivables": receivables,
             "heroRecommendation": new_hero,
             "candidates": new_candidates,
             "forecast": new_forecast,
-            "timestamp": time.strftime("%H:%M:%S")
+            "materialChange": True,
+            "timestamp": timestamp_str
         }
     })
     for queue in event_subscribers:
@@ -263,9 +317,10 @@ async def receive_event(req: EventTriggerRequest):
 
     return {
         "status": "re-optimized",
+        "material_change": True,
+        "reason": reason,
         "decision": new_decision,
-        "bayesianProbability": receivables[0]['collectionProbability'],
-        "event": new_event
+        "bayesianProbability": receivables[0]['collectionProbability']
     }
 
 @app.post("/api/what-if")

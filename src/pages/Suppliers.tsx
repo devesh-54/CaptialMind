@@ -16,7 +16,9 @@ import {
   Plus, 
   Zap,
   Info,
-  Check
+  Check,
+  Star,
+  Percent
 } from 'lucide-react';
 import { fetchSuppliersData, executeAction, triggerSimulatedEvent } from '../services/api';
 
@@ -26,99 +28,132 @@ export const Suppliers: React.FC = () => {
   const [riskFilter, setRiskFilter] = useState<string>('ALL');
   const [executingSupplierId, setExecutingSupplierId] = useState<string | null>(null);
   const [executedSuppliers, setExecutedSuppliers] = useState<Record<string, boolean>>({});
-  const [selectedSupplierDetail, setSelectedSupplierDetail] = useState<any | null>(null);
 
   useEffect(() => {
     async function load() {
       const data = await fetchSuppliersData();
       if (data && data.length > 0) {
-        setSuppliers(data);
+        // Compute dynamic star priority based on discount offer & captured yield history
+        const processed = data.map((sup: any) => {
+          let calculatedStars = 2;
+          let priorityTag = 'STANDARD TERMS';
+          
+          if (sup.discountPct > 1.5 || sup.capturedDiscountTotal > 100000) {
+            calculatedStars = 5;
+            priorityTag = 'TOP YIELD PRIORITY (2.0% DISCOUNT)';
+          } else if (sup.discountPct > 0 || sup.capturedDiscountTotal > 10000) {
+            calculatedStars = 4;
+            priorityTag = 'HIGH DISCOUNT PRIORITY';
+          } else if (sup.onTimePaymentPct > 93) {
+            calculatedStars = 3;
+            priorityTag = 'MODERATE PRIORITY';
+          }
+
+          return {
+            ...sup,
+            calculatedStars: sup.calculatedStars || calculatedStars,
+            priorityTag: sup.priorityTag || priorityTag
+          };
+        });
+        setSuppliers(processed);
       } else {
-        // High quality fallback data for Tata Motors Tier-1 Automotive OEMs
+        // High quality data with dynamic historical priority ratings
         setSuppliers([
           {
             id: 'SUP010',
             name: 'Valeo India Pvt Ltd',
             category: 'Lighting Systems & Sensor Assemblies',
-            strategicImportance: 5,
+            calculatedStars: 5,
+            priorityTag: 'TOP YIELD PRIORITY (2.0% DISCOUNT)',
             liquidityRisk: 'LOW',
             isCritical: true,
             outstandingAmount: 22721445.28,
             onTimePaymentPct: 98.4,
             capturedDiscountTotal: 454428.90,
+            discountPct: 2.0,
             paymentTerms: '2/10 Net-30',
             aiStatus: 'EARLY DISCOUNT CAPTURED',
-            contactPerson: 'Arun Kumar (Key Account Director)'
+            reason: 'Active 2.0% early payment discount yield. High historical captured returns.'
           },
           {
             id: 'SUP003',
             name: 'Bosch Ltd',
             category: 'Powertrain Electronics & Fuel Injection',
-            strategicImportance: 5,
+            calculatedStars: 5,
+            priorityTag: 'TOP YIELD PRIORITY (1.5% DISCOUNT)',
             liquidityRisk: 'LOW',
             isCritical: true,
             outstandingAmount: 181400.00,
             onTimePaymentPct: 99.2,
-            capturedDiscountTotal: 3628.00,
+            capturedDiscountTotal: 362800.00,
+            discountPct: 1.5,
             paymentTerms: '1.5/10 Net-30',
             aiStatus: 'PAYMENT SCHEDULED',
-            contactPerson: 'Deepak Sharma (Automotive Sales)'
+            reason: 'Active 1.5% early discount + 99.2% historical on-time payment track record.'
           },
           {
             id: 'SUP001',
             name: 'Tata Steel Ltd',
             category: 'Auto Grade Sheet Metal & Structural Steel',
-            strategicImportance: 5,
+            calculatedStars: 4,
+            priorityTag: 'HIGH DISCOUNT PRIORITY (2.0% DISCOUNT)',
             liquidityRisk: 'LOW',
             isCritical: true,
             outstandingAmount: 920000.00,
             onTimePaymentPct: 97.8,
-            capturedDiscountTotal: 18400.00,
-            paymentTerms: 'Net-30',
+            capturedDiscountTotal: 184000.00,
+            discountPct: 2.0,
+            paymentTerms: '2/10 Net-30',
             aiStatus: 'OPTIMAL ALLOCATION',
-            contactPerson: 'Rajesh Mehta (Commercial Accounts)'
-          },
-          {
-            id: 'SUP008',
-            name: 'Bharat Forge Ltd',
-            category: 'Forged Engine Crankshafts & Chassis Axles',
-            strategicImportance: 4,
-            liquidityRisk: 'MEDIUM',
-            isCritical: false,
-            outstandingAmount: 1450000.00,
-            onTimePaymentPct: 91.5,
-            capturedDiscountTotal: 0.00,
-            paymentTerms: 'Net-45',
-            aiStatus: 'PAY AT MATURITY',
-            contactPerson: 'Vikram Kalyani (Supply Chain Lead)'
+            reason: 'High strategic OEM supplier offering 2.0% discount yield.'
           },
           {
             id: 'SUP002',
             name: 'JSW Steel Ltd',
             category: 'Hot Rolled Chassis Frame Metal',
-            strategicImportance: 4,
+            calculatedStars: 4,
+            priorityTag: 'HIGH DISCOUNT PRIORITY (2.0% DISCOUNT)',
             liquidityRisk: 'LOW',
             isCritical: true,
             outstandingAmount: 680000.00,
             onTimePaymentPct: 96.0,
-            capturedDiscountTotal: 13600.00,
-            paymentTerms: 'Net-30',
+            capturedDiscountTotal: 136000.00,
+            discountPct: 2.0,
+            paymentTerms: '2/10 Net-30',
             aiStatus: 'PAYMENT SCHEDULED',
-            contactPerson: 'Sunil Jindal (Corporate Accounts)'
+            reason: 'Offers 2.0% early settlement discount on chassis raw material invoices.'
           },
           {
             id: 'SUP012',
             name: 'Apollo Tyres Ltd',
             category: 'Commercial Vehicle Heavy Fleet Radial Tires',
-            strategicImportance: 3,
+            calculatedStars: 3,
+            priorityTag: 'MODERATE PRIORITY (1.0% DISCOUNT)',
             liquidityRisk: 'LOW',
             isCritical: false,
             outstandingAmount: 420000.00,
             onTimePaymentPct: 94.2,
-            capturedDiscountTotal: 8400.00,
-            paymentTerms: 'Net-30',
+            capturedDiscountTotal: 84000.00,
+            discountPct: 1.0,
+            paymentTerms: '1/10 Net-30',
             aiStatus: 'OPTIMAL ALLOCATION',
-            contactPerson: 'Priya Nair (Fleet Supplies)'
+            reason: 'Moderate 1.0% early discount. Good historical payment compliance.'
+          },
+          {
+            id: 'SUP008',
+            name: 'Bharat Forge Ltd',
+            category: 'Forged Engine Crankshafts & Chassis Axles',
+            calculatedStars: 2,
+            priorityTag: 'STANDARD TERMS (0% DISCOUNT)',
+            liquidityRisk: 'MEDIUM',
+            isCritical: false,
+            outstandingAmount: 1450000.00,
+            onTimePaymentPct: 91.5,
+            capturedDiscountTotal: 0.00,
+            discountPct: 0.0,
+            paymentTerms: 'Net-45 Standard',
+            aiStatus: 'PAY AT MATURITY',
+            reason: 'Standard Net-45 credit terms with 0% early discount. Defer payout to maturity.'
           }
         ]);
       }
@@ -140,15 +175,16 @@ export const Suppliers: React.FC = () => {
                           sup.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           sup.id.toLowerCase().includes(searchQuery.toLowerCase());
     
+    if (riskFilter === 'TOP_DISCOUNT') return matchesSearch && sup.calculatedStars >= 4;
     if (riskFilter === 'CRITICAL') return matchesSearch && sup.isCritical;
     if (riskFilter === 'LOW') return matchesSearch && (sup.liquidityRisk === 'LOW' || sup.liquidityRisk === 'Low');
-    if (riskFilter === 'MEDIUM') return matchesSearch && (sup.liquidityRisk === 'MEDIUM' || sup.liquidityRisk === 'Moderate');
+    if (riskFilter === 'STANDARD') return matchesSearch && sup.calculatedStars <= 3;
     return matchesSearch;
   });
 
   const totalOutstandingPayables = suppliers.reduce((acc, sup) => acc + (sup.outstandingAmount || 0), 0);
   const totalDiscountsCaptured = suppliers.reduce((acc, sup) => acc + (sup.capturedDiscountTotal || 0), 0);
-  const criticalCount = suppliers.filter(s => s.isCritical).length;
+  const topDiscountCount = suppliers.filter(s => s.calculatedStars >= 4).length;
 
   return (
     <div className="space-y-8 pb-12 font-mono selection:bg-blue-600 selection:text-white">
@@ -161,17 +197,17 @@ export const Suppliers: React.FC = () => {
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-400/30 backdrop-blur-md flex items-center">
-                <Building2 className="w-3 h-3 mr-1 text-blue-400" /> TIER-1 OEM SUPPLIER PORTAL
+                <Building2 className="w-3 h-3 mr-1 text-blue-400" /> HISTORICAL YIELD-BASED SUPPLIER PRIORITY
               </span>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 backdrop-blur-md">
-                {criticalCount} CRITICAL OEM VENDORS
+                {topDiscountCount} HIGH-YIELD DISCOUNT VENDORS
               </span>
             </div>
             <h1 className="text-2xl font-bold text-slate-100 font-sans tracking-tight">
-              Supplier Relationship & Liquidity Risk Directory
+              Supplier Priority & Historical Discount Yield Directory
             </h1>
             <p className="text-xs text-slate-300 font-sans">
-              Real-time monitoring of strategic importance, early-discount yield capture, and automated payment execution.
+              Star ratings dynamically calculated from historical early payment discounts offered, captured yield history, and payment compliance.
             </p>
           </div>
 
@@ -182,7 +218,7 @@ export const Suppliers: React.FC = () => {
               <div className="text-base font-bold text-amber-400">{formatINR(totalOutstandingPayables)}</div>
             </div>
             <div className="bg-slate-900/80 border border-slate-700/60 px-4 py-2 rounded-xl backdrop-blur-md shadow-inner text-right">
-              <div className="text-[10px] uppercase text-slate-400 font-bold">Discounts Captured</div>
+              <div className="text-[10px] uppercase text-slate-400 font-bold font-sans">Total Captured Yield</div>
               <div className="text-base font-bold text-emerald-400">{formatINR(totalDiscountsCaptured)}</div>
             </div>
           </div>
@@ -197,7 +233,7 @@ export const Suppliers: React.FC = () => {
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
           <input
             type="text"
-            placeholder="Search vendor name, component, ID..."
+            placeholder="Search vendor name, discount, ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 outline-none focus:border-blue-500 transition font-sans"
@@ -208,9 +244,9 @@ export const Suppliers: React.FC = () => {
         <div className="flex items-center space-x-2 text-xs overflow-x-auto w-full md:w-auto">
           {[
             { id: 'ALL', label: 'All Vendors' },
-            { id: 'CRITICAL', label: 'Critical Tier-1 Only' },
-            { id: 'LOW', label: 'Low Risk' },
-            { id: 'MEDIUM', label: 'Moderate Risk' }
+            { id: 'TOP_DISCOUNT', label: '⭐️ High Discount Priority (4-5 Stars)' },
+            { id: 'STANDARD', label: 'Standard Terms (2-3 Stars)' },
+            { id: 'CRITICAL', label: 'Critical Tier-1 Only' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -233,29 +269,35 @@ export const Suppliers: React.FC = () => {
         {filteredSuppliers.map((sup) => {
           const isExecuted = executedSuppliers[sup.id];
           const isExecuting = executingSupplierId === sup.id;
-          const score = sup.strategicImportance || 5;
+          const stars = sup.calculatedStars || 3;
 
           return (
             <div 
               key={sup.id}
               className={`backdrop-blur-2xl bg-[#0F172A]/60 border rounded-2xl p-6 space-y-4 shadow-2xl transition-all duration-300 relative overflow-hidden group ${
-                sup.isCritical 
-                  ? 'border-blue-500/30 hover:border-blue-500/60' 
-                  : 'border-white/10 hover:border-white/20'
+                stars >= 5 
+                  ? 'border-emerald-500/50 shadow-emerald-950/20 ring-1 ring-emerald-500/30' 
+                  : stars === 4
+                  ? 'border-blue-500/40'
+                  : 'border-white/10'
               }`}
             >
-              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-400/30 to-transparent"></div>
+              <div className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent ${
+                stars >= 5 ? 'via-emerald-400/50' : stars === 4 ? 'via-blue-400/40' : 'via-slate-500/30'
+              } to-transparent`}></div>
 
-              {/* Top Title Row */}
+              {/* Top Title & Stars Row */}
               <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
                     <span className="font-bold text-slate-100 text-base font-sans tracking-tight">{sup.name}</span>
-                    {sup.isCritical && (
-                      <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-red-950 text-red-400 border border-red-800 shrink-0">
-                        CRITICAL TIER-1
-                      </span>
-                    )}
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                      stars >= 5 ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' :
+                      stars === 4 ? 'bg-blue-950 text-blue-300 border border-blue-800' :
+                      'bg-slate-800 text-slate-400'
+                    }`}>
+                      {sup.priorityTag}
+                    </span>
                   </div>
                   <p className="text-xs text-slate-400 font-sans">{sup.category}</p>
                 </div>
@@ -269,22 +311,27 @@ export const Suppliers: React.FC = () => {
                 </span>
               </div>
 
-              {/* Strategic Importance Score */}
-              <div className="space-y-1.5 font-sans">
-                <div className="flex justify-between text-xs text-slate-300">
-                  <span className="font-bold">Strategic Importance Index</span>
-                  <span className="font-bold text-blue-400">{score}/5 Stars</span>
+              {/* Dynamic Star Rating Based on Discount Yield */}
+              <div className="space-y-1.5 font-sans bg-slate-950/40 p-3 rounded-xl border border-white/5">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-300 font-bold flex items-center">
+                    <Percent className="w-3.5 h-3.5 text-emerald-400 mr-1" /> Discount Priority Rating
+                  </span>
+                  <div className="flex items-center space-x-1">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star 
+                        key={s} 
+                        className={`w-4 h-4 ${
+                          s <= stars 
+                            ? 'text-amber-400 fill-amber-400' 
+                            : 'text-slate-700 fill-slate-800'
+                        }`} 
+                      />
+                    ))}
+                    <span className="font-bold text-slate-200 ml-1 font-mono">{stars}/5</span>
+                  </div>
                 </div>
-                <div className="flex space-x-1.5">
-                  {[1, 2, 3, 4, 5].map((seg) => (
-                    <div
-                      key={seg}
-                      className={`h-2 flex-1 rounded-full transition-all duration-500 ${
-                        seg <= score ? 'bg-gradient-to-r from-blue-500 to-emerald-400 shadow-sm' : 'bg-slate-800'
-                      }`}
-                    ></div>
-                  ))}
-                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed font-sans">{sup.reason}</p>
               </div>
 
               {/* Financial Metrics Box */}
@@ -294,8 +341,8 @@ export const Suppliers: React.FC = () => {
                   <div className="font-bold text-slate-100 mt-0.5">{formatINR(sup.outstandingAmount)}</div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-slate-400 uppercase font-bold">On-Time Pay</div>
-                  <div className="font-bold text-emerald-400 mt-0.5">{sup.onTimePaymentPct || 98.0}%</div>
+                  <div className="text-[10px] text-slate-400 uppercase font-bold">Discount Rate</div>
+                  <div className="font-bold text-emerald-400 mt-0.5">{sup.discountPct ? `${sup.discountPct}% Active` : '0% (Net Terms)'}</div>
                 </div>
                 <div>
                   <div className="text-[10px] text-slate-400 uppercase font-bold">Captured Yield</div>
@@ -306,8 +353,8 @@ export const Suppliers: React.FC = () => {
               {/* Action & Terms Row */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
                 <div className="text-xs text-slate-400 font-sans space-y-0.5">
-                  <div>Payment Terms: <strong className="text-slate-200 font-mono">{sup.paymentTerms || 'Net-30'}</strong></div>
-                  <div>AI Status: <strong className="text-emerald-400 font-mono">{sup.aiStatus || 'OPTIMAL ALLOCATION'}</strong></div>
+                  <div>Credit Terms: <strong className="text-slate-200 font-mono">{sup.paymentTerms || 'Net-30'}</strong></div>
+                  <div>AI Action: <strong className="text-emerald-400 font-mono">{sup.aiStatus || 'OPTIMAL ALLOCATION'}</strong></div>
                 </div>
 
                 <button
@@ -318,6 +365,8 @@ export const Suppliers: React.FC = () => {
                       ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/40 cursor-default'
                       : isExecuting
                       ? 'bg-slate-800 text-slate-400 cursor-wait'
+                      : stars >= 4
+                      ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30 hover:scale-105 active:scale-95'
                       : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/30 hover:scale-105 active:scale-95'
                   }`}
                 >
@@ -331,7 +380,7 @@ export const Suppliers: React.FC = () => {
                   ) : (
                     <>
                       <Play className="w-3.5 h-3.5 fill-current" />
-                      <span>Execute Early Wire</span>
+                      <span>{sup.discountPct > 0 ? `Capture ${sup.discountPct}% Discount Wire` : 'Execute Wire'}</span>
                     </>
                   )}
                 </button>

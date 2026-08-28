@@ -57,21 +57,24 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
   };
 
   // Dynamic signals extracted from live streaming data
-  const availableCash = data?.kpis?.availableCash ?? 2554079.97;
-  const deployableCapital = data?.kpis?.deployableCapital ?? (availableCash - 970000.0);
+  const availableCash = data?.kpis?.availableCash ?? 45040000.0;
+  const deployableCapital = data?.kpis?.deployableCapital ?? (availableCash - 15500000.0);
 
   const customerAInflow = data?.receivables?.[0] || {
-    amount: 31760.96,
+    id: 'REC00001',
+    customerName: 'VRL Logistics Ltd',
+    amount: 317609.60,
     collectionProbability: 87.0,
     expectedDelayDays: 1,
     status: 'On Time'
   };
 
   const boschInvoice = data?.invoices?.[0] || {
-    id: 'INV_FUT_0260',
-    amount: 68902.88,
+    id: 'INV00002',
+    supplierName: 'Valeo India Pvt Ltd',
+    amount: 22721445.28,
     discountPct: 2.0,
-    dueDate: '2026-08-28',
+    dueDate: '2026-01-04',
     priorityScore: 95
   };
 
@@ -79,13 +82,13 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
   const choices = data?.candidates || [
     {
       id: 'OPT-1',
-      title: 'Choice 1: Reserve Salary Opex + Early Pay Bosch Ltd (Recommended)',
+      title: 'Choice 1: Reserve Salary Opex + Early Pay Bosch/Valeo (Recommended)',
       score: 96,
       subScores: { liquidity: 98, financial: 95, supplier: 92, risk: 96 },
       action: 'Pay Now',
-      cost: '₹16.50L Opex + ₹68.90k Invoice',
-      benefit: 'Captures 2.0% discount & protects Employee Salary Day in 3 days',
-      riskNote: `Customer A inflow (${customerAInflow.collectionProbability}% prob) preserves ₹9.70L reserve floor`,
+      cost: '₹16.50L Opex + Invoice Payout',
+      benefit: 'Captures 2.0% discount & protects Plant Worker Payroll in 3 days',
+      riskNote: `${customerAInflow.customerName || 'VRL Logistics'} inflow (${customerAInflow.collectionProbability}% prob) preserves ₹15.50L reserve floor`,
       breachesFloor: false,
       recommended: true
     },
@@ -112,88 +115,64 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
       riskNote: 'Preserves liquidity but incurs borrowing interest',
       breachesFloor: false,
       recommended: false
-    },
-    {
-      id: 'OPT-4',
-      title: 'Choice 4: Delay Payment (+10 Days)',
-      score: 32,
-      subScores: { liquidity: 40, financial: 25, supplier: 30, risk: 28 },
-      action: 'Delay',
-      cost: '₹0 immediate invoice outflow',
-      benefit: 'Maximizes nominal immediate cash balance',
-      riskNote: 'Breaches ₹9.70L Reserve Floor if Customer A is delayed >7 days',
-      breachesFloor: true,
-      breachDay: 'Oct 08',
-      recommended: false
     }
   ];
 
-  // Dynamic order of execution steps reflecting live data
+  // Dynamically map live stream invoices & breakdown into 0/1 Knapsack Execution Steps!
+  const dynamicInvoices = data?.invoices || [];
+
   const executionSteps = [
     {
       stepNumber: 1,
       id: 'STEP-1',
-      title: 'Lock Operating Reserve for Employee Salaries & Opex',
-      eventTrigger: 'Employee Monthly Salaries & Opex Due in 3 Days',
-      targetEntity: 'Payroll & Operations Account',
+      title: 'Lock Operating Reserve for Plant Salaries & Opex',
+      eventTrigger: 'Plant Assembly Line Payroll Due in 3 Days',
+      targetEntity: 'HDFC Operations Account',
       amount: 1650000.0,
       timing: 'Immediate (Today)',
       actionType: 'LOCK_RESERVE',
-      invoiceId: 'OBL-FUT-01',
+      invoiceId: 'OBL-TML-01',
       status: 'Ready',
-      detail: 'Locks ₹16.50L in HDFC Operating Cash to guarantee 100% payroll coverage before any discretionary supplier payouts.'
+      detail: 'Locks ₹16.50L in HDFC Operating Cash to guarantee 100% assembly line worker payroll coverage before any discretionary supplier payouts.'
     },
+    ...dynamicInvoices.slice(0, 4).map((inv: any, idx: number) => ({
+      stepNumber: idx + 2,
+      id: `STEP-${idx + 2}`,
+      title: `Execute ${inv.aiAction || 'Payout'} for ${inv.supplierName} (${inv.id})`,
+      eventTrigger: inv.discountPct > 0 ? `${inv.discountPct}% Early Payment Discount Active` : `Invoice Due ${inv.dueDate}`,
+      targetEntity: `${inv.supplierName} Payable`,
+      amount: inv.amount || 100000.0,
+      timing: idx === 0 ? 'Execute Today (Before 17:00)' : `Due ${inv.dueDate}`,
+      actionType: inv.aiAction === 'Pay Now' ? 'PAY_NOW' : 'PAY_AT_MATURITY',
+      invoiceId: inv.id,
+      status: idx === 0 ? 'Recommended' : 'Scheduled',
+      detail: `Dispatches ${formatINR(inv.amount || 100000.0)} wire transfer for ${inv.supplierName}. 0/1 Knapsack Priority Score: ${inv.priorityScore || 85}/100.`
+    })),
     {
-      stepNumber: 2,
-      id: 'STEP-2',
-      title: `Execute Early Settlement for ${boschInvoice.supplierName || 'Bosch Ltd'} (${boschInvoice.id || 'INV_FUT_0260'})`,
-      eventTrigger: `${boschInvoice.discountPct || 2.0}% Early Payment Discount Active`,
-      targetEntity: `${boschInvoice.supplierName || 'Bosch Ltd'} Payable`,
-      amount: boschInvoice.amount || 68902.88,
-      timing: 'Execute Today (Before 17:00)',
-      actionType: 'PAY_NOW',
-      invoiceId: boschInvoice.id || 'INV_FUT_0260',
-      status: 'Recommended',
-      detail: `Dispatches ${formatINR(boschInvoice.amount || 68902.88)} wire transfer to ${boschInvoice.supplierName || 'Bosch Ltd'}, capturing ${boschInvoice.discountPct || 2.0}% discount yield and protecting Q3 component delivery SLAs.`
-    },
-    {
-      stepNumber: 3,
-      id: 'STEP-3',
-      title: 'Execute Payout for Bosch Ltd Component Invoice (INV_FUT_0261)',
-      eventTrigger: 'Invoice Due Tomorrow (2026-08-29)',
-      targetEntity: 'Bosch Ltd Components',
-      amount: 140555.66,
-      timing: 'Due Tomorrow',
-      actionType: 'PAY_NOW',
-      invoiceId: 'INV_FUT_0261',
-      status: 'Scheduled',
-      detail: 'Schedules automated batch wire of ₹1.41L tomorrow morning to maintain 100% clean credit score with Bosch Ltd.'
-    },
-    {
-      stepNumber: 4,
-      id: 'STEP-4',
-      title: 'Monitor Wire Inflow from Customer A (CUST011 / Mahindra Logistics)',
-      eventTrigger: `Customer A Payment Expected (${customerAInflow.expectedDelayDays <= 2 ? 'On Time' : 'Delayed'})`,
-      targetEntity: 'Mahindra Logistics Receivable',
-      amount: customerAInflow.amount || 31760.96,
+      stepNumber: (dynamicInvoices.slice(0, 4).length) + 2,
+      id: `STEP-${(dynamicInvoices.slice(0, 4).length) + 2}`,
+      title: `Monitor Wire Inflow from ${customerAInflow.customerName || 'VRL Logistics Ltd'}`,
+      eventTrigger: `Fleet Delivery Expected (${customerAInflow.collectionProbability || 87.0}% Bayesian Prob)`,
+      targetEntity: `${customerAInflow.customerName || 'VRL Logistics Ltd'} Receivable`,
+      amount: customerAInflow.amount || 317609.60,
       timing: 'In 10 Days (Sep 28)',
       actionType: 'MONITOR_INFLOW',
-      invoiceId: 'REC_FUT_0365',
+      invoiceId: customerAInflow.id || 'REC_TML_0365',
       status: 'Bayesian Monitored',
       detail: `Monitors HDFC incoming wire channel with ${customerAInflow.collectionProbability || 87.0}% Bayesian collection probability. Automatically triggers re-optimization if delayed >3 days.`
     },
     {
-      stepNumber: 5,
-      id: 'STEP-5',
-      title: 'Maintain Deployable Buffer Above Reserve Floor (₹9.70L)',
+      stepNumber: (dynamicInvoices.slice(0, 4).length) + 3,
+      id: `STEP-${(dynamicInvoices.slice(0, 4).length) + 3}`,
+      title: 'Maintain Deployable Buffer Above Reserve Floor (₹15.50L)',
       eventTrigger: 'Continuous Reserve Policy Constraint',
-      targetEntity: 'ICICI Reserve Buffer',
-      amount: 970000.0,
+      targetEntity: 'ICICI Treasury Reserve Buffer',
+      amount: 15500000.0,
       timing: 'Continuous 30-Day Horizon',
       actionType: 'RETAIN_BUFFER',
       invoiceId: 'POLICY-FLOOR',
       status: 'Active Policy',
-      detail: 'Maintains ₹9.70L minimum cash floor throughout 30-day projection window, shielding company against unexpected demand shocks.'
+      detail: 'Maintains ₹15.50L minimum cash floor throughout 30-day projection window, shielding Tata Motors against unexpected demand shocks.'
     }
   ];
 
@@ -386,17 +365,17 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
         </div>
       </div>
 
-      {/* SECTION 3: ORDER OF EXECUTION PIPELINE (DYNAMICALLY UPDATED) */}
+      {/* SECTION 3: ORDER OF EXECUTION PIPELINE (DYNAMICALLY UPDATED FROM LIVE STREAM) */}
       <div className="backdrop-blur-2xl bg-[#0F172A]/60 border border-white/10 rounded-2xl p-6 space-y-6 shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/10 pb-3">
           <div className="flex items-center space-x-2">
             <Layers className="w-4 h-4 text-emerald-400" />
             <h2 className="text-xs font-bold uppercase tracking-wider text-slate-200">
-              Section 3: Optimal Order of Execution (Dynamic Knapsack Output)
+              Section 3: Optimal Order of Execution (Dynamic Live Knapsack Steps)
             </h2>
           </div>
           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 backdrop-blur-md">
-            SEQUENCED EXECUTION PIPELINE
+            {executionSteps.length} DYNAMIC PIPELINE STEPS
           </span>
         </div>
 

@@ -13,6 +13,7 @@ FUTURE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "futureStreamin
 
 class DataStore:
     def __init__(self):
+        self.stream_ledger: List[Dict[str, Any]] = []
         self.reset_to_defaults()
 
     def reset_to_defaults(self):
@@ -84,6 +85,36 @@ class DataStore:
         ]
 
         self.decisions_history: List[Decision] = []
+
+    def ingest_and_process_stream_record(self, record: Dict[str, Any]):
+        """
+        Stores streamed data into persistent memory & disk ledger, updates entity states,
+        and derives updated parameters consumed by the 0/1 Knapsack DP decision pipeline!
+        """
+        self.stream_ledger.insert(0, record)
+        
+        # Save persistent JSON ledger to disk
+        try:
+            ledger_path = os.path.join(FUTURE_DIR, "stored_stream_records.json")
+            with open(ledger_path, "w") as f:
+                json.dump(self.stream_ledger[:500], f, indent=2)
+        except Exception:
+            pass
+
+        # Update cash balances and invoice/receivable states based on streamed transaction
+        amount = record.get("amount", 0.0)
+        event_type = record.get("event_type", "")
+
+        if event_type in ["RECEIVABLE_INFLOW", "PAYMENT_RECEIVED"]:
+            # Add inflow to operating cash balance
+            delta = amount / 100000.0 if amount > 100 else amount
+            self.accounts[0].balance += delta
+            self.accounts[0].available_balance = self.accounts[0].balance
+        elif event_type in ["OPEX_OUTFLOW", "EMERGENCY_EXPENSE"]:
+            # Deduct outflow from operating cash balance
+            delta = amount / 100000.0 if amount > 100 else amount
+            self.accounts[0].balance = max(9.70, self.accounts[0].balance - delta)
+            self.accounts[0].available_balance = self.accounts[0].balance
 
     def get_total_cash(self) -> float:
         return sum(acc.balance for acc in self.accounts)

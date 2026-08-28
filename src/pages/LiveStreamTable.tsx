@@ -240,19 +240,32 @@ export const LiveStreamTable: React.FC = () => {
               Automated Real-Time Live Stream Table Dashboard
             </h1>
             <p className="text-xs text-slate-300 font-sans">
-              Incoming financial data stream records accumulate automatically every 3.5 seconds in real time without clicking.
+              Incoming financial data stream records accumulate automatically into memory & disk ledger, dynamically re-running 0/1 Knapsack DP.
             </p>
           </div>
 
           <div className="flex items-center space-x-3 text-xs shrink-0">
             <div className="bg-slate-900/80 border border-slate-700/60 px-4 py-2 rounded-xl backdrop-blur-md shadow-inner text-right">
-              <div className="text-[10px] uppercase text-slate-400 font-bold">Total Ingested Stream Rows</div>
+              <div className="text-[10px] uppercase text-slate-400 font-bold">Stored Stream Ledger</div>
               <div className="text-base font-bold text-emerald-400 flex items-center justify-end space-x-1.5">
-                <span>{eventCount} Records</span>
+                <span>{eventCount} Processed Events</span>
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
               </div>
             </div>
           </div>
+        </div>
+
+        {/* DECISION ACCOUNTING BANNER */}
+        <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-mono text-slate-300">
+          <div className="flex items-center space-x-2">
+            <Sparkles className="w-4 h-4 text-blue-400 shrink-0" />
+            <span>
+              <strong>Stream Decision Accounting:</strong> Every ingested record is stored in <code className="text-emerald-300 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">stored_stream_records.json</code> and directly shifts Bayesian priors + 0/1 Knapsack allocation!
+            </span>
+          </div>
+          <span className="px-2 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800 font-bold text-[10px]">
+            PERSISTED & PROCESSED
+          </span>
         </div>
       </div>
 

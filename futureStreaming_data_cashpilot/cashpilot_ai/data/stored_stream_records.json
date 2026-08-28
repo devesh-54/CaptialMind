@@ -1,0 +1,497 @@
+[
+  {
+    "id": "evt_auto_1787932265129",
+    "time": "21:21:05",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Operating Expense Payroll Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
+    "id": "evt_auto_1787932261581",
+    "time": "21:21:01",
+    "event_type": "NEW_INVOICE",
+    "stage": "FORECAST",
+    "title": "\ud83c\udfed Bosch Ltd Component Invoice INV_FUT_0270 (\u20b981.4k)",
+    "detail": "New raw material invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+    "impact": "Added to Decision Pool"
+  },
+  {
+    "id": "evt_auto_1787932258045",
+    "time": "21:20:58",
+    "event_type": "RECEIVABLE_DELAYED",
+    "stage": "FORECAST",
+    "title": "\u26a0\ufe0f Customer A Wire Delayed (+10d)",
+    "detail": "Customer CUST011 payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+    "impact": "Re-Optimizing Strategy"
+  },
+  {
+    "id": "evt_auto_1787932254523",
+    "time": "21:20:54",
+    "event_type": "TELEMETRY_PING",
+    "stage": "OBSERVE",
+    "title": "\ud83d\udce1 HDFC Treasury Balance Sync",
+    "detail": "Verified live cash balance \u20b925.54 Cr across HDFC Operating & ICICI Reserve accounts.",
+    "impact": "Monitored (No Change)"
+  },
+  {
+    "id": "evt_auto_1787932250973",
+    "time": "21:20:50",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Operating Expense Payroll Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
+    "id": "evt_auto_1787932247417",
+    "time": "21:20:47",
+    "event_type": "NEW_INVOICE",
+    "stage": "FORECAST",
+    "title": "\ud83c\udfed Bosch Ltd Component Invoice INV_FUT_0270 (\u20b981.4k)",
+    "detail": "New raw material invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+    "impact": "Added to Decision Pool"
+  },
+  {
+    "id": "evt_auto_1787932243875",
+    "time": "21:20:43",
+    "event_type": "RECEIVABLE_DELAYED",
+    "stage": "FORECAST",
+    "title": "\u26a0\ufe0f Customer A Wire Delayed (+10d)",
+    "detail": "Customer CUST011 payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+    "impact": "Re-Optimizing Strategy"
+  },
+  {
+    "id": "evt_auto_1787932240308",
+    "time": "21:20:40",
+    "event_type": "TELEMETRY_PING",
+    "stage": "OBSERVE",
+    "title": "\ud83d\udce1 HDFC Treasury Balance Sync",
+    "detail": "Verified live cash balance \u20b925.54 Cr across HDFC Operating & ICICI Reserve accounts.",
+    "impact": "Monitored (No Change)"
+  },
+  {
+    "id": "evt_auto_1787932236752",
+    "time": "21:20:36",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Operating Expense Payroll Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
+    "id": "evt_auto_1787932233209",
+    "time": "21:20:33",
+    "event_type": "NEW_INVOICE",
+    "stage": "FORECAST",
+    "title": "\ud83c\udfed Bosch Ltd Component Invoice INV_FUT_0270 (\u20b981.4k)",
+    "detail": "New raw material invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+    "impact": "Added to Decision Pool"
+  },
+  {
+    "id": "evt_auto_1787932229688",
+    "time": "21:20:29",
+    "event_type": "RECEIVABLE_DELAYED",
+    "stage": "FORECAST",
+    "title": "\u26a0\ufe0f Customer A Wire Delayed (+10d)",
+    "detail": "Customer CUST011 payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+    "impact": "Re-Optimizing Strategy"
+  },
+  {
+    "id": "evt_auto_1787932226153",
+    "time": "21:20:26",
+    "event_type": "TELEMETRY_PING",
+    "stage": "OBSERVE",
+    "title": "\ud83d\udce1 HDFC Treasury Balance Sync",
+    "detail": "Verified live cash balance \u20b925.54 Cr across HDFC Operating & ICICI Reserve accounts.",
+    "impact": "Monitored (No Change)"
+  },
+  {
+    "id": "evt_auto_1787932222613",
+    "time": "21:20:22",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Operating Expense Payroll Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
+    "id": "evt_auto_1787932219088",
+    "time": "21:20:19",
+    "event_type": "NEW_INVOICE",
+    "stage": "FORECAST",
+    "title": "\ud83c\udfed Bosch Ltd Component Invoice INV_FUT_0270 (\u20b981.4k)",
+    "detail": "New raw material invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+    "impact": "Added to Decision Pool"
+  },
+  {
+    "id": "evt_auto_1787932215549",
+    "time": "21:20:15",
+    "event_type": "RECEIVABLE_DELAYED",
+    "stage": "FORECAST",
+    "title": "\u26a0\ufe0f Customer A Wire Delayed (+10d)",
+    "detail": "Customer CUST011 payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+    "impact": "Re-Optimizing Strategy"
+  },
+  {
+    "id": "evt_auto_1787932212022",
+    "time": "21:20:12",
+    "event_type": "TELEMETRY_PING",
+    "stage": "OBSERVE",
+    "title": "\ud83d\udce1 HDFC Treasury Balance Sync",
+    "detail": "Verified live cash balance \u20b925.54 Cr across HDFC Operating & ICICI Reserve accounts.",
+    "impact": "Monitored (No Change)"
+  },
+  {
+    "id": "evt_auto_1787932208496",
+    "time": "21:20:08",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Operating Expense Payroll Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
+    "id": "evt_auto_1787932204959",
+    "time": "21:20:04",
+    "event_type": "NEW_INVOICE",
+    "stage": "FORECAST",
+    "title": "\ud83c\udfed Bosch Ltd Component Invoice INV_FUT_0270 (\u20b981.4k)",
+    "detail": "New raw material invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+    "impact": "Added to Decision Pool"
+  },
+  {
+    "id": "evt_auto_1787932201420",
+    "time": "21:20:01",
+    "event_type": "RECEIVABLE_DELAYED",
+    "stage": "FORECAST",
+    "title": "\u26a0\ufe0f Customer A Wire Delayed (+10d)",
+    "detail": "Customer CUST011 payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+    "impact": "Re-Optimizing Strategy"
+  },
+  {
+    "id": "evt_auto_1787932197903",
+    "time": "21:19:57",
+    "event_type": "TELEMETRY_PING",
+    "stage": "OBSERVE",
+    "title": "\ud83d\udce1 HDFC Treasury Balance Sync",
+    "detail": "Verified live cash balance \u20b925.54 Cr across HDFC Operating & ICICI Reserve accounts.",
+    "impact": "Monitored (No Change)"
+  },
+  {
+    "id": "evt_auto_1787932194357",
+    "time": "21:19:54",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Operating Expense Payroll Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
+    "id": "evt_auto_1787932190833",
+    "time": "21:19:50",
+    "event_type": "NEW_INVOICE",
+    "stage": "FORECAST",
+    "title": "\ud83c\udfed Bosch Ltd Component Invoice INV_FUT_0270 (\u20b981.4k)",
+    "detail": "New raw material invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+    "impact": "Added to Decision Pool"
+  },
+  {
+    "id": "evt_auto_1787932187313",
+    "time": "21:19:47",
+    "event_type": "RECEIVABLE_DELAYED",
+    "stage": "FORECAST",
+    "title": "\u26a0\ufe0f Customer A Wire Delayed (+10d)",
+    "detail": "Customer CUST011 payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+    "impact": "Re-Optimizing Strategy"
+  },
+  {
+    "id": "evt_auto_1787932183794",
+    "time": "21:19:43",
+    "event_type": "TELEMETRY_PING",
+    "stage": "OBSERVE",
+    "title": "\ud83d\udce1 HDFC Treasury Balance Sync",
+    "detail": "Verified live cash balance \u20b925.54 Cr across HDFC Operating & ICICI Reserve accounts.",
+    "impact": "Monitored (No Change)"
+  },
+  {
+    "id": "evt_auto_1787932180245",
+    "time": "21:19:40",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Operating Expense Payroll Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
+    "id": "evt_auto_1787932176710",
+    "time": "21:19:36",
+    "event_type": "NEW_INVOICE",
+    "stage": "FORECAST",
+    "title": "\ud83c\udfed Bosch Ltd Component Invoice INV_FUT_0270 (\u20b981.4k)",
+    "detail": "New raw material invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+    "impact": "Added to Decision Pool"
+  },
+  {
+    "id": "evt_auto_1787932173160",
+    "time": "21:19:33",
+    "event_type": "RECEIVABLE_DELAYED",
+    "stage": "FORECAST",
+    "title": "\u26a0\ufe0f Customer A Wire Delayed (+10d)",
+    "detail": "Customer CUST011 payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+    "impact": "Re-Optimizing Strategy"
+  },
+  {
+    "id": "evt_auto_1787932169615",
+    "time": "21:19:29",
+    "event_type": "TELEMETRY_PING",
+    "stage": "OBSERVE",
+    "title": "\ud83d\udce1 HDFC Treasury Balance Sync",
+    "detail": "Verified live cash balance \u20b925.54 Cr across HDFC Operating & ICICI Reserve accounts.",
+    "impact": "Monitored (No Change)"
+  },
+  {
+    "id": "evt_auto_1787932166087",
+    "time": "21:19:26",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Operating Expense Payroll Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
+    "id": "evt_auto_1787932162564",
+    "time": "21:19:22",
+    "event_type": "NEW_INVOICE",
+    "stage": "FORECAST",
+    "title": "\ud83c\udfed Bosch Ltd Component Invoice INV_FUT_0270 (\u20b981.4k)",
+    "detail": "New raw material invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+    "impact": "Added to Decision Pool"
+  },
+  {
+    "id": "evt_auto_1787932159023",
+    "time": "21:19:19",
+    "event_type": "RECEIVABLE_DELAYED",
+    "stage": "FORECAST",
+    "title": "\u26a0\ufe0f Customer A Wire Delayed (+10d)",
+    "detail": "Customer CUST011 payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+    "impact": "Re-Optimizing Strategy"
+  },
+  {
+    "id": "evt_auto_1787932155502",
+    "time": "21:19:15",
+    "event_type": "TELEMETRY_PING",
+    "stage": "OBSERVE",
+    "title": "\ud83d\udce1 HDFC Treasury Balance Sync",
+    "detail": "Verified live cash balance \u20b925.54 Cr across HDFC Operating & ICICI Reserve accounts.",
+    "impact": "Monitored (No Change)"
+  },
+  {
+    "id": "evt_auto_1787932151981",
+    "time": "21:19:11",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Operating Expense Payroll Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
+    "id": "evt_auto_1787932148458",
+    "time": "21:19:08",
+    "event_type": "NEW_INVOICE",
+    "stage": "FORECAST",
+    "title": "\ud83c\udfed Bosch Ltd Component Invoice INV_FUT_0270 (\u20b981.4k)",
+    "detail": "New raw material invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+    "impact": "Added to Decision Pool"
+  },
+  {
+    "id": "evt_auto_1787932144922",
+    "time": "21:19:04",
+    "event_type": "RECEIVABLE_DELAYED",
+    "stage": "FORECAST",
+    "title": "\u26a0\ufe0f Customer A Wire Delayed (+10d)",
+    "detail": "Customer CUST011 payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+    "impact": "Re-Optimizing Strategy"
+  },
+  {
+    "id": "evt_auto_1787932141398",
+    "time": "21:19:01",
+    "event_type": "TELEMETRY_PING",
+    "stage": "OBSERVE",
+    "title": "\ud83d\udce1 HDFC Treasury Balance Sync",
+    "detail": "Verified live cash balance \u20b925.54 Cr across HDFC Operating & ICICI Reserve accounts.",
+    "impact": "Monitored (No Change)"
+  },
+  {
+    "id": "evt_auto_1787932137863",
+    "time": "21:18:57",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Operating Expense Payroll Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
+    "id": "evt_auto_1787932134354",
+    "time": "21:18:54",
+    "event_type": "NEW_INVOICE",
+    "stage": "FORECAST",
+    "title": "\ud83c\udfed Bosch Ltd Component Invoice INV_FUT_0270 (\u20b981.4k)",
+    "detail": "New raw material invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+    "impact": "Added to Decision Pool"
+  },
+  {
+    "id": "evt_auto_1787932130840",
+    "time": "21:18:50",
+    "event_type": "RECEIVABLE_DELAYED",
+    "stage": "FORECAST",
+    "title": "\u26a0\ufe0f Customer A Wire Delayed (+10d)",
+    "detail": "Customer CUST011 payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+    "impact": "Re-Optimizing Strategy"
+  },
+  {
+    "id": "evt_auto_1787932127307",
+    "time": "21:18:47",
+    "event_type": "TELEMETRY_PING",
+    "stage": "OBSERVE",
+    "title": "\ud83d\udce1 HDFC Treasury Balance Sync",
+    "detail": "Verified live cash balance \u20b925.54 Cr across HDFC Operating & ICICI Reserve accounts.",
+    "impact": "Monitored (No Change)"
+  },
+  {
+    "id": "evt_auto_1787932123806",
+    "time": "21:18:43",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Operating Expense Payroll Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
+    "id": "evt_auto_1787932120277",
+    "time": "21:18:40",
+    "event_type": "NEW_INVOICE",
+    "stage": "FORECAST",
+    "title": "\ud83c\udfed Bosch Ltd Component Invoice INV_FUT_0270 (\u20b981.4k)",
+    "detail": "New raw material invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+    "impact": "Added to Decision Pool"
+  },
+  {
+    "id": "evt_auto_1787932116742",
+    "time": "21:18:36",
+    "event_type": "RECEIVABLE_DELAYED",
+    "stage": "FORECAST",
+    "title": "\u26a0\ufe0f Customer A Wire Delayed (+10d)",
+    "detail": "Customer CUST011 payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+    "impact": "Re-Optimizing Strategy"
+  },
+  {
+    "id": "evt_auto_1787932113191",
+    "time": "21:18:33",
+    "event_type": "TELEMETRY_PING",
+    "stage": "OBSERVE",
+    "title": "\ud83d\udce1 HDFC Treasury Balance Sync",
+    "detail": "Verified live cash balance \u20b925.54 Cr across HDFC Operating & ICICI Reserve accounts.",
+    "impact": "Monitored (No Change)"
+  },
+  {
+    "id": "evt_auto_1787932109658",
+    "time": "21:18:29",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Operating Expense Payroll Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
+    "id": "evt_auto_1787932106149",
+    "time": "21:18:26",
+    "event_type": "NEW_INVOICE",
+    "stage": "FORECAST",
+    "title": "\ud83c\udfed Bosch Ltd Component Invoice INV_FUT_0270 (\u20b981.4k)",
+    "detail": "New raw material invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+    "impact": "Added to Decision Pool"
+  },
+  {
+    "id": "evt_auto_1787932102609",
+    "time": "21:18:22",
+    "event_type": "RECEIVABLE_DELAYED",
+    "stage": "FORECAST",
+    "title": "\u26a0\ufe0f Customer A Wire Delayed (+10d)",
+    "detail": "Customer CUST011 payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+    "impact": "Re-Optimizing Strategy"
+  },
+  {
+    "id": "evt_auto_1787932099087",
+    "time": "21:18:19",
+    "event_type": "TELEMETRY_PING",
+    "stage": "OBSERVE",
+    "title": "\ud83d\udce1 HDFC Treasury Balance Sync",
+    "detail": "Verified live cash balance \u20b925.54 Cr across HDFC Operating & ICICI Reserve accounts.",
+    "impact": "Monitored (No Change)"
+  },
+  {
+    "id": "evt_auto_1787932095576",
+    "time": "21:18:15",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Operating Expense Payroll Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
+    "id": "evt_auto_1787932092063",
+    "time": "21:18:12",
+    "event_type": "NEW_INVOICE",
+    "stage": "FORECAST",
+    "title": "\ud83c\udfed Bosch Ltd Component Invoice INV_FUT_0270 (\u20b981.4k)",
+    "detail": "New raw material invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+    "impact": "Added to Decision Pool"
+  },
+  {
+    "id": "evt_auto_1787932088530",
+    "time": "21:18:08",
+    "event_type": "RECEIVABLE_DELAYED",
+    "stage": "FORECAST",
+    "title": "\u26a0\ufe0f Customer A Wire Delayed (+10d)",
+    "detail": "Customer CUST011 payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+    "impact": "Re-Optimizing Strategy"
+  },
+  {
+    "id": "evt_auto_1787932085001",
+    "time": "21:18:05",
+    "event_type": "TELEMETRY_PING",
+    "stage": "OBSERVE",
+    "title": "\ud83d\udce1 HDFC Treasury Balance Sync",
+    "detail": "Verified live cash balance \u20b925.54 Cr across HDFC Operating & ICICI Reserve accounts.",
+    "impact": "Monitored (No Change)"
+  },
+  {
+    "id": "evt_auto_1787932081484",
+    "time": "21:18:01",
+    "event_type": "OPEX_RESERVE",
+    "stage": "FORECAST",
+    "title": "\ud83d\udcbc Operating Expense Payroll Lock (\u20b916.50L)",
+    "detail": "Locked \u20b916.50L reserve in HDFC operating cash for salary day in 3 days.",
+    "impact": "Locked in Reserve"
+  },
+  {
+    "id": "evt_auto_1787932077974",
+    "time": "21:17:57",
+    "event_type": "NEW_INVOICE",
+    "stage": "FORECAST",
+    "title": "\ud83c\udfed Bosch Ltd Component Invoice INV_FUT_0270 (\u20b981.4k)",
+    "detail": "New raw material invoice issued by Bosch Ltd. Added to candidate 0/1 Knapsack pool.",
+    "impact": "Added to Decision Pool"
+  },
+  {
+    "id": "evt_auto_1787932074484",
+    "time": "21:17:54",
+    "event_type": "RECEIVABLE_DELAYED",
+    "stage": "FORECAST",
+    "title": "\u26a0\ufe0f Customer A Wire Delayed (+10d)",
+    "detail": "Customer CUST011 payment shifted by +10 days. Bayesian prior updated (alpha=10, beta=3, prob=76.9%).",
+    "impact": "Re-Optimizing Strategy"
+  }
+]

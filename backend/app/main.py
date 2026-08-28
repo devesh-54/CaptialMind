@@ -105,7 +105,7 @@ async def auto_stream_generator():
                     )
                 )
 
-        # 2. Append event to log ledger
+        # 2. Append event to log ledger & persist stream record
         evt_item = {
             "id": evt_id,
             "time": timestamp,
@@ -116,6 +116,7 @@ async def auto_stream_generator():
             "impact": evt["impact"]
         }
         store.events_log.insert(0, evt_item)
+        store.ingest_and_process_stream_record(evt_item)
 
         # 3. Re-run 0/1 Knapsack DP Decision Pipeline with updated data
         total_cash = store.get_total_cash()
@@ -131,6 +132,7 @@ async def auto_stream_generator():
                 "newEvent": evt_item,
                 "availableCash": total_cash * 100000.0,
                 "sequenceDate": f"2026-08-{(28 + idx % 10):02d}",
+                "storedStreamCount": len(store.stream_ledger),
                 "heroRecommendation": {
                     "title": new_decision.chosen_action,
                     "confidence": int(new_decision.confidence * 100),
@@ -441,6 +443,8 @@ async def receive_event(event: EventPayload):
             "impact": "Monitored (No Material Change)"
         }
         store.events_log.insert(0, evt_item)
+
+    store.ingest_and_process_stream_record(evt_item)
 
     total_cash = store.get_total_cash()
     new_decision = run_decision_pipeline(total_cash, store.invoices, store.suppliers, store.financing_options, triggered_by_event_id=evt_id)

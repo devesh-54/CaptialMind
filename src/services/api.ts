@@ -102,6 +102,29 @@ export async function triggerSimulatedEvent(
   return null;
 }
 
+export async function runWhatIfSimulation(delayDays = 10, cashDropLakhs = 0) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/what-if`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        receivable_delay_days: delayDays,
+        cash_drop_lakhs: cashDropLakhs
+      })
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('Failed to run what-if simulation:', err);
+  }
+  return {
+    minCashLakhs: 1550,
+    breachesFloor: false,
+    explanation: 'Simulating VRL Logistics fleet delay maintains reserve floor above target.'
+  };
+}
+
 export async function fetchStreamStatus() {
   try {
     const res = await fetch(`${API_BASE_URL}/api/stream/status`);

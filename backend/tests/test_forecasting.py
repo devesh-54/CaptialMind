@@ -30,6 +30,7 @@ class TestTimeSeriesForecaster(unittest.TestCase):
         self.assertIn("ml_metrics", res)
         self.assertIn("naive_metrics", res)
         self.assertIn("ma_metrics", res)
+        self.assertIn("arima_metrics", res)
         self.assertIn("model_outperforms_baseline", res)
         self.assertIn("confidence_score", res)
         self.assertGreaterEqual(res["confidence_score"], 0.0)

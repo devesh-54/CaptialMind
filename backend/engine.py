@@ -179,7 +179,9 @@ class DecisionEngine:
             mae=pred_res["forecast_metrics"].get("mae", "NOT AVAILABLE"),
             rmse=pred_res["forecast_metrics"].get("rmse", "NOT AVAILABLE"),
             mape=pred_res["forecast_metrics"].get("mape", "NOT AVAILABLE"),
-            r2=pred_res["forecast_metrics"].get("r2", "NOT AVAILABLE")
+            r2=pred_res["forecast_metrics"].get("r2", "NOT AVAILABLE"),
+            ci_upper_bound=pred_res.get("ci_upper_bound", 0.0),
+            ci_lower_bound=pred_res.get("ci_lower_bound", 0.0),
         )
 
         other_fin = OtherFinancials(
@@ -218,7 +220,11 @@ class DecisionEngine:
         )
 
         # 2. Validate Forecast Reliability (Phase 3 & 4)
-        forecast_quality = ForecastValidator.validate_forecast(state)
+        # Compute CI width from ForecastData (non-zero only when ARIMA wins)
+        ci_width = max(0.0, state.forecast.ci_upper_bound - state.forecast.ci_lower_bound)
+        forecast_quality = ForecastValidator.validate_forecast(
+            state, ci_width=ci_width
+        )
 
         # 3. Dynamic Cash Reserve (Phase 5)
         temp_risk = RiskEngine.classify_risk(state, self.reserve_floor, forecast_quality)
@@ -226,7 +232,8 @@ class DecisionEngine:
             state=state,
             risk_level=temp_risk["risk_level"],
             forecast_quality=forecast_quality,
-            avg_daily_outflow=state.cash.daily_outflow
+            avg_daily_outflow=state.cash.daily_outflow,
+            ci_width=ci_width
         )
 
         # 4. Financial Risk Classification (Phase 8)
@@ -290,7 +297,9 @@ class DecisionEngine:
             risk_info=risk_info,
             ranked_safe_actions=ranked_safe_actions if ranked_safe_actions else raw_candidates,
             selected_combination=selected_combo,
-            before_after_simulation=before_after_sim
+            before_after_simulation=before_after_sim,
+            all_model_metrics=self.forecaster.all_model_metrics,
+            forecast_selection_reason=self.forecaster.selected_reason
         )
 
         return output_contract

@@ -12,7 +12,8 @@ class ForecastValidator:
     def validate_forecast(
         state: FinancialState,
         forecast_metrics: Dict[str, Any] = None,
-        confidence_score: float = None
+        confidence_score: float = None,
+        ci_width: float = 0.0
     ) -> Dict[str, Any]:
         warnings = []
         reasons = []
@@ -33,6 +34,17 @@ class ForecastValidator:
             confidence = state.forecast.confidence_score
         else:
             confidence = max(0.0, min(1.0, confidence_score))
+
+        # 2b. CI-width penalty (model-agnostic: only applies when ci_width > 0)
+        # A wide confidence interval relative to the historical balance std-dev signals
+        # elevated forecast uncertainty → reduce confidence by up to 15%.
+        if ci_width > 0.0:
+            raw_cash = abs(state.forecast.raw_projected_cash)
+            ref_scale = max(1.0, raw_cash)
+            ci_ratio = ci_width / ref_scale
+            # Scale: ci_ratio >= 1.0 → full 15% penalty; ci_ratio <= 0 → no penalty
+            ci_penalty = min(0.15, max(0.0, ci_ratio * 0.15))
+            confidence = round(confidence * (1.0 - ci_penalty), 2)
 
         # 3. Business Bound & Anomaly Checks
         raw_proj_cash = state.forecast.raw_projected_cash

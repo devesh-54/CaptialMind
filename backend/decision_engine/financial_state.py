@@ -26,6 +26,9 @@ class ForecastData:
     mape: Any = "NOT AVAILABLE"
     r2: Any = "NOT AVAILABLE"
     projected_points: List[Dict[str, Any]] = field(default_factory=list)
+    # Confidence-interval bounds (populated when ARIMA_SARIMA wins; 0.0 otherwise)
+    ci_upper_bound: float = 0.0
+    ci_lower_bound: float = 0.0
 
 @dataclass
 class ReceivableItem:

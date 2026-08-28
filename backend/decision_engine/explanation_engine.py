@@ -16,7 +16,9 @@ class ExplanationEngine:
         risk_info: Dict[str, Any],
         ranked_safe_actions: List[Dict[str, Any]],
         selected_combination: Dict[str, Any],
-        before_after_simulation: Dict[str, Any]
+        before_after_simulation: Dict[str, Any],
+        all_model_metrics: Dict[str, Any] = None,
+        forecast_selection_reason: str = ""
     ) -> Dict[str, Any]:
         
         # 1. Financial Health Section
@@ -99,9 +101,38 @@ class ExplanationEngine:
         if cash_buffer < 0:
             global_warnings.append(f"Immediate liquidity gap of ₹{abs(cash_buffer):,.2f} requires working capital action.")
 
+        # 5. Forecast Model Selection block
+        candidate_metrics = {}
+        if all_model_metrics:
+            name_map = {
+                "naive_metrics": "NAIVE_BASELINE",
+                "ma_metrics": "MOVING_AVERAGE_7D",
+                "ml_metrics": "RIDGE_ML",
+                "ensemble_metrics": "WEIGHTED_ENSEMBLE",
+                "arima_metrics": "ARIMA_SARIMA",
+            }
+            for key, label in name_map.items():
+                m = all_model_metrics.get(key, {})
+                if m and isinstance(m.get("mae"), (int, float)):
+                    candidate_metrics[label] = {
+                        "mae": m.get("mae"),
+                        "mape": m.get("mape"),
+                        "r2": m.get("r2")
+                    }
+
+        forecast_model_selection = {
+            "winner": state.forecast.selected_strategy,
+            "selection_criterion": "lowest test-period MAE (80/20 chronological split)",
+            "candidates": candidate_metrics,
+            "reason": forecast_selection_reason,
+            "ci_upper_bound": round(state.forecast.ci_upper_bound, 2),
+            "ci_lower_bound": round(state.forecast.ci_lower_bound, 2),
+        }
+
         return {
             "financial_health": financial_health,
             "forecast_quality": forecast_quality,
+            "forecast_model_selection": forecast_model_selection,
             "problem_detected": problem_detected,
             "recommendations": recommendations,
             "optimal_combination_summary": {

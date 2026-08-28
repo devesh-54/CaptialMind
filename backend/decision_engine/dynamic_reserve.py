@@ -23,7 +23,8 @@ class DynamicReserveCalculator:
         state: FinancialState,
         risk_level: str = "LOW",
         forecast_quality: Dict[str, Any] = None,
-        avg_daily_outflow: float = None
+        avg_daily_outflow: float = None,
+        ci_width: float = 0.0
     ) -> Dict[str, Any]:
         # 1. Base Reserve Days from Risk Level
         base_days = self.reserve_days_config.get(risk_level, 10)
@@ -37,6 +38,13 @@ class DynamicReserveCalculator:
                 extra_days += 2
             elif status == "UNRELIABLE":
                 extra_days += 4
+
+        # CI-width guard: wide ARIMA CI → more conservative reserve
+        # Threshold: ci_width > 3 days of daily outflow burn
+        if ci_width > 0.0:
+            burn_3d = (avg_daily_outflow or state.cash.daily_outflow or 165000.0) * 3.0
+            if ci_width > burn_3d:
+                extra_days += 3
 
         unreliable_recs = [r for r in state.receivables if r.collection_probability < 0.75 or r.expected_delay_days > 5]
         if len(unreliable_recs) > 0:

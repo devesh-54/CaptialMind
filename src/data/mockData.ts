@@ -1,4 +1,108 @@
-import { Invoice, Receivable, Supplier, ActivityEvent, DecisionRecord } from '../types/dashboard';
+import { Invoice, Receivable, Supplier, ActivityEvent, DecisionRecord, OptionCandidate } from '../types/dashboard';
+
+export const mockOptionCandidates: OptionCandidate[] = [
+  {
+    id: 'OPT-1',
+    action: 'Pay Now',
+    title: 'Pay Now (Selected)',
+    score: 96,
+    costBenefit: 'Captures ₹33,440 net early discounts',
+    riskNote: 'Stays safely above ₹15.0L floor throughout',
+    breachesFloor: false,
+    selected: true,
+    sparklineData: [
+      { day: 'Aug 28', cash: 48.2 },
+      { day: 'Aug 30', cash: 38.8 },
+      { day: 'Sep 02', cash: 42.1 },
+      { day: 'Sep 05', cash: 36.5 },
+      { day: 'Sep 08', cash: 29.4 },
+      { day: 'Sep 12', cash: 34.0 },
+      { day: 'Sep 18', cash: 41.5 },
+      { day: 'Sep 25', cash: 52.0 },
+    ]
+  },
+  {
+    id: 'OPT-2',
+    action: 'Pay at Maturity',
+    title: 'Pay at Maturity',
+    score: 61,
+    costBenefit: 'Costs ₹33,440 in forfeited discount yield',
+    riskNote: 'Stays above floor; zero early settlement return',
+    breachesFloor: false,
+    selected: false,
+    sparklineData: [
+      { day: 'Aug 28', cash: 48.2 },
+      { day: 'Aug 30', cash: 48.2 },
+      { day: 'Sep 02', cash: 48.2 },
+      { day: 'Sep 05', cash: 29.8 },
+      { day: 'Sep 08', cash: 27.2 },
+      { day: 'Sep 12', cash: 31.5 },
+      { day: 'Sep 18', cash: 39.0 },
+      { day: 'Sep 25', cash: 48.5 },
+    ]
+  },
+  {
+    id: 'OPT-3',
+    action: 'Finance',
+    title: 'Bank Credit Line',
+    score: 74,
+    costBenefit: 'Costs ₹18,000 interest (8.5% APR)',
+    riskNote: 'Preserves cash today; net yield reduced by interest',
+    breachesFloor: false,
+    selected: false,
+    sparklineData: [
+      { day: 'Aug 28', cash: 48.2 },
+      { day: 'Aug 30', cash: 48.2 },
+      { day: 'Sep 02', cash: 45.0 },
+      { day: 'Sep 05', cash: 40.5 },
+      { day: 'Sep 08', cash: 35.0 },
+      { day: 'Sep 12', cash: 38.2 },
+      { day: 'Sep 18', cash: 44.0 },
+      { day: 'Sep 25', cash: 52.0 },
+    ]
+  },
+  {
+    id: 'OPT-4',
+    action: 'Delay',
+    title: 'Delay Payment (+10d)',
+    score: 32,
+    costBenefit: '₹0 immediate cash outflow',
+    riskNote: 'Breaches reserve floor (₹12.5L) on Day 18',
+    breachesFloor: true,
+    breachDay: 'Sep 18',
+    selected: false,
+    sparklineData: [
+      { day: 'Aug 28', cash: 48.2 },
+      { day: 'Aug 30', cash: 48.2 },
+      { day: 'Sep 02', cash: 45.0 },
+      { day: 'Sep 05', cash: 22.0 },
+      { day: 'Sep 08', cash: 18.0 },
+      { day: 'Sep 12', cash: 16.5 },
+      { day: 'Sep 18', cash: 12.5 },
+      { day: 'Sep 25', cash: 29.0 },
+    ]
+  },
+  {
+    id: 'OPT-5',
+    action: 'Retain',
+    title: 'Retain Cash Buffer',
+    score: 45,
+    costBenefit: 'Maximizes nominal cash reserve',
+    riskNote: 'Forfeits ₹33.4k & risks supplier delivery hold',
+    breachesFloor: false,
+    selected: false,
+    sparklineData: [
+      { day: 'Aug 28', cash: 48.2 },
+      { day: 'Aug 30', cash: 48.2 },
+      { day: 'Sep 02', cash: 48.2 },
+      { day: 'Sep 05', cash: 48.2 },
+      { day: 'Sep 08', cash: 42.0 },
+      { day: 'Sep 12', cash: 40.0 },
+      { day: 'Sep 18', cash: 45.0 },
+      { day: 'Sep 25', cash: 52.0 },
+    ]
+  }
+];
 
 export const mockInvoices: Invoice[] = [
   {
@@ -12,7 +116,8 @@ export const mockInvoices: Invoice[] = [
     priorityScore: 96,
     aiAction: 'Pay Now',
     strategicImportance: 5,
-    reasoning: 'Strategic Tier-1 supplier. Captures ₹23,000 discount (32.4% annualized return). Buffer exceeds ₹15L safety floor.'
+    reasoning: 'Strategic Tier-1 supplier. Captures ₹23,000 discount (32.4% annualized return). Buffer exceeds ₹15L safety floor.',
+    candidates: mockOptionCandidates
   },
   {
     id: 'INV-2026-084',
@@ -155,15 +260,15 @@ export const mockActivityFeed: ActivityEvent[] = [
     timestamp: '14s ago',
     stage: 'DECIDE',
     title: 'Optimized Day 1 Capital Deployment',
-    detail: 'Allocated ₹18.4L across Tata Steel & Apex Logistics to capture ₹33,440 combined discounts.',
-    impact: '+₹33.4k Yield'
+    detail: 'Evaluated 5 candidates. Selected Pay Now (Score: 96/100) over Bank Finance (74/100) & Delay (32/100).',
+    impact: '+₹33.4k Net Yield'
   },
   {
     id: 'ACT-104',
     timestamp: '2m ago',
     stage: 'FORECAST',
     title: 'Receivable Risk Updated',
-    detail: 'Probability shift on Bajaj Auto (82% → 64%). Shifted Zenith Packaging invoice to Dynamic Financing.',
+    detail: 'Probability shift on Bajaj Auto (82% → 64%). Simulated floor breach under Delay scenario on Day 18.',
     impact: 'Protected ₹15.0L Floor'
   },
   {
@@ -187,14 +292,15 @@ export const mockDecisionHistory: DecisionRecord[] = [
     id: 'DEC-8801',
     timestamp: '2026-08-28 14:45',
     triggerEvent: 'Daily Working Capital Run',
-    decision: 'Early Settlement - Tata Steel',
+    decision: 'Early Settlement - Tata Steel (Pay Now)',
     amount: 920000,
     confidence: 96,
     status: 'Pending Approval',
     version: 'v1.2',
     reasons: [
+      'Pay Now candidate scored 96/100 (runner-up Bank Finance scored 74/100).',
       '2.5% discount captures ₹23,000 net value (32.4% annualized return).',
-      'Post-payment cash remains at ₹33.2L, well above ₹15.0L safety reserve.',
+      'Post-payment cash remains at ₹33.2L, well above ₹15.0L safety reserve floor.',
       'Tata Steel priority rating (5/5) critical for Q3 delivery guarantees.'
     ]
   },

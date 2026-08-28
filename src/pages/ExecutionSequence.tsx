@@ -110,61 +110,95 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
   // Dynamic live signals derived directly from real-time stream ingestion feed
   const liveStreamEvents = (data?.activityFeed || data?.events_log || []);
 
+  const parseSignalMetric = (evt: any) => {
+    if (!evt) return { amount: '₹15.50L', titleStr: 'FINANCIAL SIGNAL' };
+    const text = `${evt.title || ''} ${evt.detail || ''}`;
+    
+    // Extract rupee amount
+    const rupeeMatch = text.match(/(₹\s?[\d\.,]+(?:\s?[LCMcr]+)?)/i);
+    let amountStr = rupeeMatch ? rupeeMatch[1] : '';
+
+    // Extract delay days
+    const delayMatch = text.match(/(\+\d+\s?d(?:ays)?)/i);
+    if (!amountStr && delayMatch) {
+      amountStr = delayMatch[1];
+    }
+
+    if (!amountStr) {
+      amountStr = '₹45.04 Cr';
+    }
+
+    // Clean title string without emoji
+    let cleanTitle = (evt.title || evt.event_type || 'STREAM SIGNAL')
+      .replace(/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '')
+      .trim();
+
+    return { amountStr, cleanTitle };
+  };
+
   const renderedSignals = liveStreamEvents.length > 0
-    ? liveStreamEvents.slice(0, 4).map((evt: any, i: number) => ({
-        id: evt.id || `sig-${i}`,
-        title: evt.title || evt.event_type || 'STREAM SIGNAL',
-        tag: evt.impact || evt.stage || 'LIVE STREAM',
-        tagColor: i % 2 === 0 ? 'bg-amber-500 text-black' : 'bg-emerald-950/80 text-emerald-300 border border-emerald-800',
-        borderColor: i % 2 === 0 ? 'border-amber-500/30 hover:border-amber-500/60' : 'border-emerald-500/30 hover:border-emerald-500/60',
-        topLineColor: i % 2 === 0 ? 'via-amber-400/40' : 'via-emerald-400/40',
-        titleColor: i % 2 === 0 ? 'text-amber-400' : 'text-emerald-400',
-        amountText: evt.time ? `Refreshed ${evt.time}` : formatINR(1650000),
-        detail: evt.detail || 'Live stream context signal ingested into 0/1 Knapsack DP decision solver.'
-      }))
+    ? liveStreamEvents.slice(0, 4).map((evt: any, i: number) => {
+        const { amountStr, cleanTitle } = parseSignalMetric(evt);
+        return {
+          id: evt.id || `sig-${i}`,
+          title: cleanTitle,
+          tag: evt.impact || evt.stage || 'LIVE STREAM',
+          tagColor: i % 2 === 0 ? 'bg-amber-500 text-black' : 'bg-emerald-950/80 text-emerald-300 border border-emerald-800',
+          borderColor: i % 2 === 0 ? 'border-amber-500/30 hover:border-amber-500/60' : 'border-emerald-500/30 hover:border-emerald-500/60',
+          topLineColor: i % 2 === 0 ? 'via-amber-400/40' : 'via-emerald-400/40',
+          titleColor: i % 2 === 0 ? 'text-amber-400' : 'text-emerald-400',
+          amountText: amountStr,
+          timeText: evt.time || 'Live',
+          detail: evt.detail || 'Live stream context signal ingested into 0/1 Knapsack DP decision solver.'
+        };
+      })
     : [
         {
           id: 'sig-1',
-          title: '💼 PLANT SALARIES & OPEX',
+          title: 'PLANT SALARIES & OPEX',
           tag: 'DUE IN 3 DAYS',
           tagColor: 'bg-amber-500 text-black',
           borderColor: 'border-amber-500/30 hover:border-amber-500/60',
           topLineColor: 'via-amber-400/40',
           titleColor: 'text-amber-400',
           amountText: formatINR(1650000),
+          timeText: '01:31:23',
           detail: 'Critical payroll requirement due in 3 days. Lock reserve before executing discretionary payouts.'
         },
         {
           id: 'sig-2',
-          title: `📥 ${customerAInflow.customerName || 'VRL LOGISTICS'} INFLOW`,
+          title: `${customerAInflow.customerName || 'VRL LOGISTICS'} INFLOW`,
           tag: `EXPECTED IN ${customerAInflow.expectedDelayDays || 10}d`,
           tagColor: 'bg-emerald-950/80 text-emerald-300 border border-emerald-800',
           borderColor: 'border-emerald-500/30 hover:border-emerald-500/60',
           topLineColor: 'via-emerald-400/40',
           titleColor: 'text-emerald-400',
           amountText: formatINR(customerAInflow.amount || 317609.60),
+          timeText: '01:31:45',
           detail: `Expected wire on Sep 28. Live Bayesian probability: ${customerAInflow.collectionProbability || 87.0}%.`
         },
         {
           id: 'sig-3',
-          title: `🏭 ${boschInvoice.supplierName || 'BOSCH LTD'} OEM`,
+          title: `${boschInvoice.supplierName || 'BOSCH LTD'} OEM`,
           tag: `DISCOUNT ${boschInvoice.discountPct || 2.0}%`,
           tagColor: 'bg-blue-950/80 text-blue-300 border border-blue-800',
           borderColor: 'border-blue-500/30 hover:border-blue-500/60',
           topLineColor: 'via-blue-400/40',
           titleColor: 'text-blue-400',
           amountText: formatINR(boschInvoice.amount || 22721445.28),
+          timeText: '01:31:56',
           detail: `${boschInvoice.discountPct || 2.0}% early discount active. Priority Score: ${boschInvoice.priorityScore || 95}/100.`
         },
         {
           id: 'sig-4',
-          title: '🏦 STATUTORY TAX OBLIGATION',
+          title: 'STATUTORY TAX OBLIGATION',
           tag: 'DUE IN 5 DAYS',
           tagColor: 'bg-purple-950/80 text-purple-300 border border-purple-800',
           borderColor: 'border-purple-500/30 hover:border-purple-500/60',
           topLineColor: 'via-purple-400/40',
           titleColor: 'text-purple-400',
           amountText: formatINR(230000),
+          timeText: '01:32:00',
           detail: 'Mandatory tax obligation due in 5 days. Remained covered under 30-day liquidity horizon.'
         }
       ];
@@ -326,19 +360,35 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
           {renderedSignals.map((sig: any) => (
             <div 
               key={sig.id}
-              className={`backdrop-blur-xl bg-[#0F172A]/50 border ${sig.borderColor} rounded-xl p-4 space-y-2 shadow-xl transition group relative overflow-hidden`}
+              className={`backdrop-blur-xl bg-[#0F172A]/50 border ${sig.borderColor} rounded-xl p-4 space-y-2 shadow-xl transition group relative overflow-hidden flex flex-col justify-between`}
             >
               <div className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent ${sig.topLineColor} to-transparent`}></div>
-              <div className="flex items-center justify-between text-[10px] font-bold gap-2">
-                <span className={`truncate font-sans ${sig.titleColor}`}>{sig.title}</span>
-                <span className={`shrink-0 px-2 py-0.5 rounded text-[9px] font-bold ${sig.tagColor}`}>
-                  {sig.tag}
-                </span>
+              
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-[10px] font-bold gap-2">
+                  <span className={`font-sans font-bold text-[11px] truncate ${sig.titleColor}`}>{sig.title}</span>
+                  <span className={`shrink-0 px-2 py-0.5 rounded text-[9px] font-bold uppercase ${sig.tagColor}`}>
+                    {sig.tag}
+                  </span>
+                </div>
+                
+                {/* LARGE MONETARY / METRIC DISPLAY */}
+                <div className="text-2xl font-bold text-slate-100 font-mono tracking-tight pt-1">
+                  {sig.amountText}
+                </div>
               </div>
-              <div className="text-lg font-bold text-slate-100 font-mono truncate">{sig.amountText}</div>
-              <p className="text-[11px] text-slate-300 font-sans leading-relaxed line-clamp-2">
-                {sig.detail}
-              </p>
+
+              <div className="space-y-2 pt-2 border-t border-white/5">
+                <p className="text-[11px] text-slate-300 font-sans leading-relaxed line-clamp-2">
+                  {sig.detail}
+                </p>
+
+                <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                  <span className="flex items-center text-slate-400"><Clock className="w-3 h-3 mr-1 text-slate-500" /> Refreshed {sig.timeText}</span>
+                  <span className="text-emerald-400 font-bold">● Active</span>
+                </div>
+              </div>
+
             </div>
           ))}
         </div>

@@ -7,6 +7,7 @@ from app.models import (
     FinancingOption, EventPayload, Decision, SupplierArchetype, EntityArchetype, ActionType
 )
 from app.historical_data import generate_historical_transactions, preprocess_customer_history
+from app.supabase_service import sync_stream_event_to_supabase, fetch_supabase_stream_records
 
 HISTORICAL_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "historical_data_cashpilot", "data", "historical")
 FUTURE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "futureStreaming_data_cashpilot", "cashpilot_ai", "data")
@@ -88,12 +89,15 @@ class DataStore:
 
     def ingest_and_process_stream_record(self, record: Dict[str, Any]):
         """
-        Stores streamed data into persistent memory & disk ledger, updates entity states,
+        Stores streamed data into persistent Supabase DB & memory & disk ledger, updates entity states,
         and derives updated parameters consumed by the 0/1 Knapsack DP decision pipeline!
         """
         self.stream_ledger.insert(0, record)
         
-        # Save persistent JSON ledger to disk
+        # 1. Sync to Supabase Database
+        sync_stream_event_to_supabase(record)
+
+        # 2. Save persistent JSON ledger to disk
         try:
             ledger_path = os.path.join(FUTURE_DIR, "stored_stream_records.json")
             with open(ledger_path, "w") as f:
@@ -101,7 +105,7 @@ class DataStore:
         except Exception:
             pass
 
-        # Update cash balances and invoice/receivable states based on streamed transaction
+        # 3. Update cash balances and invoice/receivable states based on streamed transaction
         amount = record.get("amount", 0.0)
         event_type = record.get("event_type", "")
 

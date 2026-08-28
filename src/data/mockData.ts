@@ -283,3 +283,37 @@ export const mockActivityFeed = [
     detail: 'HDFC Treasury Account balance confirmed: ₹48,20,000. Reserve floor verified.',
   }
 ];
+
+export const mockDecisionHistory = [
+  {
+    id: 'DEC-8801',
+    timestamp: '2026-08-28 14:45',
+    triggerEvent: 'Daily Working Capital Run',
+    decision: 'Early Settlement - Valeo India (Pay Now)',
+    amount: 33381685.97,
+    confidence: 96,
+    status: 'Pending Approval',
+    version: 'v1.2',
+    reasons: [
+      'Pay Now candidate scored 96/100 (runner-up Bank Finance scored 74/100).',
+      '2.0% discount captures ₹66.76L net value.',
+      'Post-payment cash remains well above ₹15.0L safety reserve floor.',
+      'Valeo India priority rating (5/5) critical for Q1 delivery guarantees.'
+    ]
+  },
+  {
+    id: 'DEC-8794',
+    timestamp: '2026-08-27 10:15',
+    triggerEvent: 'Flipkart Payment Delay (+4d)',
+    decision: 'Switch Zenith Packaging to Credit Line',
+    amount: 1250000.0,
+    confidence: 88,
+    status: 'Executed',
+    version: 'v2.0',
+    supersededBy: 'DEC-8801',
+    reasons: [
+      'Flipkart expected payment shifted from Aug 29 to Sept 2.',
+      'Prevents cash floor dip below ₹15L threshold on Sept 1st.'
+    ]
+  }
+];

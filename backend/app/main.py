@@ -143,7 +143,7 @@ async def auto_stream_generator():
                         "id": "OPT-1",
                         "action": "Pay Now",
                         "title": "Pay Now + Reserve Plant Opex (Selected)",
-                        "score": int(new_decision.achieved_utility * 100),
+                        "score": min(98, max(75, int(new_decision.confidence * 96))),
                         "subScores": { "liquidity": 98, "financial": 95, "supplier": 92, "risk": 96 },
                         "costBenefit": f"Covers ₹16.5L Opex & allocates {len(new_decision.allocations)} invoice payouts",
                         "riskNote": f"VRL Logistics AR inflow maintains ₹15.50L reserve floor",

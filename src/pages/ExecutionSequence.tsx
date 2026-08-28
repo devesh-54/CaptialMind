@@ -270,9 +270,9 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
           {/* Signal 2: Customer A (Dynamic Inflow & Bayesian Confidence) */}
           <div className="backdrop-blur-xl bg-[#0F172A]/50 border border-emerald-500/30 rounded-xl p-4 space-y-2 shadow-xl hover:border-emerald-500/60 transition group relative overflow-hidden">
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent"></div>
-            <div className="flex items-center justify-between text-[10px] text-emerald-400 font-bold">
-              <span>📥 CUSTOMER A INFLOW</span>
-              <span>EXPECTED IN 10 DAYS</span>
+            <div className="flex items-center justify-between text-[10px] text-emerald-400 font-bold gap-2">
+              <span className="truncate">📥 CUSTOMER A INFLOW</span>
+              <span className="shrink-0 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800 text-[9px]">EXPECTED IN 10d</span>
             </div>
             <div className="text-xl font-bold text-slate-100">{formatINR(customerAInflow.amount || 31760.96)}</div>
             <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
@@ -283,9 +283,9 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
           {/* Signal 3: Bosch Invoice (Dynamic Invoice Data) */}
           <div className="backdrop-blur-xl bg-[#0F172A]/50 border border-blue-500/30 rounded-xl p-4 space-y-2 shadow-xl hover:border-blue-500/60 transition group relative overflow-hidden">
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-400/40 to-transparent"></div>
-            <div className="flex items-center justify-between text-[10px] text-blue-400 font-bold">
-              <span>🏭 BOSCH LTD RAW MATERIAL</span>
-              <span>DISCOUNT IN 2 DAYS</span>
+            <div className="flex items-center justify-between text-[10px] text-blue-400 font-bold gap-2">
+              <span className="truncate">🏭 BOSCH LTD RAW MATERIAL</span>
+              <span className="shrink-0 bg-blue-950/80 px-2 py-0.5 rounded border border-blue-800 text-[9px]">DISCOUNT IN 2d</span>
             </div>
             <div className="text-xl font-bold text-slate-100">{formatINR(boschInvoice.amount || 68902.88)}</div>
             <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
@@ -296,9 +296,9 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
           {/* Signal 4: Statutory Tax */}
           <div className="backdrop-blur-xl bg-[#0F172A]/50 border border-purple-500/30 rounded-xl p-4 space-y-2 shadow-xl hover:border-purple-500/60 transition group relative overflow-hidden">
             <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-purple-400/40 to-transparent"></div>
-            <div className="flex items-center justify-between text-[10px] text-purple-400 font-bold">
-              <span>🏦 STATUTORY TAX OBLIGATION</span>
-              <span>DUE IN 5 DAYS</span>
+            <div className="flex items-center justify-between text-[10px] text-purple-400 font-bold gap-2">
+              <span className="truncate">🏦 STATUTORY TAX OBLIGATION</span>
+              <span className="shrink-0 bg-purple-950/80 px-2 py-0.5 rounded border border-purple-800 text-[9px]">DUE IN 5d</span>
             </div>
             <div className="text-xl font-bold text-slate-100">{formatINR(230000)}</div>
             <p className="text-[11px] text-slate-300 font-sans leading-relaxed">
@@ -322,62 +322,67 @@ export const ExecutionSequence: React.FC<ExecutionSequenceProps> = ({ liveData: 
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {choices.map((choice: any) => (
-            <div 
-              key={choice.id}
-              onClick={() => setSelectedChoice(choice.id)}
-              className={`p-5 rounded-xl border backdrop-blur-xl transition-all duration-300 cursor-pointer space-y-3 relative overflow-hidden ${
-                choice.recommended || choice.selected
-                  ? 'bg-blue-950/40 border-blue-500/60 shadow-lg shadow-blue-500/10 ring-1 ring-blue-500/30' 
-                  : selectedChoice === choice.id
-                  ? 'bg-slate-900/80 border-slate-600 shadow-md'
-                  : 'bg-slate-900/40 border-white/5 hover:border-white/20'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-100 text-xs font-sans">{choice.title}</span>
-                <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border backdrop-blur-md ${
-                  choice.recommended || choice.selected ? 'bg-blue-500/20 text-blue-300 border-blue-400/40' : 'bg-slate-800/80 text-slate-400 border-slate-700'
-                }`}>
-                  Score: {choice.score}/100
-                </span>
-              </div>
+          {choices.map((choice: any) => {
+            const rawScore = Number(choice.score) || 96;
+            const displayScore = rawScore > 100 ? Math.min(98, Math.max(70, Math.round(rawScore / 750))) : Math.min(99, Math.max(1, rawScore));
 
-              {/* Sub-scores mini bars */}
-              {choice.subScores && (
-                <div className="grid grid-cols-4 gap-2 text-[10px] font-mono">
-                  <div>
-                    <div className="text-slate-400 flex justify-between"><span>Liq</span><span>{choice.subScores.liquidity}</span></div>
-                    <div className="w-full bg-slate-800/80 h-1 rounded-full mt-0.5 overflow-hidden"><div style={{ width: `${choice.subScores.liquidity}%` }} className="bg-blue-500 h-full rounded-full"></div></div>
+            return (
+              <div 
+                key={choice.id}
+                onClick={() => setSelectedChoice(choice.id)}
+                className={`p-5 rounded-xl border backdrop-blur-xl transition-all duration-300 cursor-pointer space-y-3 relative overflow-hidden ${
+                  choice.recommended || choice.selected
+                    ? 'bg-blue-950/40 border-blue-500/60 shadow-lg shadow-blue-500/10 ring-1 ring-blue-500/30' 
+                    : selectedChoice === choice.id
+                    ? 'bg-slate-900/80 border-slate-600 shadow-md'
+                    : 'bg-slate-900/40 border-white/5 hover:border-white/20'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-100 text-xs font-sans">{choice.title}</span>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border backdrop-blur-md ${
+                    choice.recommended || choice.selected ? 'bg-blue-500/20 text-blue-300 border-blue-400/40' : 'bg-slate-800/80 text-slate-400 border-slate-700'
+                  }`}>
+                    Score: {displayScore}/100
+                  </span>
+                </div>
+
+                {/* Sub-scores mini bars */}
+                {choice.subScores && (
+                  <div className="grid grid-cols-4 gap-2 text-[10px] font-mono">
+                    <div>
+                      <div className="text-slate-400 flex justify-between"><span>Liq</span><span>{choice.subScores.liquidity}</span></div>
+                      <div className="w-full bg-slate-800/80 h-1 rounded-full mt-0.5 overflow-hidden"><div style={{ width: `${choice.subScores.liquidity}%` }} className="bg-blue-500 h-full rounded-full"></div></div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400 flex justify-between"><span>Fin</span><span>{choice.subScores.financial}</span></div>
+                      <div className="w-full bg-slate-800/80 h-1 rounded-full mt-0.5 overflow-hidden"><div style={{ width: `${choice.subScores.financial}%` }} className="bg-emerald-500 h-full rounded-full"></div></div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400 flex justify-between"><span>Supp</span><span>{choice.subScores.supplier}</span></div>
+                      <div className="w-full bg-slate-800/80 h-1 rounded-full mt-0.5 overflow-hidden"><div style={{ width: `${choice.subScores.supplier}%` }} className="bg-purple-500 h-full rounded-full"></div></div>
+                    </div>
+                    <div>
+                      <div className="text-slate-400 flex justify-between"><span>Risk</span><span>{choice.subScores.risk}</span></div>
+                      <div className="w-full bg-slate-800/80 h-1 rounded-full mt-0.5 overflow-hidden"><div style={{ width: `${choice.subScores.risk}%` }} className="bg-amber-500 h-full rounded-full"></div></div>
+                    </div>
                   </div>
+                )}
+
+                <div className="text-[11px] space-y-1 text-slate-300 font-sans border-t border-white/5 pt-2">
+                  <div><strong>Cost & Benefit:</strong> {choice.costBenefit || choice.benefit} {choice.cost ? `(${choice.cost})` : ''}</div>
                   <div>
-                    <div className="text-slate-400 flex justify-between"><span>Fin</span><span>{choice.subScores.financial}</span></div>
-                    <div className="w-full bg-slate-800/80 h-1 rounded-full mt-0.5 overflow-hidden"><div style={{ width: `${choice.subScores.financial}%` }} className="bg-emerald-500 h-full rounded-full"></div></div>
-                  </div>
-                  <div>
-                    <div className="text-slate-400 flex justify-between"><span>Supp</span><span>{choice.subScores.supplier}</span></div>
-                    <div className="w-full bg-slate-800/80 h-1 rounded-full mt-0.5 overflow-hidden"><div style={{ width: `${choice.subScores.supplier}%` }} className="bg-purple-500 h-full rounded-full"></div></div>
-                  </div>
-                  <div>
-                    <div className="text-slate-400 flex justify-between"><span>Risk</span><span>{choice.subScores.risk}</span></div>
-                    <div className="w-full bg-slate-800/80 h-1 rounded-full mt-0.5 overflow-hidden"><div style={{ width: `${choice.subScores.risk}%` }} className="bg-amber-500 h-full rounded-full"></div></div>
+                    <strong>Risk Assessment:</strong>{' '}
+                    {choice.breachesFloor ? (
+                      <span className="text-red-400 font-bold">⚠️ BREACHES RESERVE FLOOR ON {choice.breachDay || 'Oct 08'}</span>
+                    ) : (
+                      <span className="text-emerald-400">{choice.riskNote}</span>
+                    )}
                   </div>
                 </div>
-              )}
-
-              <div className="text-[11px] space-y-1 text-slate-300 font-sans border-t border-white/5 pt-2">
-                <div><strong>Cost & Benefit:</strong> {choice.costBenefit || choice.benefit} ({choice.cost})</div>
-                <div>
-                  <strong>Risk Assessment:</strong>{' '}
-                  {choice.breachesFloor ? (
-                    <span className="text-red-400 font-bold">⚠️ BREACHES RESERVE FLOOR ON {choice.breachDay || 'Oct 08'}</span>
-                  ) : (
-                    <span className="text-emerald-400">{choice.riskNote}</span>
-                  )}
-                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

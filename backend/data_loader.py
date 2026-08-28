@@ -1,292 +1,147 @@
 import os
 import json
-import pandas as pd
 from typing import Dict, Any, List
-from preprocessor import HistoricalPreprocessor
-
-HISTORICAL_DIR = os.path.join(os.path.dirname(__file__), "..", "historical_data_cashpilot", "data", "historical")
-FUTURE_DIR = os.path.join(os.path.dirname(__file__), "..", "futureStreaming_data_cashpilot", "cashpilot_ai", "data")
+from build_unified_dataset import build_unified_dataset, OUTPUT_JSON_PATH
 
 class DataLoader:
-    def __init__(self, historical_dir: str = HISTORICAL_DIR, future_dir: str = FUTURE_DIR):
-        self.historical_dir = os.path.abspath(historical_dir)
-        self.future_dir = os.path.abspath(future_dir)
-        
-        # Preprocess historical transactions
-        self.preprocessor = HistoricalPreprocessor(self.historical_dir)
-        self.customer_features = self.preprocessor.preprocess_customer_history()
-        self.supplier_features = self.preprocessor.preprocess_supplier_history()
+    def __init__(self):
+        if not os.path.exists(OUTPUT_JSON_PATH):
+            self.dataset = build_unified_dataset()
+        else:
+            try:
+                with open(OUTPUT_JSON_PATH, "r", encoding="utf-8") as f:
+                    self.dataset = json.load(f)
+            except Exception:
+                self.dataset = build_unified_dataset()
 
     def load_company(self) -> Dict[str, Any]:
-        # Read from historical or future company.json
-        for dir_path in [self.historical_dir, self.future_dir]:
-            path = os.path.join(dir_path, "company.json")
-            if os.path.exists(path):
-                try:
-                    with open(path, "r", encoding="utf-8") as f:
-                        return json.load(f)
-                except Exception:
-                    pass
-        return {
-            "id": "TATA001",
+        return self.dataset.get("company", {
+            "company_id": "TATA001",
             "name": "Tata Consumer Products",
-            "minimum_cash_reserve": 1500000.0,
-            "currency": "INR"
-        }
+            "currency": "INR",
+            "minimum_cash_reserve": 970000.0,
+            "operating_reserve_floor": 1500000.0
+        })
 
     def load_cash(self) -> float:
-        # Priority: read balance from future cash_accounts.csv or future_daily_consolidated.csv
-        path_fut_daily = os.path.join(self.future_dir, "future_daily_consolidated.csv")
-        if os.path.exists(path_fut_daily):
-            try:
-                df = pd.read_csv(path_fut_daily)
-                if not df.empty and 'balance' in df.columns:
-                    val = float(df['balance'].iloc[0])
-                    if val > 0:
-                        return val
-            except Exception:
-                pass
-
-        path_fut_cash = os.path.join(self.future_dir, "cash_accounts.csv")
-        if os.path.exists(path_fut_cash):
-            try:
-                df = pd.read_csv(path_fut_cash)
-                if not df.empty and 'balance' in df.columns:
-                    val = float(df['balance'].iloc[0])
-                    if val > 0:
-                        return val
-            except Exception:
-                pass
-
-        # Fallback: historical cash_accounts.csv
-        path_hist_cash = os.path.join(self.historical_dir, "cash_accounts.csv")
-        if os.path.exists(path_hist_cash):
-            try:
-                df = pd.read_csv(path_hist_cash)
-                if not df.empty and 'balance' in df.columns:
-                    return float(df['balance'].iloc[0])
-            except Exception:
-                pass
-
+        accounts = self.dataset.get("cash_accounts", [])
+        if accounts:
+            return float(accounts[0].get("current_balance", 2554079.97))
         return 2554079.97
 
-    def load_suppliers_dict(self) -> Dict[str, Dict[str, Any]]:
-        path = os.path.join(self.historical_dir, "suppliers.csv")
-        suppliers = {}
-        if os.path.exists(path):
-            try:
-                df = pd.read_csv(path)
-                for _, row in df.iterrows():
-                    sup_id = str(row.get("supplier_id", ""))
-                    imp_val = str(row.get("strategic_importance", "MEDIUM")).upper()
-                    imp_score = 5 if "CRITICAL" in imp_val else 3 if "MEDIUM" in imp_val else 2
-                    
-                    sup_feat = self.supplier_features.get(sup_id, {})
-                    suppliers[sup_id] = {
-                        "name": str(row.get("name", f"Supplier {sup_id}")),
-                        "category": str(row.get("category", "Raw Materials")),
-                        "strategicImportance": imp_score,
-                        "isCritical": "CRITICAL" in imp_val,
-                        "liquidityRisk": str(row.get("liquidity_risk", "LOW")).upper(),
-                        "capturedDiscountTotal": sup_feat.get("captured_discount_total", 142000.0)
-                    }
-            except Exception as e:
-                print(f"Error reading suppliers.csv: {e}")
-        return suppliers
+    def load_customers(self) -> List[Dict[str, Any]]:
+        return self.dataset.get("customers", [])
 
     def load_suppliers(self) -> List[Dict[str, Any]]:
-        path = os.path.join(self.historical_dir, "suppliers.csv")
+        suppliers_raw = self.dataset.get("suppliers", [])
         suppliers = []
-        if os.path.exists(path):
-            try:
-                df = pd.read_csv(path)
-                for _, row in df.head(10).iterrows():
-                    sup_id = str(row.get("supplier_id", "SUP001"))
-                    imp_val = str(row.get("strategic_importance", "MEDIUM")).upper()
-                    imp_score = 5 if "CRITICAL" in imp_val else 3 if "MEDIUM" in imp_val else 2
-                    sup_feat = self.supplier_features.get(sup_id, {})
-                    suppliers.append({
-                        "id": sup_id,
-                        "name": str(row.get("name", f"Supplier {sup_id}")),
-                        "category": str(row.get("category", "Raw Materials")),
-                        "strategicImportance": imp_score,
-                        "isCritical": "CRITICAL" in imp_val,
-                        "liquidityRisk": str(row.get("liquidity_risk", "LOW")),
-                        "outstandingInvoices": 2,
-                        "outstandingAmount": 140555.66,
-                        "onTimePaymentPct": sup_feat.get("on_time_payment_pct", 94.0),
-                        "capturedDiscountTotal": sup_feat.get("captured_discount_total", 142000.0)
-                    })
-            except Exception as e:
-                print(f"Error reading suppliers.csv: {e}")
+        for s in suppliers_raw:
+            suppliers.append({
+                "id": s.get("supplier_id"),
+                "name": s.get("name"),
+                "category": s.get("category"),
+                "strategicImportance": s.get("strategic_importance_rating", 4),
+                "isCritical": s.get("is_critical", True),
+                "liquidityRisk": s.get("liquidity_risk", "LOW"),
+                "outstandingInvoices": 2,
+                "outstandingAmount": 140555.66,
+                "onTimePaymentPct": 94.0,
+                "capturedDiscountTotal": s.get("captured_discount_total", 142000.0)
+            })
         return suppliers
 
     def load_invoices(self) -> List[Dict[str, Any]]:
-        # READ OPEN INVOICES FROM FUTURE STREAMING DATASET
-        path = os.path.join(self.future_dir, "invoices.csv")
-        suppliers_dict = self.load_suppliers_dict()
+        invoices_raw = self.dataset.get("invoices", [])
+        suppliers_dict = {s["supplier_id"]: s for s in self.dataset.get("suppliers", [])}
+        
         invoices = []
+        # Filter open future invoices first
+        future_invs = [inv for inv in invoices_raw if inv.get("data_stream_type") == "FUTURE_STREAMING"]
+        if not future_invs:
+            future_invs = invoices_raw
 
-        if os.path.exists(path):
-            try:
-                df = pd.read_csv(path)
-                # Parse future open invoices
-                for _, row in df.head(10).iterrows():
-                    inv_id = str(row.get("invoice_id", "INV_FUT_0260"))
-                    sup_id = str(row.get("supplier_id", "SUP003"))
-                    sup_info = suppliers_dict.get(sup_id, {
-                        "name": f"Supplier ({sup_id})", 
-                        "category": "Components", 
-                        "strategicImportance": 4
-                    })
-                    amount = float(row.get("amount", 68902.88))
-                    discount_pct = float(row.get("discount_percentage", 0.0))
-                    status = str(row.get("status", "PAID"))
-                    discount_deadline = str(row.get("discount_deadline", "-"))
-                    if pd.isna(discount_deadline) or not discount_deadline:
-                        discount_deadline = "-"
-
-                    score = 95 if discount_pct > 0 else 82 if status == "PAID" else 65
-                    action = "Pay Now" if score >= 80 else "Pay at Maturity"
-
-                    discount_savings = (amount * discount_pct / 100.0) if discount_pct > 0 else 0
-                    reasoning = f"Supplier {sup_info['name']} (Strategic {sup_info['strategicImportance']}/5). "
-                    if discount_pct > 0:
-                        reasoning += f"Captures ₹{discount_savings:,.0f} early discount ({discount_pct}%). Safety floor preserved."
-                    else:
-                        reasoning += f"Invoice issued on {row.get('issue_date', '2026-08-28')}. Terms allow liquidity preservation until maturity."
-
-                    invoices.append({
-                        "id": inv_id,
-                        "supplierName": sup_info["name"],
-                        "supplierCategory": sup_info["category"],
-                        "amount": amount,
-                        "dueDate": str(row.get("issue_date", "2026-08-28")),
-                        "discountPct": discount_pct,
-                        "discountDeadline": discount_deadline,
-                        "priorityScore": score,
-                        "aiAction": action,
-                        "strategicImportance": sup_info["strategicImportance"],
-                        "reasoning": reasoning
-                    })
-            except Exception as e:
-                print(f"Error parsing future invoices.csv: {e}")
+        for inv in future_invs[:10]:
+            sup_id = inv.get("supplier_id")
+            sup_info = suppliers_dict.get(sup_id, {"name": f"Supplier ({sup_id})", "category": "Components", "strategic_importance_rating": 4})
+            amt = float(inv.get("amount", 68902.88))
+            disc_pct = float(inv.get("discount_percentage", 0.0))
+            
+            invoices.append({
+                "id": inv.get("invoice_id"),
+                "supplierId": sup_id,
+                "supplierName": sup_info.get("name", "Bosch Ltd"),
+                "supplierCategory": sup_info.get("category", "Components"),
+                "amount": amt,
+                "dueDate": inv.get("due_date", "2026-08-28"),
+                "discountPct": disc_pct,
+                "discountDeadline": inv.get("discount_deadline", "-"),
+                "priorityScore": inv.get("ai_priority_score", 95 if disc_pct > 0 else 82),
+                "aiAction": inv.get("recommended_action", "Pay Now"),
+                "strategicImportance": sup_info.get("strategic_importance_rating", 4),
+                "reasoning": f"Relational link to Supplier {sup_info.get('name')} ({sup_id}). Terms and discount captured."
+            })
         return invoices
 
     def load_receivables(self) -> List[Dict[str, Any]]:
-        # READ RECEIVABLES FROM FUTURE STREAMING DATASET
-        path = os.path.join(self.future_dir, "receivables.csv")
+        receivables_raw = self.dataset.get("receivables", [])
+        customers_dict = {c["customer_id"]: c for c in self.dataset.get("customers", [])}
+
         receivables = []
-        if os.path.exists(path):
-            try:
-                df = pd.read_csv(path)
-                for idx, row in df.head(8).iterrows():
-                    cust_id = str(row.get("customer_id", f"CUST-00{idx+1}"))
-                    cust_feat = self.customer_features.get(cust_id, {
-                        "alpha": 10, "beta": 2, "observations_count": 11, "on_time_probability": 87.0, "average_delay_days": 1.0
-                    })
-                    amount = float(row.get("amount", 31760.96))
-                    prob_raw = float(row.get("collection_probability", 0.87))
-                    prob = (prob_raw * 100.0) if prob_raw <= 1.0 else prob_raw
-                    delay = int(row.get("expected_delay_days", 1))
-                    status = "On Time" if delay == 0 else "Slight Delay" if delay <= 5 else "At Risk"
-                    
-                    receivables.append({
-                        "id": str(row.get("receivable_id", f"REC_FUT_036{idx}")),
-                        "customerName": f"Customer {cust_id}",
-                        "customerId": cust_id,
-                        "amount": amount,
-                        "expectedDate": str(row.get("expected_date", "2026-09-28")),
-                        "collectionProbability": round(prob, 1),
-                        "expectedDelayDays": delay,
-                        "alpha": cust_feat.get("alpha", 10),
-                        "beta": cust_feat.get("beta", 2),
-                        "observationsCount": cust_feat.get("observations_count", 11),
-                        "status": status
-                    })
-            except Exception as e:
-                print(f"Error loading future receivables.csv: {e}")
+        future_recs = [rec for rec in receivables_raw if rec.get("data_stream_type") == "FUTURE_STREAMING"]
+        if not future_recs:
+            future_recs = receivables_raw
+
+        for rec in future_recs[:8]:
+            cust_id = rec.get("customer_id")
+            cust_info = customers_dict.get(cust_id, {"name": f"Customer ({cust_id})", "alpha_prior": 10, "beta_prior": 2, "observations_count": 12, "on_time_probability": 87.0})
+            
+            receivables.append({
+                "id": rec.get("receivable_id"),
+                "customerId": cust_id,
+                "customerName": cust_info.get("name", f"Customer ({cust_id})"),
+                "amount": float(rec.get("amount", 31760.96)),
+                "expectedDate": rec.get("expected_date", "2026-09-28"),
+                "collectionProbability": float(rec.get("collection_probability", 87.0)),
+                "expectedDelayDays": int(rec.get("expected_delay_days", 1)),
+                "alpha": cust_info.get("alpha_prior", 10),
+                "beta": cust_info.get("beta_prior", 2),
+                "observationsCount": cust_info.get("observations_count", 12),
+                "status": rec.get("status", "On Time")
+            })
         return receivables
 
     def load_obligations(self) -> List[Dict[str, Any]]:
-        # READ OBLIGATIONS FROM FUTURE STREAMING DATASET OR CONSOLIDATED DATA
-        path = os.path.join(self.future_dir, "obligations.csv")
+        obligations_raw = self.dataset.get("obligations", [])
         obligations = []
-        if os.path.exists(path):
-            try:
-                df = pd.read_csv(path)
-                if not df.empty:
-                    for _, row in df.head(10).iterrows():
-                        amount = float(row.get("amount", 100000.0))
-                        desc = str(row.get("description", row.get("category", "OBLIGATION")))
-                        due = str(row.get("due_date", "Tomorrow"))
-                        prio = str(row.get("priority", "HIGH")).upper()
-                        obligations.append({
-                            "id": str(row.get("obligation_id", "OBL-001")),
-                            "supplierName": desc,
-                            "amount": amount,
-                            "dueDate": due if due else "Tomorrow",
-                            "priority": prio,
-                            "aiAction": "Must Pay" if prio == "CRITICAL" else "Pay Now"
-                        })
-            except Exception:
-                pass
-        
-        if not obligations:
-            # Derived from future consolidated daily expenses
-            obligations = [
-                {
-                    "id": "OBL-FUT-01",
-                    "supplierName": "Operating Expense & Monthly Salaries",
-                    "amount": 1650000.0,
-                    "dueDate": "2026-08-28 (Today)",
-                    "priority": "CRITICAL",
-                    "aiAction": "Must Pay"
-                },
-                {
-                    "id": "OBL-FUT-02",
-                    "supplierName": "Invoice INV_FUT_0260 (Bosch Ltd)",
-                    "amount": 68902.88,
-                    "dueDate": "Due 2026-08-28",
-                    "priority": "HIGH",
-                    "aiAction": "Pay Now"
-                },
-                {
-                    "id": "OBL-FUT-03",
-                    "supplierName": "Invoice INV_FUT_0261 (Bosch Ltd)",
-                    "amount": 140555.66,
-                    "dueDate": "Due 2026-08-29",
-                    "priority": "HIGH",
-                    "aiAction": "Pay Now"
-                },
-                {
-                    "id": "OBL-FUT-04",
-                    "supplierName": "Invoice INV_FUT_0262 (JSW Steel)",
-                    "amount": 21563.53,
-                    "dueDate": "Due 2026-08-31",
-                    "priority": "MEDIUM",
-                    "aiAction": "Pay at Maturity"
-                }
-            ]
+        for ob in obligations_raw:
+            obligations.append({
+                "id": ob.get("obligation_id"),
+                "supplierId": ob.get("supplier_id"),
+                "supplierName": ob.get("description"),
+                "amount": float(ob.get("amount", 100000.0)),
+                "dueDate": ob.get("due_date"),
+                "priority": ob.get("priority", "HIGH"),
+                "aiAction": ob.get("ai_action", "Must Pay")
+            })
         return obligations
 
     def load_future_daily_sequence(self) -> List[Dict[str, Any]]:
-        path = os.path.join(self.future_dir, "future_daily_consolidated.csv")
-        sequence = []
-        if os.path.exists(path):
-            try:
-                df = pd.read_csv(path)
-                for _, row in df.iterrows():
-                    sequence.append({
-                        "date": str(row.get("date")),
-                        "balance": float(row.get("balance", 2554079.97)),
-                        "available_balance": float(row.get("available_balance", 1954079.97)),
-                        "reserved_balance": float(row.get("reserved_balance", 970000.0)),
-                        "deployable_cash": float(row.get("deployable_cash", 984079.97)),
-                        "inflow": float(row.get("daily_inflow", 0.0)),
-                        "outflow": float(row.get("daily_outflow", 0.0)),
-                        "invoices_created_amount": float(row.get("invoices_created_amount", 0.0))
-                    })
-            except Exception as e:
-                print(f"Error loading future_daily_consolidated.csv: {e}")
-        return sequence
+        return self.dataset.get("future_daily_sequence", [])
+
+    def load_decisions(self) -> List[Dict[str, Any]]:
+        decisions_raw = self.dataset.get("decisions", [])
+        decisions = []
+        for d in decisions_raw:
+            decisions.append({
+                "id": d.get("decision_id"),
+                "timestamp": d.get("timestamp"),
+                "triggerEvent": d.get("trigger_event"),
+                "decision": d.get("title"),
+                "amount": float(d.get("allocated_amount", 68902.88)),
+                "confidence": d.get("confidence_score", 96),
+                "status": d.get("status", "ACTIVE"),
+                "version": d.get("version", "v2.0"),
+                "validUntil": d.get("valid_until"),
+                "reasons": d.get("reasons", [])
+            })
+        return decisions

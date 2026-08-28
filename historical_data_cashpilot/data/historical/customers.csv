@@ -1,0 +1,26 @@
+customer_id,customer_name,company_id,industry,payment_terms,risk_category,total_historical_payments,on_time_payments,late_payments,on_time_probability,average_delay_days,payment_history_tier
+CUST001,Concorde Motors,COMP001,automotive_manufacturing,15,LOW,24,21,3,0.88,15.3,reliable
+CUST002,Pinnacle Motors,COMP001,automotive_manufacturing,30,LOW,36,31,5,0.86,31.4,reliable
+CUST003,Jayem Automotives,COMP001,automotive_manufacturing,15,LOW,18,16,2,0.89,26.5,reliable
+CUST004,Ganganagar Motors,COMP001,automotive_manufacturing,45,MEDIUM,33,21,12,0.64,23.6,average
+CUST005,Bimal Auto Agency,COMP001,automotive_manufacturing,30,MEDIUM,29,17,12,0.59,23.8,average
+CUST006,Kiran Motors,COMP001,automotive_manufacturing,45,MEDIUM,34,21,13,0.62,21.6,average
+CUST007,Prabhu Motors,COMP001,automotive_manufacturing,45,MEDIUM,32,19,13,0.59,23.2,average
+CUST008,Prerana Motors,COMP001,automotive_manufacturing,30,MEDIUM,29,20,9,0.69,23.1,average
+CUST009,Sai Service Pvt Ltd,COMP001,automotive_manufacturing,60,HIGH,15,5,10,0.33,21.6,risky
+CUST010,Shivam Autozone,COMP001,automotive_manufacturing,60,HIGH,15,8,7,0.53,18.0,risky
+CUST011,Tirupati Motors,COMP001,automotive_manufacturing,30,LOW,22,19,3,0.86,26.3,reliable
+CUST012,Vinayak Motors,COMP001,automotive_manufacturing,15,LOW,25,23,2,0.92,9.5,reliable
+CUST013,BlueDart Express Ltd,COMP001,automotive_manufacturing,30,LOW,23,21,2,0.91,24.0,reliable
+CUST014,Rivigo Services Pvt Ltd,COMP001,automotive_manufacturing,30,MEDIUM,21,17,4,0.81,24.5,average
+CUST015,TCI Express Ltd,COMP001,automotive_manufacturing,30,MEDIUM,18,14,4,0.78,21.8,average
+CUST016,VRL Logistics Ltd,COMP001,automotive_manufacturing,45,MEDIUM,26,18,8,0.69,23.2,average
+CUST017,Gati Ltd,COMP001,automotive_manufacturing,45,MEDIUM,25,20,5,0.8,29.6,average
+CUST018,Eicher Trucks & Buses (Fleet Div),COMP001,automotive_manufacturing,45,MEDIUM,33,25,8,0.76,22.4,average
+CUST019,Indian Army (DGOF),COMP001,automotive_manufacturing,45,HIGH,34,13,21,0.38,26.5,risky
+CUST020,ONGC Ltd,COMP001,automotive_manufacturing,60,HIGH,28,14,14,0.5,27.7,risky
+CUST021,NTPC Ltd,COMP001,automotive_manufacturing,15,LOW,21,18,3,0.86,19.0,reliable
+CUST022,Tata Steel Ltd (Internal),COMP001,automotive_manufacturing,30,LOW,23,22,1,0.96,15.0,reliable
+CUST023,Indian Railways,COMP001,automotive_manufacturing,30,LOW,36,31,5,0.86,23.4,reliable
+CUST024,Ashok Leyland (Cross-supply),COMP001,automotive_manufacturing,45,MEDIUM,16,13,3,0.81,31.3,average
+CUST025,Mahindra & Mahindra,COMP001,automotive_manufacturing,45,MEDIUM,34,21,13,0.62,27.8,average

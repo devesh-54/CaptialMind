@@ -1,0 +1,6 @@
+financing_option_id,provider,type,interest_rate,credit_limit,available_amount,minimum_amount,processing_fee,repayment_terms
+FIN001,State Bank of India,BANK_LOAN,0.095,500000000,500000000,5000000,0.005,12 monthly instalments
+FIN002,HDFC Bank,LINE_OF_CREDIT,0.105,300000000,250000000,2000000,0.003,Revolving – min 5% monthly
+FIN003,ICICI Bank,WORKING_CAPITAL_LOAN,0.1,400000000,400000000,10000000,0.004,6 monthly instalments
+FIN004,Kotak Mahindra Bank,INVOICE_FINANCING,0.12,200000000,180000000,1000000,0.006,Against invoice settlement
+FIN005,Tata Capital Financial Svc,SUPPLIER_FINANCING,0.085,150000000,120000000,500000,0.002,90 days from drawdown

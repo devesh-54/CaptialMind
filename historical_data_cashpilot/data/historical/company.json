@@ -1,0 +1,8 @@
+{
+  "id": "COMP001",
+  "name": "Tata Motors Ltd",
+  "industry": "automotive_manufacturing",
+  "currency": "INR",
+  "minimum_cash_reserve": 50000000,
+  "starting_cash": 480000000
+}

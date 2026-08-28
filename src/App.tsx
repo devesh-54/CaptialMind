@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageId } from './types/dashboard';
 import { TopBar } from './components/TopBar';
 import { Navigation } from './components/Navigation';
 import { ExplanationDrawer } from './components/ExplanationDrawer';
+import { subscribeToSSEStream, triggerSimulatedEvent } from './services/api';
 
 import { CommandCenter } from './pages/CommandCenter';
 import { Invoices } from './pages/Invoices';
@@ -17,10 +18,33 @@ export function App() {
   const [currentPage, setCurrentPage] = useState<PageId>('command-center');
   const [drawerInvoiceId, setDrawerInvoiceId] = useState<string | null>(null);
   const [isOptimizing, setIsOptimizing] = useState<boolean>(false);
+  const [liveStreamStatus, setLiveStreamStatus] = useState<string>('Connecting...');
 
-  const handleReoptimize = () => {
+  useEffect(() => {
+    const unsubscribe = subscribeToSSEStream((data) => {
+      if (data.event === 'CONNECTED') {
+        setLiveStreamStatus('LIVE SSE CONNECTED');
+      } else if (data.event === 'HEARTBEAT') {
+        setLiveStreamStatus(`LIVE • ${data.data.timestamp}`);
+      } else if (data.event === 'REALTIME_UPDATE') {
+        setLiveStreamStatus(`UPDATED • ${data.data.timestamp}`);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  const handleReoptimize = async () => {
     setIsOptimizing(true);
-    setTimeout(() => setIsOptimizing(false), 1200);
+    await triggerSimulatedEvent(
+      'DECIDE',
+      'Manual Re-Optimization Triggered',
+      0,
+      0
+    );
+    setTimeout(() => setIsOptimizing(false), 1000);
   };
 
   const renderPage = () => {

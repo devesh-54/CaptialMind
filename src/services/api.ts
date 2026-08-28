@@ -60,6 +60,30 @@ export async function fetchFinancingData() {
   return null;
 }
 
+export async function fetchDecisionHistoryData() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/decision-history`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('Failed to fetch decision history:', err);
+  }
+  return null;
+}
+
+export async function fetchAgentActivityData() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/agent-activity`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('Failed to fetch agent activity:', err);
+  }
+  return null;
+}
+
 export async function executeAction(invoiceId: string, action: string) {
   try {
     const res = await fetch(`${API_BASE_URL}/execute`, {

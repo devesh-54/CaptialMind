@@ -9,7 +9,10 @@ import {
   ArrowUpRight, 
   ShieldCheck,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  HelpCircle,
+  TrendingUp,
+  BrainCircuit
 } from 'lucide-react';
 import { fetchCommandCenterData, triggerSimulatedEvent } from '../services/api';
 
@@ -28,7 +31,6 @@ export const TodaysDecisions: React.FC = () => {
     load();
   }, []);
 
-  // Filter only items scheduled for TODAY
   const rawInvoices = data?.invoices || [
     {
       id: 'INV00002',
@@ -40,7 +42,7 @@ export const TodaysDecisions: React.FC = () => {
       dueToday: true,
       aiAction: 'PAY_NOW',
       priorityScore: 95,
-      reason: 'Capture 2.0% early discount yield (+₹4,54,428 saved today). Highest priority OEM allocation.'
+      reasoning: 'WHY EXECUTE TODAY: Captures 2.0% early-payment discount (+₹4,54,428 saved today). Secures critical Tier-1 sensor supply for Tata Motors Pune plant without breaching the ₹15.50 Cr reserve floor policy.'
     },
     {
       id: 'INV_TML_270',
@@ -52,7 +54,7 @@ export const TodaysDecisions: React.FC = () => {
       dueToday: true,
       aiAction: 'PAY_NOW',
       priorityScore: 91,
-      reason: 'Execute early wire before 17:00 cutoff to maintain Critical Tier-1 supplier SLA.'
+      reasoning: 'WHY EXECUTE TODAY: Paying Bosch before the 17:00 cutoff captures a 1.5% discount yield (+₹2,721) while protecting engine delivery SLAs before VRL Logistics receivables wire in 10 days.'
     }
   ];
 
@@ -66,7 +68,7 @@ export const TodaysDecisions: React.FC = () => {
     dueToday: true,
     aiAction: 'LOCK_RESERVE',
     priorityScore: 99,
-    reason: 'Lock ₹16.50L operating cash in HDFC Treasury to guarantee 100% assembly worker payroll coverage.'
+    reasoning: 'WHY LOCK TODAY: Locks ₹16.50L in HDFC Treasury to guarantee 100% assembly worker payroll coverage due in 3 days, eliminating operational shutdown risk before any discretionary vendor payments.'
   };
 
   const todayItems = [
@@ -78,7 +80,7 @@ export const TodaysDecisions: React.FC = () => {
     setExecutingId(item.id);
     await triggerSimulatedEvent('PAYMENT_SCHEDULED', `Today payout executed for ${item.supplierName}`, 0, item.amount);
     setTimeout(() => {
-      setExecutedItems(prev => ({ ...prev, [item.id]: true }));
+      setExecutedSteps(prev => ({ ...prev, [item.id]: true }));
       setExecutingId(null);
     }, 700);
   };
@@ -92,14 +94,14 @@ export const TodaysDecisions: React.FC = () => {
       <div className="bg-[#0F172A]/80 border border-white/10 rounded-2xl p-6 shadow-2xl backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center space-x-2 text-xs font-sans text-blue-400 font-bold mb-1">
-            <Calendar className="w-3.5 h-3.5" />
-            <span>AUG 29, 2026 — TODAY'S DECISION QUEUE</span>
+            <BrainCircuit className="w-4 h-4 text-emerald-400" />
+            <span>AUG 29, 2026 — EXECUTIVE TODAY'S DECISION QUEUE</span>
           </div>
           <h1 className="text-2xl font-bold text-slate-100 font-sans tracking-tight">
-            Today's Payout Decisions
+            Today's Payout Decisions & LLM Explainability
           </h1>
           <p className="text-xs text-slate-400 font-sans">
-            Minimal executive queue of actions scheduled for immediate execution today.
+            Clear plain-language explanations of WHY each decision was selected today.
           </p>
         </div>
 
@@ -110,16 +112,22 @@ export const TodaysDecisions: React.FC = () => {
       </div>
 
       {/* VERTICALLY STACKED MINIMAL DECISION CARDS */}
-      <div className="space-y-4">
+      <div className="space-y-5">
         {todayItems.map((item: any, index: number) => {
           const isExecuted = executedItems[item.id];
           const isExecuting = executingId === item.id;
           const isLock = item.aiAction === 'LOCK_RESERVE';
 
+          const explanation = item.reasoning || item.action_reason || item.reason || (
+            isLock 
+              ? 'WHY LOCK TODAY: Locks ₹16.50L in HDFC Treasury to guarantee 100% assembly worker payroll coverage due in 3 days, preventing plant downtime.' 
+              : `WHY EXECUTE TODAY: Dispatches ${formatINR(item.amount)} wire to capture early discount yield while preserving ₹29.54 Cr liquidity buffer above the ₹15.50 Cr reserve floor.`
+          );
+
           return (
             <div 
               key={item.id}
-              className={`bg-[#0F172A]/70 border rounded-2xl p-6 transition-all duration-300 shadow-xl backdrop-blur-xl relative overflow-hidden space-y-4 ${
+              className={`bg-[#0F172A]/80 border rounded-2xl p-6 transition-all duration-300 shadow-xl backdrop-blur-xl relative overflow-hidden space-y-4 ${
                 isExecuted 
                   ? 'border-emerald-500/50 bg-emerald-950/10' 
                   : isLock
@@ -159,29 +167,33 @@ export const TodaysDecisions: React.FC = () => {
                 </div>
               </div>
 
-              {/* AMOUNT & REASONING ROW */}
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                
-                <div className="md:col-span-4 bg-slate-950/80 p-4 rounded-xl border border-white/5 font-mono">
-                  <div className="text-[10px] text-slate-500 uppercase font-bold">Amount to Process</div>
-                  <div className="text-2xl font-bold text-slate-100 mt-1">{formatINR(item.amount)}</div>
+              {/* AMOUNT DISPLAY */}
+              <div className="flex items-center justify-between bg-slate-950/80 p-4 rounded-xl border border-white/5 font-mono">
+                <div>
+                  <div className="text-[10px] text-slate-500 uppercase font-bold">Action Amount</div>
+                  <div className="text-2xl font-bold text-slate-100 mt-0.5">{formatINR(item.amount)}</div>
                 </div>
-
-                <div className="md:col-span-8 space-y-1 font-sans text-xs">
-                  <div className="text-slate-400 font-bold flex items-center">
-                    <Sparkles className="w-3.5 h-3.5 text-blue-400 mr-1" /> AI Decision Rationale
-                  </div>
-                  <p className="text-slate-200 leading-relaxed bg-slate-950/40 p-3 rounded-xl border border-white/5">
-                    {item.reason || item.action_reason || 'Allocated by 0/1 Knapsack DP solver for optimal capital efficiency.'}
-                  </p>
+                <div className="text-right">
+                  <div className="text-[10px] text-slate-500 uppercase font-bold">Timing Window</div>
+                  <div className="text-xs font-bold text-amber-400 mt-0.5">Execute Today (Before 17:00)</div>
                 </div>
+              </div>
 
+              {/* ENHANCED LLM EXPLAINABILITY RATIONALE BOX */}
+              <div className="bg-gradient-to-r from-purple-950/30 via-slate-950/60 to-blue-950/30 border border-purple-500/30 rounded-xl p-4 space-y-2">
+                <div className="flex items-center space-x-2 text-xs font-bold text-purple-300 font-sans">
+                  <Sparkles className="w-4 h-4 text-purple-400 shrink-0" />
+                  <span>AI DECISION EXPLAINABILITY (WHY DO THIS TODAY):</span>
+                </div>
+                <p className="text-xs text-slate-200 leading-relaxed font-sans font-medium">
+                  {explanation}
+                </p>
               </div>
 
               {/* BOTTOM ACTION BAR */}
               <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs font-sans">
                 <div className="text-slate-400 font-mono text-[11px] flex items-center">
-                  <Clock className="w-3.5 h-3.5 text-slate-500 mr-1" /> Target Execution: <strong>Today (Before 17:00)</strong>
+                  <Clock className="w-3.5 h-3.5 text-slate-500 mr-1" /> Status: <strong>{isExecuted ? 'Wire Dispatched' : 'Ready for Execution'}</strong>
                 </div>
 
                 <button
